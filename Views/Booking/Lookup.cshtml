@@ -23,17 +23,34 @@
 
                     <div class="col-12 col-lg-5">
                         <label class="form-label">訂單編號<span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" placeholder="例如：BK20260810018" />
+                        <input type="text" class="form-control" id="orderNo" placeholder="例如：BK20260810018" />
+                        
                     </div>
 
                     <div class="col-12 col-lg-5">
                         <label class="form-label">聯絡電話<span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" placeholder="例如：0912-345-678" />
+                        <input type="text" class="form-control" id="phone" placeholder="例如：0912-345-678"/>
+                        
                     </div>
 
-                    <div class="col-12 col-lg-2 d-grid">
-                        <button type="submit" class="btn btn-primary">查詢</button>
+                    <div class="col-12 col-lg-2 d-grid">                        
+                        <button type="button" class="btn btn-primary" id="btnSearch">查詢</button>
                     </div>
+
+                </div>
+
+                <!-- 第二列：錯誤訊息 -->
+                <div class="row">
+
+                    <div class="col-12 col-lg-5">
+                        <div class="invalid-feedback" id="orderError">請輸入訂單編號。</div>
+                    </div>
+
+                    <div class="col-12 col-lg-5">
+                        <div class="invalid-feedback" id="phoneError">請輸入聯絡電話。</div>
+                    </div>
+
+                    <div class="col-lg-2"></div>
 
                 </div>
             </form>
@@ -44,13 +61,21 @@
     <!-- end 搜尋框／查詢按扭區塊 -->
 
 
+    <!-- 查無資料 -->
+    <div id="noResult" class="alert alert-warning mt-4 d-none">
+        查無符合的訂單資料！
+    </div>
+
+
     <!-- 查詢結果 -->
-    <div class="card mt-4">
+    <div class="card mt-4 d-none" id="orderResult">
 
         <div class="card-header d-flex justify-content-between align-items-center">
             
-            <span class="fw-semibold">訂單 BK20260810018</span>
-            <span class="badge text-bg-success">已成立</span>
+            <!-- 訂單編號 -->
+            <span class="fw-semibold" id="resultOrderNo"></span>
+            <!-- 訂單狀態 -->
+            <span class="badge text-bg-success" id="resultStatus"></span>
 
         </div>
 
@@ -62,28 +87,32 @@
                 <div class="col-12">
                     <div class="row border-bottom pb-2">
                         <div class="col-md-4 text-secondary">分館／房型</div>
-                        <div class="col-md-8 fw-semibold text-md-end">台北館・標準雙人房</div>
+                        <!-- 預訂分館．房型 -->
+                        <div class="col-md-8 fw-semibold text-md-end" id="resultRoom"></div>
                     </div>
                 </div>
 
                 <div class="col-12">
                     <div class="row border-bottom pb-2">
                         <div class="col-md-4 text-secondary">入住／退房</div>
-                        <div class="col-md-8 fw-semibold text-md-end">2026/08/10 ～ 2026/08/12</div>
+                        <!-- 入住日期 ~ 退房日期 -->
+                        <div class="col-md-8 fw-semibold text-md-end" id="resultDate"></div>
                     </div>
                 </div>
 
                 <div class="col-12">
                     <div class="row border-bottom pb-2">
                         <div class="col-md-4 text-secondary">訂房人</div>
-                        <div class="col-md-8 fw-semibold text-md-end">王小明</div>
+                        <!-- 訂房人姓名 -->
+                        <div class="col-md-8 fw-semibold text-md-end" id="resultCustomer"></div>
                     </div>
                 </div>
 
                 <div class="col-12">
                     <div class="row">
                         <div class="col-md-4 text-secondary">總金額</div>
-                        <div class="col-md-8 fw-bold text-md-end">NT$ 4,800</div>
+                        <!-- 房價總額 -->
+                        <div class="col-md-8 fw-bold text-md-end" id="resultTotal"></div>
                     </div>
                 </div>
 
@@ -94,7 +123,7 @@
 
         <div class="card-footer bg-white">
             <div class="d-flex justify-content-end">
-                <a asp-controller="Home" asp-action="Index" class="btn btn-outline-primary">返回</a>
+                <a href="~/Home/Index" class="btn btn-outline-primary">返回</a>
             </div>
         </div>
 
@@ -102,11 +131,129 @@
     </div>
     <!-- end 查詢結果 -->
 
-
-
-
-
-
-
-
 </div>
+
+
+@section Styles{
+
+<style>
+.invalid-feedback {
+    display: block;
+    min-height: 24px;
+    visibility: hidden;
+}
+
+.invalid-feedback.show {
+    visibility: visible;
+}
+</style>
+
+}
+
+
+
+
+@section Scripts{
+
+<script>
+// 假資料（測試用資料）
+const orderData = [
+    {
+        orderNo: "BK20260810018",
+        phone: "0912345678",
+        branch: "台北館",
+        roomType: "標準雙人房",
+        checkIn: "2026/08/10",
+        checkOut: "2026/08/12",
+        customer: "王小明",
+        total: 4800,
+        status: "已成立"
+    }
+];
+
+
+document.getElementById("btnSearch").addEventListener("click", function (e) {
+    e.preventDefault(); // 防止表單預設送出動作
+
+    const orderNo = document.getElementById("orderNo");
+    const phone = document.getElementById("phone");
+    const result = document.getElementById("orderResult");
+
+    let isValid = true;
+
+
+    // 每次按查詢先清除錯誤樣式
+    //orderNo.classList.remove("is-invalid");
+    //document.getElementById("orderError").classList.remove("show");
+    //phone.classList.remove("is-invalid");
+    //doucument.getElementById("phoneError").classList.remove("show");
+
+
+    // 驗證訂單編號
+    if (orderNo.value.trim() === "") {
+        orderNo.classList.add("is-invalid");
+        document.getElementById("orderError").classList.add("show");
+        isValid = false;
+    }
+    else {
+        orderNo.classList.remove("is-invalid");
+        document.getElementById("orderError").classList.remove("show");
+    }
+
+    
+
+    // 驗證聯絡電話
+    if (phone.value.trim() === "") {
+        phone.classList.add("is-invalid");
+        document.getElementById("phoneError").classList.add("show");
+        isValid = false;
+    }
+    else {
+        phone.classList.remove("is-invalid");
+        document.getElementById("phoneError").classList.remove("show");
+    }
+
+
+    // 驗證失敗
+    if (!isValid) {
+        result.classList.add("d-none");
+        return;
+    }
+    // 驗證成功，顯示查詢結果
+    //result.classList.remove("d-none");
+
+    
+    // 先把查詢結果及查無資料隱藏
+    result.classList.add("d-none");
+    document.getElementById("noResult").classList.add("d-none");
+
+    // 找資料
+    const inputPhone = phone.value.replaceAll("-", "").trim();
+    const order = orderData.find(x =>
+        x.orderNo === orderNo.value.trim() &&
+        x.phone === inputPhone
+    );
+
+    if (!order) {
+        // 查無資料
+        document.getElementById("noResult").classList.remove("d-none");
+        return;
+    }
+
+    // 資料顯示到畫面上
+    document.getElementById("resultOrderNo").textContent = "訂單 " + order.orderNo;
+    document.getElementById("resultStatus").textContent = order.status;
+    document.getElementById("resultRoom").textContent = order.branch + "・" + order.roomType;
+    document.getElementById("resultDate").textContent = order.checkIn + " ～ " + order.checkOut;
+    document.getElementById("resultCustomer").textContent = order.customer;
+    document.getElementById("resultTotal").textContent = "NT$ " + order.total.toLocaleString();
+    
+    // 顯示結果
+    result.classList.remove("d-none");    
+    
+
+});
+
+</script>
+
+}
