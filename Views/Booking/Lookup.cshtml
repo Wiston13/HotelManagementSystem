@@ -2,5 +2,111 @@
     For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 *@
 @{
+    ViewData["Title"] = "訂單查詢";
 }
-<h1>查詢訂單頁</h1>
+@* <h1>查詢訂單頁</h1> *@
+
+<div class="container py-4">
+
+    <h1 class="h3 fw-bold mb-2">查詢我的訂單</h1>
+
+    <p class="text-secondary mb-4">請輸入訂單編號與訂房時填寫的聯絡電話。</p>
+
+
+    <!-- 搜尋框／查詢按扭區塊 -->
+    <div class="card">
+
+        <div class="card-body">
+
+            <form>
+                <div class="row g-3 align-items-end">
+
+                    <div class="col-12 col-lg-5">
+                        <label class="form-label">訂單編號<span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" placeholder="例如：BK20260810018" />
+                    </div>
+
+                    <div class="col-12 col-lg-5">
+                        <label class="form-label">聯絡電話<span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" placeholder="例如：0912-345-678" />
+                    </div>
+
+                    <div class="col-12 col-lg-2 d-grid">
+                        <button type="submit" class="btn btn-primary">查詢</button>
+                    </div>
+
+                </div>
+            </form>
+
+        </div>
+
+    </div>
+    <!-- end 搜尋框／查詢按扭區塊 -->
+
+
+    <!-- 查詢結果 -->
+    <div class="card mt-4">
+
+        <div class="card-header d-flex justify-content-between align-items-center">
+            
+            <span class="fw-semibold">訂單 BK20260810018</span>
+            <span class="badge text-bg-success">已成立</span>
+
+        </div>
+
+
+        <div class="card-body">
+
+            <div class="row gy-3">
+
+                <div class="col-12">
+                    <div class="row border-bottom pb-2">
+                        <div class="col-md-4 text-secondary">分館／房型</div>
+                        <div class="col-md-8 fw-semibold text-md-end">台北館・標準雙人房</div>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <div class="row border-bottom pb-2">
+                        <div class="col-md-4 text-secondary">入住／退房</div>
+                        <div class="col-md-8 fw-semibold text-md-end">2026/08/10 ～ 2026/08/12</div>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <div class="row border-bottom pb-2">
+                        <div class="col-md-4 text-secondary">訂房人</div>
+                        <div class="col-md-8 fw-semibold text-md-end">王小明</div>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <div class="row">
+                        <div class="col-md-4 text-secondary">總金額</div>
+                        <div class="col-md-8 fw-bold text-md-end">NT$ 4,800</div>
+                    </div>
+                </div>
+
+            </div>        
+        
+        </div>
+
+
+        <div class="card-footer bg-white">
+            <div class="d-flex justify-content-end">
+                <a asp-controller="Home" asp-action="Index" class="btn btn-outline-primary">返回</a>
+            </div>
+        </div>
+
+
+    </div>
+    <!-- end 查詢結果 -->
+
+
+
+
+
+
+
+
+</div>
