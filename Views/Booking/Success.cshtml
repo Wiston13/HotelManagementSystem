@@ -45,9 +45,15 @@
         </p>
     </div>
 
-    <button type="button" class="order-check btn btn-primary btn-lg fw-semibold w-100 mt-4">
+    <p class="cancel-notice text-secondary text-center mt-3 mb-0">
+        如有取消訂單需求，請於入住前一天 23：59 前，電話連絡訂房分館處理。
+    </p>
+
+    <a asp-controller="Booking"
+       asp-action="Lookup"
+       class="order-check btn btn-primary btn-lg fw-semibold w-100 mt-4">
         查看訂單
-    </button>
+    </a>
 
 </div>
 
