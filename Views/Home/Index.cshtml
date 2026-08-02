@@ -1,8 +1,28 @@
 ﻿@{
     ViewData["Title"] = "Home Page";
+}
 
+@functions {
+    public class HotelItem
+    {
+        public string? Name { get; set; }
+        public string? Phone { get; set; }
+        public string? Address { get; set; }
+        public string? ImageUrl { get; set; }
+        public string? Intro { get; set; }
+
+        public Dictionary<string, int>? RoomList { get; set; }
+    }
+}
+@*note:
+    目前未完成:
+    1.房型動態顯示
+    2.房型白名單驗證
+    3.(考慮)加入分館介紹標題
+*@
+@{
     // 搜尋欄位需要的資料
-    List<string> HotelNameList = new List<string>() { "高雄_Kaohsiung", "台北_Taipei", "台中_Taichung","Test資料","Test資料2" };
+    List<string> HotelNameList = new List<string>() { "高雄_Kaohsiung", "台北_Taipei", "台中_Taichung", "Test資料", "Test資料2", "Test資料2", "Test資料2", "Test資料2", "Test資料2" };
     Dictionary<string, int> HotelRoomForPeopleDic = new Dictionary<string, int>(){
         { "精緻雙人房", 2 },
         { "豪華雙人房", 2 },
@@ -12,83 +32,136 @@
         { "景觀六人房", 6 }
     };
 
+
+    //看資料狀況加入 Region = "...",
     // 分館介紹顯示需要資料
-    var KaohsiungHotelList = new[]
+    var KaohsiungHotelList = new List<HotelItem>
     {
-        new
+        new HotelItem
         {
             Name = "高雄站前館 Kaohsiung Main Station",
             Phone = "TEL. 07-238-6677",
             Address = "高雄市三民區建國二路295號",
             ImageUrl = "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80",
-            Intro = "融合城市美學與自然靜謐的設計語彙，為旅人打造一處放鬆身心的理想之所。全館免費 Wi-Fi、24小時點心吧，提供您旅途中最溫暖的依靠。"
+            Intro = "融合城市美學與自然靜謐的設計語彙，為旅人打造一處放鬆身心的理想之所。全館免費 Wi-Fi、24小時點心吧，提供您旅途中最溫暖的依靠。",
+            RoomList = new Dictionary<string, int>
+            {
+                { "精緻雙人房", 2 },
+                { "豪華雙人房", 2 },
+                { "精緻四人房", 4 },
+                { "頂級四人房", 4 },
+                { "精緻六人房", 6 },
+                { "景觀六人房", 6 }
+            }
         },
-        new
+        new HotelItem
         {
             Name = "站東九如館 Kaohsiung Jiuru",
             Phone = "TEL. 07-315-3366",
             Address = "高雄市三民區九如二路339號",
             ImageUrl = "https://png.pngtree.com/thumb_back/fw800/background/20260731/pngtree-modern-lobby-interior-with-a-striking-slate-feature-wall-illuminated-by-image_22118052.webp",
-            Intro = "分館介紹2"
+            Intro = "坐落於高雄交通要道，沉穩內斂的石材設計與暖調燈光交織出沉靜舒適的氛圍。館內提供貼心周到的服務與舒適客房，是您探索港都風情、商務出差的最佳避風港。",
+            RoomList = new Dictionary<string, int>
+            {
+                { "精緻雙人房", 2 },
+                { "頂級四人房", 4 }
+            }
         },
-        new
+        new HotelItem
         {
             Name = "中山八德館 Zhongshan Bade",
             Phone = "TEL. 07-288-3399",
             Address = "高雄市新興區中山一路289號",
             ImageUrl =  "https://images.unsplash.com/photo-1522798514-97ceb8c4f1c8?auto=format&fit=crop&w=800&q=80",
-            Intro = "分館介紹3"
+            Intro = "緊鄰美麗島捷運站核心地帶，結合現代簡約與便利機能。走出戶外即可感受南台灣的熱情活力，回到館內則能擁抱寧靜優雅的私密休憩空間，滿足每位旅人的漫旅期待。",
+            RoomList = new Dictionary<string, int>
+            {
+                { "精緻雙人房", 2 },
+                { "豪華雙人房", 2 },
+                { "精緻四人房", 4 }
+            }
         },
-        new
+        new HotelItem
         {
             Name = "七賢館 Qixian",
             Phone = "TEL. 07-288-5588",
             Address = "高雄市新興區同愛街30號",
             ImageUrl =  "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80",
-            Intro = "分館介紹4"
+            Intro = "隱身於鬧市中的溫馨居所，以木質調與柔和採光營造出如家一般的歸屬感。無論是雙人甜蜜出遊或多人好友同行，都能在此享受自在放鬆的愜意時光。",
+            RoomList = new Dictionary<string, int>
+            {
+                { "精緻雙人房", 2 },
+                { "精緻六人房", 6 }
+            }
         },
     };
-    var TaipeiHotelList = new[]
+    var TaipeiHotelList = new List<HotelItem>
 {
-    new
+    new HotelItem
     {
         Name = "台北站前館 Taipei Main Station",
         Phone = "TEL. 02-2311-6677",
         Address = "台北市中正區館前路123號",
         ImageUrl = "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=800&q=80",
-        Intro = "坐落於台北核心交通樞紐，緊鄰台北車站與捷運站。提供溫馨舒適的客房與24小時點心吧，是商務出差與城市度假的極佳選擇。"
+        Intro = "坐落於台北核心交通樞紐，緊鄰台北車站與捷運站。提供溫馨舒適的客房與24小時點心吧，是商務出差與城市度假的極佳選擇。",
+        RoomList = new Dictionary<string, int>
+            {
+                { "台北商務雙人房", 2 },
+                { "台北豪華四人房", 4 }
+            }
     },
-    new
+    new HotelItem
     {
         Name = "台北中山館 Taipei Zhongshan",
         Phone = "TEL. 02-2521-3388",
         Address = "台北市中山區中山北路二段45號",
         ImageUrl = "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80",
-        Intro = "融合日系優雅與現代簡約美學，位處中山商圈靜巷之中鬧中取靜，給您漫活沉浸的住宿體驗。"
+        Intro = "融合日系優雅與現代簡約美學，位處中山商圈靜巷之中鬧中取靜，給您漫活沉浸的住宿體驗。",
+        RoomList = new Dictionary<string, int>
+            {
+                { "日系單人房", 1 },
+                { "日系雙人房", 2 }
+            }
     }
 };
 
-var TaichungHotelList = new[]
+    var TaichungHotelList = new List<HotelItem>
 {
-    new
+    new HotelItem
     {
         Name = "台中逢甲館 Taichung Fengchia",
         Phone = "TEL. 04-2451-7788",
         Address = "台中市西屯區福星路420號",
         ImageUrl = "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80",
-        Intro = "緊鄰知名逢甲商圈，擁有便利的地理位置與時尚洗鍊的空間設計，讓您盡情探索台中的熱情與活力。"
+        Intro = "緊鄰知名逢甲商圈，擁有便利的地理位置與時尚洗鍊的空間設計，讓您盡情探索台中的熱情與活力。",
+        RoomList = new Dictionary<string, int>
+            {
+                { "逢甲活力雙人房", 2 },
+                { "逢甲歡樂四人房", 4 }
+            }
     },
-    new
+    new HotelItem
     {
         Name = "台中綠園道館 Taichung Green Parkway",
         Phone = "TEL. 04-2301-5599",
         Address = "台中市西區公益路68號",
         ImageUrl = "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80",
-        Intro = "漫步於草悟道與美術館藝文特區旁，享受充滿綠意與人文藝術氣息的悠閒假期。"
+        Intro = "漫步於草悟道與美術館藝文特區旁，享受充滿綠意與人文藝術氣息的悠閒假期。",
+        RoomList = new Dictionary<string, int>
+            {
+                { "綠園道景觀房", 2 },
+                { "藝術家庭房", 4 }
+            }
     }
 };
     var hotelList = new[] { KaohsiungHotelList, TaipeiHotelList, TaichungHotelList };
 
+
+    var allHotels = new List<List<HotelItem>>();
+    allHotels.Add(KaohsiungHotelList);
+    allHotels.Add(TaipeiHotelList);
+    allHotels.Add(TaichungHotelList);
+    var hotelJSON = System.Text.Json.JsonSerializer.Serialize(allHotels);
 
 }
 
@@ -114,16 +187,25 @@ var TaichungHotelList = new[]
                     <div class="col-md-3">
                         <label class="form-label text-muted small">分館</label>
                         <!-- 這裡之後會換成 ASP.NET 的 Helper -->
-
+                        <!-- 此處判斷資料異常時顯示預設文字-->
                         <select class="form-select" id="HotelSelect">
                             <option value="" disabled selected hidden>選擇分館</option>
-                            @for (int i = 0; i < HotelNameList.Count; i++)
+                            @if (hotelList == null || hotelList.All(group => !group.Any()))
                             {
-                                <option>@HotelNameList[i]</option>
+                                <option value="" disabled selected hidden>系統維護中，目前無法載入分館</option>
                             }
-                        </select>
+                            else
+                            {
+                                @foreach (var hotel in hotelList)
+                                {
+                                    @foreach (var h in hotel)
+                                    {
+                                        <option>@h.Name</option>
+                                    }
+                                }
+                            }
 
-                    
+                        </select>
                     </div>
 
                     <!-- 選擇日期 (佔 4 份) -->
@@ -137,7 +219,7 @@ var TaichungHotelList = new[]
                     
                     <!-- 人數 (佔 2 份) -->
                     <div class="col-md-2">
-                        <label class="form-label text-muted small">入住人數</label>
+                        <label class="form-label text-muted small">入住人數(房型)</label>
                         <select class="form-select" id="RoomSelect">
                             <option value="" disabled selected hidden>選擇房型</option>
 
@@ -202,35 +284,93 @@ var TaichungHotelList = new[]
     let HotelSelect = document.getElementById("HotelSelect");
     let dateTime = document.getElementById("dateTime");
     let RoomSelect = document.getElementById("RoomSelect");
+
+    var validHotels;
+    var hotelRoomsMap;
+    var validRoom;
     document.getElementById("submitBtn").addEventListener("click", function() {
-
+        // 初始化白名單
+        if (validHotels == null) {
+            validHotelsvalidHotels = [
+            @foreach (var hotel in hotelList)
+                {
+                    @foreach (var h in hotel)
+                    {
+                        @: "@Html.Raw(h.Name)",
+                    }
+                }
+             ];
+        }
+        hotelRoomsMap = {
+        @foreach (var group in hotelList)
+        {
+            @foreach (var h in group)
+            {
+                @: "@Html.Raw(h.Name)": {
+                    @if (h.RoomList != null)
+                    {
+                        @foreach (var room in h.RoomList)
+                        {
+                            @: "@Html.Raw(room.Key)": @room.Value,
+                        }
+                    }
+                @: },
+            }
+        }
+    };
         
-        let isValid = true;
+if(validRoom!=null){
+    validRoom = [
+               new Set(Object.values(hotelRoomsMap[HotelSelect.value]))
+            ];
+}
+                        
+        
+        
 
-        if (HotelSelect.value === "") {
+        let isValid = true;
+        let startDate;
+        let endDate;
+        // 分館欄位判斷
+        // console.log(HotelSelect.value);
+        // console.log(validHotels);
+
+        if (HotelSelect.value === "" || checkWhiteList(HotelSelect.value)  ) {
             HotelSelect.classList.add("is-invalid");
             isValid = false;
         }
         else {
             HotelSelect.classList.remove("is-invalid");
         }
-
+        // 日期欄位判斷 
         let altInput = dateTime._flatpickr ? dateTime._flatpickr.altInput : null;
-        if (dateTime.value === "") {
+        if (dateTime.value === ""  || checkWhiteList(endDate)) {
             altInput.classList.add("is-invalid");
             isValid = false;
         }
         else {
-            altInput.classList.remove("is-invalid");
+            startDate = dateTime.value.slice(0, 10);
+            endDate = dateTime.value.slice(13, 23);
+            if (!checkWhiteList(startDate)) {
+                altInput.classList.add("is-invalid");
+                isValid = false;
+            }
+            else {
+                altInput.classList.remove("is-invalid");
+            }
         }
-
-        if (RoomSelect.value === "") {
+        //|| (!checkWhiteList(RoomSelect.value)
+        // 房型欄位判斷 
+        // newHotelRoomType(HotelSelect.value);
+        if (RoomSelect.value === "" || checkWhiteList(RoomSelect.value)) {
             RoomSelect.classList.add("is-invalid");
             isValid = false;
         }
         else {
             RoomSelect.classList.remove("is-invalid");
         }
+        console.log(validRoom);
+        console.log(RoomSelect.value);
 
         if (!isValid) {
             return;
@@ -239,11 +379,32 @@ var TaichungHotelList = new[]
 
         // 將HotelSelect.value dateTime.value RoomSelect.value 以url傳去 /Booking/RoomSelection
 
-        let targetUrl = `/Booking/RoomSelection?hotel=${encodeURIComponent(HotelSelect.value)}&date=${encodeURIComponent(dateTime.value)}&people=${encodeURIComponent(RoomSelect.value)}`;
+        let targetUrl = `/Booking/RoomSelection?hotel=${encodeURIComponent(HotelSelect.value)}&startDate=${startDate}&endDate=${endDate}&people=${encodeURIComponent(RoomSelect.value)}`;
 
         window.location.href = targetUrl;
 
     });
+
+    function checkWhiteList(value) {
+        let isValid = false;
+
+        //驗證分館名稱
+        
+        if (validHotels && validHotels.includes(value)) isValid = true;
+
+        //驗證房型
+        let roomcheck ;
+        if(value!=null){
+            roomcheck = value.toString().slice(0,1);
+        }
+        if (validRoom && validRoom.includes(Number(roomcheck))) isValid = true;
+
+        //驗證日期格式
+        const d = new Date(value);
+        if (!isNaN(d.getTime()) && value === d.toISOString().split('T')[0]) isValid = true;
+
+        return isValid;
+    }
 
     // 按下紅色欄位 會消除紅色警告
 
@@ -262,7 +423,7 @@ var TaichungHotelList = new[]
 
 <!--     以下為首頁區        -->
 <!--          css            -->
-<style>    
+<style>
 
     /* 確保所有分館圖片高度一致，自動裁切不會變形 */
     .branch-img-trigger {
@@ -384,13 +545,12 @@ var TaichungHotelList = new[]
         <div class="region-scroll" id="regionContainer">
             <!-- 假設每個按鈕設定固定寬度或 flex-shrink-0 確保一次看得見約 4 個 -->
             @for (int i = 0; i < HotelNameList.Count; i++)
-            {                
-                 string? act = i == 0 ? "active" : null;                
-                <button 
-                class="btn btn-outline-primary px-4 py-2 flex-shrink-0 region-btn @act" 
-                style="min-width: 140px;" 
-                data-region="@HotelNameList[i]">
-                @HotelNameList[i]
+            {
+                string? act = i == 0 ? "active" : null;
+                <button class="btn btn-outline-primary px-4 py-2 flex-shrink-0 region-btn @act"
+                        style="min-width: 140px;"
+                        data-region="@HotelNameList[i]">
+                    @HotelNameList[i]
                 </button>
             }
         </div>
@@ -403,7 +563,7 @@ var TaichungHotelList = new[]
 
     <!-- 2. 詳細介紹展開區塊 (預設隱藏 display: none) -->
     <!-- Bootstrap Grid 12等分，6:4 找不到整數，我們用 7:5 (約 58% : 41%) 視覺上最接近你要的比例 -->
-    <div id="detailView" class="mb-5" style="display: none;">
+    <div id="detailView" class="mb-5 branch-detail-section" style="display: none;">
         <div class="row g-4">
             <!-- 左側 7 份：大圖與關閉按鈕 -->
             <div class="col-md-7 position-relative">
@@ -416,8 +576,8 @@ var TaichungHotelList = new[]
             <!-- 右側 5 份：詳細資訊 -->
             <div class="col-md-5 d-flex flex-column justify-content-center">
                 <h3 id="detailTitle" class="fw-bold mb-3 text-primary">分館名稱</h3>
-                <p class="text-secondary lh-lg mb-4" >
-                    <span id="detailIntro">分館介紹載入中...</span> 
+                <p class="text-secondary lh-lg mb-4">
+                    <span id="detailIntro">分館介紹載入中...</span>
                 </p>
                 <ul class="list-unstyled text-secondary">
                     <li class="mb-3 d-flex align-items-center">
@@ -437,14 +597,14 @@ var TaichungHotelList = new[]
 
     <!-- 3. 分館列表 (響應式：大螢幕3排、平板2排、手機1排) -->
     @*因資料存取為了方便閱讀 用匿名資料存'a[] 但執行程式再載入後立刻執行 因此將全部資料都讀取再隱藏*@
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 region-cards-group" id="group-高雄_Kaohsiung" style="display: flex" >
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 region-cards-group" id="group-高雄_Kaohsiung" style="display: flex">
         @*動態顯示所有分館資料*@
         @*data-Intro 預載介紹資料 若有新增多個資料 可再增加data-... 同時修改JS*@
         @foreach (var hotel in KaohsiungHotelList)
         {
             <div class="col branch-card">
                 <div class="card border-0"
-                data-Intro ="@hotel.Intro">
+                     data-Intro="@hotel.Intro">
 
                     <img src="@hotel.ImageUrl" class="card-img-top rounded-0 branch-img-trigger" alt="館別圖片">
                     <div class="card-body px-0">
@@ -462,7 +622,7 @@ var TaichungHotelList = new[]
         {
             <div class="col branch-card">
                 <div class="card border-0"
-                data-Intro ="@hotel.Intro">
+                     data-Intro="@hotel.Intro">
 
                     <img src="@hotel.ImageUrl" class="card-img-top rounded-0 branch-img-trigger" alt="館別圖片">
                     <div class="card-body px-0">
@@ -474,13 +634,13 @@ var TaichungHotelList = new[]
             </div>
         }
     </div>
-     <!--  台中區  -->
-     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 region-cards-group" id="group-台中_Taichung" style="display: none">
+    <!--  台中區  -->
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 region-cards-group" id="group-台中_Taichung" style="display: none">
         @foreach (var hotel in TaichungHotelList)
         {
             <div class="col branch-card">
                 <div class="card border-0"
-                data-Intro ="@hotel.Intro">
+                     data-Intro="@hotel.Intro">
 
                     <img src="@hotel.ImageUrl" class="card-img-top rounded-0 branch-img-trigger" alt="館別圖片">
                     <div class="card-body px-0">
@@ -501,13 +661,13 @@ var TaichungHotelList = new[]
     const scrollLeftBtn = document.getElementById('scrollLeftBtn');
     const scrollRightBtn = document.getElementById('scrollRightBtn');
 
-    regionContainer.addEventListener('click',function(e){
+    regionContainer.addEventListener('click', function(e) {
         // 檢查被點擊的是不是我們按鈕
         let clickBtn = e.target.closest('.region-btn');
-        if(!clickBtn) return;
+        if (!clickBtn) return;
 
         // 1. 移除所有按鈕的 active 樣式
-        regionContainer.querySelectorAll('.region-btn').forEach(function(btn){
+        regionContainer.querySelectorAll('.region-btn').forEach(function(btn) {
             btn.classList.remove('active');
         });
 
@@ -515,34 +675,34 @@ var TaichungHotelList = new[]
         clickBtn.classList.add('active');
 
         // 3. 取得被點擊的地區名稱文字（例如："高雄 Kaohsiung"）
-        let selectedRegion = clickBtn.getAttribute('data-region');   
+        let selectedRegion = clickBtn.getAttribute('data-region');
 
         switchCardGroup(selectedRegion);
-        
-    });
-    
-    
 
-    function switchCardGroup(regionName){
+    });
+
+    
+    
+    function switchCardGroup(regionName) {
         // A. 先把所有的卡片群組通通隱藏
         let allGroups = document.querySelectorAll('.region-cards-group');
         allGroups.forEach(function(group) {
-        group.style.display = 'none';
+            group.style.display = 'none';
         });
         // B. 根據傳進來的地區名稱，決定要顯示哪一個群組
         let targetGroup = document.getElementById('group-' + regionName);
         if (targetGroup) {
-        targetGroup.style.display = 'flex';
+            targetGroup.style.display = 'flex';
         }
         // C. 如果使用者切換地區時，剛好有展開詳細介紹，把它關閉並還原
-    let detailView = document.getElementById('detailView');
-    detailView.style.display = 'none';
-    if (currentExpandedCard !== null) {
-        currentExpandedCard.style.display = 'block';
-        currentExpandedCard = null;
+        let detailView = document.getElementById('detailView');
+        detailView.style.display = 'none';
+        if (currentExpandedCard !== null) {
+            currentExpandedCard.style.display = 'block';
+            currentExpandedCard = null;
+        }
     }
-    }
-    
+
     
     // 檢查並更新左右箭頭的顯示狀態
     function updateArrowVisibility() {
@@ -592,7 +752,7 @@ var TaichungHotelList = new[]
 
 
     // ==========================================
-    // 原有的分館卡片切換邏輯 
+    // 原有的分館卡片切換邏輯
     // ==========================================
     let currentExpandedCard = null;
 
@@ -601,6 +761,7 @@ var TaichungHotelList = new[]
             // 取得這張圖片所在的整張卡片容器
             let clickedCard = this.closest('.branch-card');
             let cardData = clickedCard.querySelector('.card');// 藏有 data-* 屬性的那層
+
 
             if (currentExpandedCard !== null) {
                 currentExpandedCard.style.display = 'block';
@@ -614,7 +775,7 @@ var TaichungHotelList = new[]
             let targetTitle = clickedCard.querySelector('.branch-title').innerText;
             let targetAddress = clickedCard.querySelector('.branch-address').innerText;
             let targetPhone = clickedCard.querySelector('.branch-phone').innerText;
-            let targetIntro = cardData.getAttribute('data-Intro');// 抓出專屬介紹文字  
+            let targetIntro = cardData.getAttribute('data-Intro');// 抓出專屬介紹文字
             //若有其他資料 繼續新增
             document.getElementById('detailImg').src = targetImgSrc;
             document.getElementById('detailTitle').innerText = targetTitle;
@@ -629,6 +790,16 @@ var TaichungHotelList = new[]
                 top: detailView.offsetTop - 80,
                 behavior: 'smooth'
             });
+
+            
+            // 按下分館圖片後將介紹頁置中
+            let detailSection = document.querySelector('.branch-detail-section');
+            if (detailSection) {
+                detailSection.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                })
+            }
         });
     });
 
