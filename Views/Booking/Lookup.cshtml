@@ -1,259 +1,379 @@
 ﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+	For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 *@
 @{
-    ViewData["Title"] = "訂單查詢";
+	ViewData["Title"] = "訂單查詢";
 }
 @* <h1>查詢訂單頁</h1> *@
 
 <div class="container py-4">
 
-    <h1 class="h3 fw-bold mb-2">查詢我的訂單</h1>
+	<h1 class="h3 fw-bold mb-2">查詢我的訂單</h1>
 
-    <p class="text-secondary mb-4">請輸入訂單編號與訂房時填寫的聯絡電話。</p>
-
-
-    <!-- 搜尋框／查詢按扭區塊 -->
-    <div class="card">
-
-        <div class="card-body">
-
-            <form>
-                <div class="row g-3 align-items-end">
-
-                    <div class="col-12 col-lg-5">
-                        <label class="form-label">訂單編號<span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="orderNo" placeholder="例如：BK20260810018" />
-                        
-                    </div>
-
-                    <div class="col-12 col-lg-5">
-                        <label class="form-label">聯絡電話<span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="phone" placeholder="例如：0912-345-678"/>
-                        
-                    </div>
-
-                    <div class="col-12 col-lg-2 d-grid">                        
-                        <button type="button" class="btn btn-primary" id="btnSearch">查詢</button>
-                    </div>
-
-                </div>
-
-                <!-- 第二列：錯誤訊息 -->
-                <div class="row">
-
-                    <div class="col-12 col-lg-5">
-                        <div class="invalid-feedback" id="orderError">請輸入訂單編號。</div>
-                    </div>
-
-                    <div class="col-12 col-lg-5">
-                        <div class="invalid-feedback" id="phoneError">請輸入聯絡電話。</div>
-                    </div>
-
-                    <div class="col-lg-2"></div>
-
-                </div>
-            </form>
-
-        </div>
-
-    </div>
-    <!-- end 搜尋框／查詢按扭區塊 -->
+	<p class="text-secondary mb-4">請輸入訂單編號與訂房時填寫的聯絡電話。</p>
 
 
-    <!-- 查無資料 -->
-    <div id="noResult" class="alert alert-warning mt-4 d-none">
-        查無符合的訂單資料！
-    </div>
+	<!-- 搜尋框／查詢按扭區塊 -->
+	<div class="card">
+
+		<div class="card-body">
+
+			<form>
+				<div class="row g-3 align-items-end">
+
+					<div class="col-12 col-lg-5">
+						<label class="form-label">訂單編號<span class="text-danger">*</span></label>
+
+						<small class="text-secondary fw-normal ms-1">請輸入完整訂單編號（英文字母區分大小寫）。</small>
+
+						<input type="text" class="form-control" id="orderNo" placeholder="例如：BK20260810018" />
+						
+					</div>
+
+					<div class="col-12 col-lg-5">
+						<label class="form-label">聯絡電話<span class="text-danger">*</span></label>
+						<input type="text" class="form-control" id="phone" placeholder="例如：0912345678"/>
+						
+					</div>
+
+					<div class="col-12 col-lg-2 d-grid">                        
+						<button type="button" class="btn btn-primary" id="btnSearch">查詢</button>
+					</div>
+
+				</div>
+
+				<!-- 第二列：錯誤訊息 -->
+				<div class="row">
+
+					<div class="col-12 col-lg-5">
+						<div class="invalid-feedback" id="orderError">請輸入訂單編號。</div>
+					</div>
+
+					<div class="col-12 col-lg-5">
+						<div class="invalid-feedback" id="phoneError">請輸入聯絡電話。</div>
+					</div>
+
+					<div class="col-lg-2"></div>
+
+				</div>
+			</form>
+
+		</div>
+
+	</div>
+	<!-- end 搜尋框／查詢按扭區塊 -->
 
 
-    <!-- 查詢結果 -->
-    <div class="card mt-4 d-none" id="orderResult">
-
-        <div class="card-header d-flex justify-content-between align-items-center">
-            
-            <!-- 訂單編號 -->
-            <span class="fw-semibold" id="resultOrderNo"></span>
-            <!-- 訂單狀態 -->
-            <span class="badge text-bg-success" id="resultStatus"></span>
-
-        </div>
+	<!-- 查無資料 -->
+	<div id="noResult" class="alert alert-warning mt-4 d-none">查無符合的訂單資料！</div>
 
 
-        <div class="card-body">
+	<!-- 查詢結果 -->
+	<div class="card mt-4 d-none" id="orderResult">
 
-            <div class="row gy-3">
+		<div class="card-header d-flex justify-content-between align-items-center">
+			
+			<!-- 訂單編號 -->
+			<span class="fw-semibold" id="resultOrderNo"></span>
+			<!-- 訂單狀態 -->
+			<span class="badge" id="resultStatus"></span>
 
-                <div class="col-12">
-                    <div class="row border-bottom pb-2">
-                        <div class="col-md-4 text-secondary">分館／房型</div>
-                        <!-- 預訂分館．房型 -->
-                        <div class="col-md-8 fw-semibold text-md-end" id="resultRoom"></div>
-                    </div>
-                </div>
-
-                <div class="col-12">
-                    <div class="row border-bottom pb-2">
-                        <div class="col-md-4 text-secondary">入住／退房</div>
-                        <!-- 入住日期 ~ 退房日期 -->
-                        <div class="col-md-8 fw-semibold text-md-end" id="resultDate"></div>
-                    </div>
-                </div>
-
-                <div class="col-12">
-                    <div class="row border-bottom pb-2">
-                        <div class="col-md-4 text-secondary">訂房人</div>
-                        <!-- 訂房人姓名 -->
-                        <div class="col-md-8 fw-semibold text-md-end" id="resultCustomer"></div>
-                    </div>
-                </div>
-
-                <div class="col-12">
-                    <div class="row">
-                        <div class="col-md-4 text-secondary">總金額</div>
-                        <!-- 房價總額 -->
-                        <div class="col-md-8 fw-bold text-md-end" id="resultTotal"></div>
-                    </div>
-                </div>
-
-            </div>        
-        
-        </div>
+		</div>
 
 
-        <div class="card-footer bg-white">
-            <div class="d-flex justify-content-end">
-                <a href="~/Home/Index" class="btn btn-outline-primary">返回</a>
-            </div>
-        </div>
+		<div class="card-body">
+
+			<div class="row gy-3">
+
+				<div class="col-12">
+					<div class="row border-bottom pb-2">
+						<div class="col-md-4 text-secondary">分館／房型</div>
+						<!-- 預訂分館．房型 -->
+						<div class="col-md-8 fw-semibold text-md-end" id="resultRoom"></div>
+					</div>
+				</div>
+
+				<div class="col-12">
+					<div class="row border-bottom pb-2">
+						<div class="col-md-4 text-secondary">入住／退房</div>
+						<!-- 入住日期 ~ 退房日期 -->
+						<div class="col-md-8 fw-semibold text-md-end" id="resultDate"></div>
+					</div>
+				</div>
+
+				<div class="col-12">
+					<div class="row border-bottom pb-2">
+						<div class="col-md-4 text-secondary">訂房人</div>
+						<!-- 訂房人姓名 -->
+						<div class="col-md-8 fw-semibold text-md-end" id="resultCustomer"></div>
+					</div>
+				</div>
+
+				<div class="col-12">
+					<div class="row">
+						<div class="col-md-4 text-secondary">總金額</div>
+						<!-- 房價總額 -->
+						<div class="col-md-8 fw-bold text-md-end" id="resultTotal"></div>
+					</div>
+				</div>
+
+			</div>        
+		
+		</div>
 
 
-    </div>
-    <!-- end 查詢結果 -->
+		<div class="card-footer bg-white">
+			<div class="d-flex justify-content-end">
+				<a asp-controller="Home" asp-action="Index" class="btn btn-outline-primary">返回</a>
+			</div>
+		</div>
+
+
+	</div>
+	<!-- end 查詢結果 -->
 
 </div>
 
 
+
+
+
 @section Styles{
 
-<style>
-.invalid-feedback {
-    display: block;
-    min-height: 24px;
-    visibility: hidden;
-}
+	<style>
+		.invalid-feedback {
+			display: block;
+			min-height: 24px;
+			visibility: hidden;
+		}
 
-.invalid-feedback.show {
-    visibility: visible;
-}
-</style>
+		.invalid-feedback.show {
+			visibility: visible;
+		}
+	</style>
 
 }
-
 
 
 
 @section Scripts{
 
-<script>
-// 假資料（測試用資料）
-const orderData = [
-    {
-        orderNo: "BK20260810018",
-        phone: "0912345678",
-        branch: "台北館",
-        roomType: "標準雙人房",
-        checkIn: "2026/08/10",
-        checkOut: "2026/08/12",
-        customer: "王小明",
-        total: 4800,
-        status: "已成立"
-    }
-];
+	<script>
+
+		// 假資料（測試用資料）
+		const orderData = [
+			{
+				orderNo: "BK20260810018",
+				phone: "0912345678",
+				branch: "台北館",
+				roomType: "標準雙人房",
+				checkIn: "2026/08/10",
+				checkOut: "2026/08/12",
+				customer: "王小明",
+				total: 4800,
+				status: "已成立"
+			},
+			{
+				orderNo: "BK20260810019",
+				phone: "0987654321",
+				branch: "台中館",
+				roomType: "豪華雙人房",
+				checkIn: "2026/08/15",
+				checkOut: "2026/08/17",
+				customer: "陳小華",
+				total: 6000,
+				status: "已取消"
+			}
+		];
+
+		const orderNoPattern = /^[A-Za-z0-9]+$/;  // 訂單編號格式驗證（僅允許英數字）
+		const phonePattern = /^[0-9+\-()\s]+$/;  // 聯絡電話格式驗證（允許數字、+、-、()、空格）
+
+		function normalizePhone(phone) {
+			return phone.replace(/\D/g, "");    // 移除所有不是數字的字元
+		}
 
 
-document.getElementById("btnSearch").addEventListener("click", function (e) {
-    e.preventDefault(); // 防止表單預設送出動作
+		// 訂單編號驗證
+		function validateOrderNo() {
+			const orderNo = document.getElementById("orderNo");
+			const orderError = document.getElementById("orderError");
 
-    const orderNo = document.getElementById("orderNo");
-    const phone = document.getElementById("phone");
-    const result = document.getElementById("orderResult");
+			const value = orderNo.value.trim();
+			if (value === "") {
+				orderNo.classList.add("is-invalid");
+				orderError.textContent = "請輸入訂單編號。";
+				orderError.classList.add("show");
+				return false;
+			}
 
-    let isValid = true;
+			if (!orderNoPattern.test(value)) {
+				orderNo.classList.add("is-invalid");
+				orderError.textContent = "輸入的訂單編號格式不正確。";
+				orderError.classList.add("show");
+				return false;
+			}
 
+			// 驗證成功
+			orderNo.classList.remove("is-invalid");
+			orderError.classList.remove("show");
 
-    // 每次按查詢先清除錯誤樣式
-    //orderNo.classList.remove("is-invalid");
-    //document.getElementById("orderError").classList.remove("show");
-    //phone.classList.remove("is-invalid");
-    //doucument.getElementById("phoneError").classList.remove("show");
-
-
-    // 驗證訂單編號
-    if (orderNo.value.trim() === "") {
-        orderNo.classList.add("is-invalid");
-        document.getElementById("orderError").classList.add("show");
-        isValid = false;
-    }
-    else {
-        orderNo.classList.remove("is-invalid");
-        document.getElementById("orderError").classList.remove("show");
-    }
-
-    
-
-    // 驗證聯絡電話
-    if (phone.value.trim() === "") {
-        phone.classList.add("is-invalid");
-        document.getElementById("phoneError").classList.add("show");
-        isValid = false;
-    }
-    else {
-        phone.classList.remove("is-invalid");
-        document.getElementById("phoneError").classList.remove("show");
-    }
+			return true;
+		}
 
 
-    // 驗證失敗
-    if (!isValid) {
-        result.classList.add("d-none");
-        return;
-    }
-    // 驗證成功，顯示查詢結果
-    //result.classList.remove("d-none");
+		// 聯絡電話驗證
+		function validatePhone() {
+			const phone = document.getElementById("phone");
+			const phoneError = document.getElementById("phoneError");
 
-    
-    // 先把查詢結果及查無資料隱藏
-    result.classList.add("d-none");
-    document.getElementById("noResult").classList.add("d-none");
+			const value = phone.value.trim();
+			if (value === "") {
+				phone.classList.add("is-invalid");
+				phoneError.textContent = "請輸入聯絡電話。";
+				phoneError.classList.add("show");
+				return false;
+			}
 
-    // 找資料
-    const inputPhone = phone.value.replaceAll("-", "").trim();
-    const order = orderData.find(x =>
-        x.orderNo === orderNo.value.trim() &&
-        x.phone === inputPhone
-    );
+			if (!phonePattern.test(value)) {
+				phone.classList.add("is-invalid");
+				phoneError.textContent = "輸入的電話號碼格式不正確。";
+				phoneError.classList.add("show");
+				return false;
+			}
 
-    if (!order) {
-        // 查無資料
-        document.getElementById("noResult").classList.remove("d-none");
-        return;
-    }
+			const digitCount = value.replace(/\D/g, "").length;
+			if (digitCount < 6) {
+				phone.classList.add("is-invalid");
+				phoneError.textContent = "請輸入正確的聯絡電話。";
+				phoneError.classList.add("show");
+				return false;
+			}
 
-    // 資料顯示到畫面上
-    document.getElementById("resultOrderNo").textContent = "訂單 " + order.orderNo;
-    document.getElementById("resultStatus").textContent = order.status;
-    document.getElementById("resultRoom").textContent = order.branch + "・" + order.roomType;
-    document.getElementById("resultDate").textContent = order.checkIn + " ～ " + order.checkOut;
-    document.getElementById("resultCustomer").textContent = order.customer;
-    document.getElementById("resultTotal").textContent = "NT$ " + order.total.toLocaleString();
-    
-    // 顯示結果
-    result.classList.remove("d-none");    
-    
+			// 驗證成功
+			phone.classList.remove("is-invalid");
+			phoneError.classList.remove("show");
 
-});
+			return true;
+		}
 
-</script>
+
+
+
+		// 清空並隱藏結果區塊
+		function clearResult() {
+			const result = document.getElementById("orderResult");
+			const noResult = document.getElementById("noResult");
+	
+			// 隱藏兩種結果
+			result.classList.add("d-none");
+			noResult.classList.add("d-none");
+
+			// 清空舊資料
+			document.getElementById("resultOrderNo").textContent = "";
+			document.getElementById("resultStatus").textContent = "";
+			document.getElementById("resultRoom").textContent = "";
+			document.getElementById("resultDate").textContent = "";
+			document.getElementById("resultCustomer").textContent = "";
+			document.getElementById("resultTotal").textContent = "";
+		}
+
+		// 設定訂單狀態顯示樣式
+		function getStatusBadgeClass(status) {
+			switch (status) {
+				case "已成立":
+					return "text-bg-success";
+				case "已取消":
+					return "text-bg-danger";
+				default:
+					return "text-bg-secondary";
+			}
+		}
+
+		// 顯示查詢結果
+		function showOrder(order) {
+			document.getElementById("resultOrderNo").textContent = "訂單 " + order.orderNo;
+
+			// 設定訂單狀態
+			const statusBadge = document.getElementById("resultStatus");    
+			statusBadge.textContent = order.status;  // 設定文字    
+			statusBadge.className = "badge";  // 移除舊顏色    
+			statusBadge.classList.add(  // 加入新的顏色
+				getStatusBadgeClass(order.status)
+			);
+
+			document.getElementById("resultRoom").textContent = order.branch + "・" + order.roomType;
+			document.getElementById("resultDate").textContent = order.checkIn + " ～ " + order.checkOut;
+			document.getElementById("resultCustomer").textContent = order.customer;
+			document.getElementById("resultTotal").textContent = "NT$ " + order.total.toLocaleString();
+
+			// 顯示結果區塊
+			document.getElementById("orderResult").classList.remove("d-none");
+		}
+
+		// 顯示查無資料
+		function showNoResult() {
+			const noResult = document.getElementById("noResult");
+			noResult.textContent = "查無符合的資料，請確認訂單編號與聯絡電話是否輸入正確。";
+			noResult.classList.remove("d-none");
+		}
+
+
+
+		// 查詢按鈕點擊事件
+		document.getElementById("btnSearch").addEventListener("click", function (e) {
+			e.preventDefault(); // 防止表單預設送出動作
+
+			let isValid = true;
+			
+			if (!validateOrderNo()) {
+				isValid = false;
+			}
+
+			if (!validatePhone()) {
+				isValid = false;
+			}
+
+			// 驗證失敗
+			if (!isValid) {
+				clearResult();  // 清空並隱藏結果區塊
+				return;
+			}	
+
+			// 清除上一次查詢結果
+			clearResult();
+
+			// 比對資料
+			const inputPhone = normalizePhone(phone.value);
+			const order = orderData.find(x =>
+				x.orderNo === orderNo.value.trim() &&
+				normalizePhone(x.phone) === inputPhone
+			);
+
+			// 查無資料
+			if (!order) {
+				showNoResult();  //顯示查無資料
+				return;
+			}
+
+			// 有資料
+			showOrder(order);  // 顯示查詢結果 
+
+		});
+		// -- end 查詢按鈕點擊事件
+
+
+
+		// 訂單編號輸入時即時驗證
+		document.getElementById("orderNo").addEventListener("input", function () {
+			validateOrderNo();
+		});
+
+		// 聯絡電話輸入時即時驗證
+		document.getElementById("phone").addEventListener("input", function () {
+			validatePhone();
+		});
+
+	</script>
 
 }
