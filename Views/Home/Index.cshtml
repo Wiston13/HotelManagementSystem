@@ -222,19 +222,8 @@
                         <label class="form-label text-muted small">入住人數(房型)</label>
                         <select class="form-select" id="RoomSelect">
                             <option value="" disabled selected hidden>選擇房型</option>
-
-                            @{
-                                List<int> roomPeople = new List<int>();
-                                foreach (var p in HotelRoomForPeopleDic)
-                                {
-                                    int num = p.Value;
-                                    if (!roomPeople.Contains(num)) roomPeople.Add(num);
-                                }
-                            }
-                            @for (int i = 0; i < roomPeople.Count; i++)
-                            {
-                                <option>@roomPeople[i].ToString()人(房)</option>
-                            }
+                            <option value="" disabled >請先選擇分館</option>
+                            
                         </select>
                     </div>
 
@@ -285,127 +274,142 @@
     let dateTime = document.getElementById("dateTime");
     let RoomSelect = document.getElementById("RoomSelect");
 
-    var validHotels;
-    var hotelRoomsMap;
-    var validRoom;
-    document.getElementById("submitBtn").addEventListener("click", function() {
-        // 初始化白名單
-        if (validHotels == null) {
-            validHotelsvalidHotels = [
-            @foreach (var hotel in hotelList)
+    var validHotels= [
+                @foreach (var hotel in hotelList)
                 {
-                    @foreach (var h in hotel)
+                            @foreach (var h in hotel)
                     {
                         @: "@Html.Raw(h.Name)",
                     }
                 }
-             ];
-        }
-        hotelRoomsMap = {
-        @foreach (var group in hotelList)
-        {
-            @foreach (var h in group)
+                 ];
+    var hotelRoomsMap= {
+            @foreach (var group in hotelList)
             {
-                @: "@Html.Raw(h.Name)": {
+                    @foreach (var h in group)
+                {
+                    @: "@Html.Raw(h.Name)": {
                     @if (h.RoomList != null)
-                    {
-                        @foreach (var room in h.RoomList)
                         {
-                            @: "@Html.Raw(room.Key)": @room.Value,
+                                        @foreach (var room in h.RoomList)
+                            {
+                                @: "@Html.Raw(room.Key)": @room.Value,
                         }
-                    }
-                @: },
+                        }
+                        @: },
             }
-        }
-    };
+            }
+        };
+    var validRoom;
+    document.getElementById("submitBtn").addEventListener("click", function() {        
         
-if(validRoom!=null){
-    validRoom = [
-               new Set(Object.values(hotelRoomsMap[HotelSelect.value]))
-            ];
-}
-                        
-        
-        
+    let isValid = true;
+    let startDate;
+    let endDate;
+    // 分館欄位判斷
+    // console.log(HotelSelect.value);
+    // console.log(validHotels);
 
-        let isValid = true;
-        let startDate;
-        let endDate;
-        // 分館欄位判斷
-        // console.log(HotelSelect.value);
-        // console.log(validHotels);
-
-        if (HotelSelect.value === "" || checkWhiteList(HotelSelect.value)  ) {
-            HotelSelect.classList.add("is-invalid");
-            isValid = false;
-        }
-        else {
-            HotelSelect.classList.remove("is-invalid");
-        }
-        // 日期欄位判斷 
-        let altInput = dateTime._flatpickr ? dateTime._flatpickr.altInput : null;
-        if (dateTime.value === ""  || checkWhiteList(endDate)) {
+    if (HotelSelect.value === "" || checkWhiteList(HotelSelect.value, "hotel")) {
+        HotelSelect.classList.add("is-invalid");
+        isValid = false;
+    }
+    else {
+        HotelSelect.classList.remove("is-invalid");
+    }
+    // 日期欄位判斷
+    let altInput = dateTime._flatpickr ? dateTime._flatpickr.altInput : null;
+    if (dateTime.value === "" || checkWhiteList(endDate, "date")) {
+        altInput.classList.add("is-invalid");
+        isValid = false;
+    }
+    else {
+        startDate = dateTime.value.slice(0, 10);
+        endDate = dateTime.value.slice(13, 23);
+        if (!checkWhiteList(startDate, "date")) {
             altInput.classList.add("is-invalid");
             isValid = false;
         }
         else {
-            startDate = dateTime.value.slice(0, 10);
-            endDate = dateTime.value.slice(13, 23);
-            if (!checkWhiteList(startDate)) {
-                altInput.classList.add("is-invalid");
-                isValid = false;
-            }
-            else {
-                altInput.classList.remove("is-invalid");
-            }
+            altInput.classList.remove("is-invalid");
         }
-        //|| (!checkWhiteList(RoomSelect.value)
-        // 房型欄位判斷 
-        // newHotelRoomType(HotelSelect.value);
-        if (RoomSelect.value === "" || checkWhiteList(RoomSelect.value)) {
-            RoomSelect.classList.add("is-invalid");
-            isValid = false;
-        }
-        else {
-            RoomSelect.classList.remove("is-invalid");
-        }
-        console.log(validRoom);
-        console.log(RoomSelect.value);
+    }
+    //|| (!checkWhiteList(RoomSelect.value)
+    // 房型欄位判斷
+    // newHotelRoomType(HotelSelect.value);
+    
+    if (RoomSelect.value === "" || !checkWhiteList(RoomSelect.value, "room")) {
+        RoomSelect.classList.add("is-invalid");
+        isValid = false;
+    }
+    else {
+        RoomSelect.classList.remove("is-invalid");
+    }    
 
-        if (!isValid) {
-            return;
-        }
+    if (!isValid) {
+        return;
+    }
 
+    // 將HotelSelect.value dateTime.value RoomSelect.value 以url傳去 /Booking/RoomSelection
 
-        // 將HotelSelect.value dateTime.value RoomSelect.value 以url傳去 /Booking/RoomSelection
+    let targetUrl = `/Booking/RoomSelection?hotel=${encodeURIComponent(HotelSelect.value)}&startDate=${startDate}&endDate=${endDate}&people=${encodeURIComponent(RoomSelect.value)}`;
 
-        let targetUrl = `/Booking/RoomSelection?hotel=${encodeURIComponent(HotelSelect.value)}&startDate=${startDate}&endDate=${endDate}&people=${encodeURIComponent(RoomSelect.value)}`;
+    window.location.href = targetUrl;
 
-        window.location.href = targetUrl;
+ });
 
+ HotelSelect.addEventListener("change", function() {
+        validRoom = new Set(Object.values(hotelRoomsMap[HotelSelect.value]));
+        
+
+        let selectedHotel = this.value;
+        if (!selectedHotel) return;
+
+        RoomSelect.innerHTML = '<option value="" disabled selected hidden>選擇房型</option>';
+        
+        let roomArray = Array.from(validRoom);
+        
+    // 順利跑 foreach
+    roomArray.forEach(function(num) {
+        let option = document.createElement("option");
+        option.value = num;
+        option.textContent = num + "人(房)";
+        RoomSelect.appendChild(option);
+        });
     });
 
-    function checkWhiteList(value) {
+    //資料白名單
+    function checkWhiteList(value ,type) {
         let isValid = false;
 
         //驗證分館名稱
-        
-        if (validHotels && validHotels.includes(value)) isValid = true;
-
-        //驗證房型
-        let roomcheck ;
-        if(value!=null){
-            roomcheck = value.toString().slice(0,1);
+        if(type=="hotel"){
+            if (validHotels && validHotels.includes(value)) isValid = true;
         }
-        if (validRoom && validRoom.includes(Number(roomcheck))) isValid = true;
+            //驗證房型
+        if(type=="room")
+        {
+            
+        let roomcheck;
+        if (value != null) {
+            roomcheck = value.toString().slice(0, 1);//抓取房型第一個字判斷
+        }
 
+        if (validRoom && validRoom.has(Number(roomcheck))) isValid = true;
+        }
         //驗證日期格式
+        if(type=="date"){
+            
         const d = new Date(value);
         if (!isNaN(d.getTime()) && value === d.toISOString().split('T')[0]) isValid = true;
+        }
+        
+
+        
 
         return isValid;
     }
-
+    
     // 按下紅色欄位 會消除紅色警告
 
     HotelSelect.addEventListener("click", function() {
