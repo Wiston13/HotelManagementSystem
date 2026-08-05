@@ -310,7 +310,7 @@
     // console.log(HotelSelect.value);
     // console.log(validHotels);
 
-    if (HotelSelect.value === "" || checkWhiteList(HotelSelect.value, "hotel")) {
+    if (HotelSelect.value === "" || !checkWhiteList(HotelSelect.value, "hotel")) {
         HotelSelect.classList.add("is-invalid");
         isValid = false;
     }
