@@ -1,13 +1,10 @@
 ﻿@{
     var pageTitle = ViewData["Title"] as string;
-    var branchName = ViewData["BranchName"] as string;
 
     var currentAction = ViewContext.RouteData.Values["action"]!.ToString();
     var BranchController = ViewContext.RouteData.Values["controller"]!.ToString();
 
 
-    //暫時 之後帶資料
-    branchName = "台北館";
 
     // var currentController =
     //     ViewContext.RouteData.Values["controller"]?.ToString();
@@ -37,7 +34,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@(string.IsNullOrWhiteSpace(pageTitle) ? "旅館管理系統" : $"{pageTitle}｜旅館管理系統")</title>
+    <title>@(string.IsNullOrWhiteSpace(pageTitle) ? "旅宿管理系統" : $"{pageTitle}｜旅宿管理系統")</title>
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
@@ -58,7 +55,7 @@
             <nav class="col-md-3 col-lg-2 d-md-block bg-white border-end collapse p-3" id="adminSidebar">
                 <div class="position-sticky pt-3">
                     <h5 class="sidebar-heading px-3 mb-3 text-primary fw-bold">
-                        OO旅館管理系統
+                        旅宿管理系統
                     </h5>
 
                     <ul class="nav flex-column gap-1">
@@ -66,33 +63,28 @@
 							<!---->
                             <a class="nav-link rounded @(Check(isIndex))"
                                asp-controller="@BranchController" asp-action="Index">
-                                <i class="bi bi-house-door me-2"></i>工作首頁
+                                <i class="bi bi-person-circle me-2"></i>帳號管理
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link rounded @(Check(isLookup))"
                                asp-controller="@BranchController" asp-action="Lookup">
-                                <i class="bi bi-search me-2"></i>訂單查詢
+                                <i class="bi bi-house-door me-2"></i>分館管理
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link rounded @(Check(isCheckIn))" asp-controller="@BranchController" asp-action="CheckIn">
-                                <i class="bi bi-box-arrow-in-right me-2"></i>Check-in
+                                <i class="bi bi-cash-coin me-2"></i>房型與價格
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link rounded @(Check(isCheckOut))" asp-controller="@BranchController" asp-action="CheckOut">
-                                <i class="bi bi-box-arrow-right me-2"></i>Check-out
+                                <i class="bi bi-house-gear me-2"></i>房間管理
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link rounded @(Check(isUnchecked) )" asp-controller="@BranchController" asp-action="Unchecked">
-                                <i class="bi bi-exclamation-circle me-2"></i>未入住結案
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link rounded @(Check(isRooms) )" asp-controller="@BranchController" asp-action="Rooms">
-                                <i class="bi bi-door-open me-2"></i>房間狀態
+                                <i class="bi bi-search me-2"></i>跨館查詢
                             </a>
                         </li>
                         <hr class="my-2">
@@ -105,16 +97,8 @@
                 </div>
             </nav>
 
-            <!-- 右側主要內容區 -->
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4 d-flex flex-column">
 
-                <!-- 頂部資訊列 (顯示登入身分：台北館・櫃檯人員) -->
-                <div class="d-flex justify-content-between align-items-center pb-3 mb-4 border-bottom">
-                    <h2 class="h4 mb-0 fw-bold">@pageTitle</h2>
-                    <div class="text-secondary small">
-                        <i class="bi bi-person-circle me-1"></i> @branchName・櫃檯人員
-                    </div>
-                </div>
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4 d-flex flex-column">
 
                 <!-- 頁面實際內容 -->
                 <div class="flex-grow-1">
