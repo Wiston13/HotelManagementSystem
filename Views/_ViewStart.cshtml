@@ -1,3 +1,11 @@
 ﻿@{
-    Layout = "_Layout";
+    string? action = @ViewContext.RouteData.Values["controller"]!.ToString();
+
+    if(action=="Home"){
+            Layout = "_BranchLayout";
+    }
+    else
+    {
+        Layout="_Layout";
+    }
 }
