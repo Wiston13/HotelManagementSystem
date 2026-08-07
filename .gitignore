@@ -361,6 +361,3 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-/HotelManagement.db
-/HotelManagement.db-shm
-/HotelManagement.db-wal
