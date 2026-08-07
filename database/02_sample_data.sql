@@ -9,9 +9,9 @@
     4. 訂房／住房日期會以「執行當天」為基準動態產生，避免測資隨時間失效
 
     測試帳號說明：
-    - PasswordHash 目前以 SQL Server SHA2_256 產生測試雜湊，
-      只用於資料庫測試資料。
-    - 未來 ASP.NET 登入若採用 PasswordHasher，請由應用程式重新產生相容雜湊。
+    - 全部測試帳號密碼固定為 Hotel@123。
+    - PasswordHash 使用 ASP.NET Core PasswordHasher IdentityV3 相容格式。
+    - 固定測試雜湊只供本機開發／展示使用，不得沿用至正式環境。
 */
 
 USE [HotelManagementSystem];
@@ -46,13 +46,15 @@ BEGIN TRY
     /* =========================================================
        共用日期
        ========================================================= */
-    DECLARE @Today date = CAST(GETDATE() AS date);
+    DECLARE @NowTaipei datetime2(0) =
+        CONVERT(datetime2(0), SYSDATETIMEOFFSET() AT TIME ZONE 'Taipei Standard Time');
+    DECLARE @Today date = CAST(@NowTaipei AS date);
 
     DECLARE @Yesterday date = DATEADD(DAY, -1, @Today);
     DECLARE @Tomorrow date = DATEADD(DAY, 1, @Today);
 
     DECLARE @SamplePasswordHash varchar(255) =
-        CONVERT(varchar(64), HASHBYTES('SHA2_256', 'Hotel@123'), 2);
+        'AQAAAAIAAYagAAAAEAARIjNEVWZ3iJmqu8zd7v+PeRFk6r5bp/etR1cXSVRJ3jQ7XCpEip30m5ie+Qu5vg==';
 
     /* =========================================================
        1. Branches
@@ -70,7 +72,7 @@ BEGIN TRY
     VALUES
     (
         N'台北商旅',
-        '02-2555-0101',
+        '0225550101',
         N'台北市中山區中山北路一段100號',
         N'位於台北市中心，鄰近捷運與主要商圈。',
         1,
@@ -79,7 +81,7 @@ BEGIN TRY
     ),
     (
         N'台中商旅',
-        '04-2222-0202',
+        '0422220202',
         N'台中市西區台灣大道二段200號',
         N'位於台中市區，適合商務與短期住宿。',
         1,
@@ -88,7 +90,7 @@ BEGIN TRY
     ),
     (
         N'高雄商旅',
-        '07-3333-0303',
+        '0733330303',
         N'高雄市前金區中華三路300號',
         N'目前停止接受新訂房，但既有訂單仍可繼續處理。',
         0,
@@ -261,6 +263,7 @@ BEGIN TRY
         [CheckInDate],
         [CheckOutDate],
         [RoomTypeNameSnapshot],
+        [MaxOccupancySnapshot],
         [NightlyPriceSnapshot],
         [TotalAmount],
         [BookingStatus],
@@ -276,11 +279,12 @@ BEGIN TRY
         1,
         1,
         N'陳冠宇',
-        '0912-345-001',
+        '0912345001',
         'guest001@example.com',
         @Today,
         DATEADD(DAY, 2, @Today),
         N'標準雙人房',
+        2,
         2800.00,
         5600.00,
         'Paid',
@@ -295,11 +299,12 @@ BEGIN TRY
         1,
         2,
         N'李佳穎',
-        '0912-345-002',
+        '0912345002',
         'guest002@example.com',
         DATEADD(DAY, 5, @Today),
         DATEADD(DAY, 7, @Today),
         N'家庭四人房',
+        4,
         4200.00,
         8400.00,
         'Paid',
@@ -314,11 +319,12 @@ BEGIN TRY
         1,
         1,
         N'周子晴',
-        '0912-345-003',
+        '0912345003',
         'guest003@example.com',
         DATEADD(DAY, -2, @Today),
         @Today,
         N'標準雙人房',
+        2,
         2800.00,
         5600.00,
         'CheckedIn',
@@ -333,11 +339,12 @@ BEGIN TRY
         2,
         4,
         N'黃詩涵',
-        '0912-345-004',
+        '0912345004',
         'guest004@example.com',
         DATEADD(DAY, -5, @Today),
         DATEADD(DAY, -3, @Today),
         N'標準雙人房',
+        2,
         2500.00,
         5000.00,
         'Completed',
@@ -352,11 +359,12 @@ BEGIN TRY
         1,
         2,
         N'吳家豪',
-        '0912-345-005',
+        '0912345005',
         'guest005@example.com',
         DATEADD(DAY, 10, @Today),
         DATEADD(DAY, 12, @Today),
         N'家庭四人房',
+        4,
         4200.00,
         8400.00,
         'Cancelled',
@@ -371,11 +379,12 @@ BEGIN TRY
         2,
         5,
         N'林書妍',
-        '0912-345-006',
+        '0912345006',
         'guest006@example.com',
         DATEADD(DAY, 1, @Today),
         DATEADD(DAY, 3, @Today),
         N'三人房',
+        3,
         3300.00,
         6600.00,
         'Cancelled',
@@ -390,11 +399,12 @@ BEGIN TRY
         1,
         1,
         N'許博翔',
-        '0912-345-007',
+        '0912345007',
         'guest007@example.com',
         DATEADD(DAY, -4, @Today),
         DATEADD(DAY, -2, @Today),
         N'標準雙人房',
+        2,
         2800.00,
         5600.00,
         'NoShow',
@@ -624,3 +634,4 @@ BEGIN CATCH
     THROW;
 END CATCH;
 GO
+
