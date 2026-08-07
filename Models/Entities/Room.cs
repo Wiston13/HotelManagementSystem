@@ -21,5 +21,5 @@ public partial class Room
 
     public virtual RoomType RoomType { get; set; } = null!;
 
-    public virtual StayRecord? StayRecord { get; set; }
+    public virtual ICollection<StayRecord> StayRecords { get; set; } = new List<StayRecord>();
 }

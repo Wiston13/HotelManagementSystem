@@ -240,8 +240,8 @@ public partial class HotelManagementContext : DbContext
                 .HasForeignKey(d => d.CheckedOutByEmployeeNumber)
                 .HasConstraintName("FK_StayRecords_CheckedOutByEmployee");
 
-            entity.HasOne(d => d.Room).WithOne(p => p.StayRecord)
-                .HasForeignKey<StayRecord>(d => d.RoomId)
+            entity.HasOne(d => d.Room).WithMany(p => p.StayRecords)
+                .HasForeignKey(d => d.RoomId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_StayRecords_Rooms");
         });
