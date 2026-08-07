@@ -1,0 +1,202 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+
+@*
+    飯店管理系統 - 模擬付款頁面原型
+    已完全修正所有標籤閉合與跑版問題，內嵌姓名防呆與卡號自動空格功能
+*@
+
+<div class="container py-4">
+    <!-- 三、頁面標題與副標題 -->
+    <h1 class="h3 fw-bold mb-2">信用卡付款</h1>
+    
+
+    <!-- 表單開始：使用 ASP.NET Core 標準 Tag Helper 確保標籤完美解析 -->
+    <form id="paymentForm" asp-controller="Booking" asp-action="Success" class="needs-validation" novalidate>
+        <!-- 二、版面欄位使用 Bootstrap Grid (桌面版並排，窄畫面自動上下排列) -->
+        <div class="row g-4">
+
+            <!-- 左側：主要內容 (訂房人資料) -->
+            <div class="col-12 col-lg-8">
+                <!-- 四、內容區塊使用 Bootstrap Card -->
+                <div class="card h-100">
+                    <div class="card-header fw-semibold">
+                        訂房人資料
+                    </div>
+                    <div class="card-body">
+                        <!-- 姓名欄位：限制不可有數字、限50字、即時過濾、獨立紅字 -->
+                        <div class="mb-3">
+                            <label class="form-label">
+                                姓名 <span class="text-danger">*</span>
+                            </label>
+                            <input class="form-control" type="text" id="txtName" required placeholder="例如:王小明"
+                                   pattern="[^\d]*" maxlength="50"
+                                   oninput="this.value = this.value.replace(/\d/g, '')"
+                                   data-error-target="#nameError">
+                            <div id="nameError" class="text-danger small mt-1 d-none">請輸入姓名，且不可包含數字或超過 50 個字。</div>
+                        </div>
+
+                        <!-- 聯絡電話欄位 -->
+                        <div class="mb-3">
+                            <label class="form-label">
+                                聯絡電話 <span class="text-danger">*</span>
+                            </label>
+                            <input class="form-control" type="tel" id="txtPhone" required placeholder="例如:0912-345-678" data-error-target="#phoneError">
+                            <div id="phoneError" class="text-danger small mt-1 d-none">請輸入聯絡電話。</div>
+                        </div>
+
+                        <!-- 電子信箱欄位 -->
+                        <div class="mb-3">
+                            <label class="form-label">
+                                電子信箱 <span class="text-danger">*</span>
+                            </label>
+                            <input class="form-control" type="email" id="txtEmail" required placeholder="例如:name@example.com" data-error-target="#emailError">
+                            <div id="emailError" class="text-danger small mt-1 d-none">請輸入正確的電子信箱格式。</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右側：摘要區 (付款資訊) -->
+            <div class="col-12 col-lg-4">
+                <div class="card h-100 d-flex flex-column justify-content-between">
+                    <div>
+                        <div class="card-header fw-semibold">
+                            付款資訊
+                        </div>
+                        <div class="card-body">
+                            <!-- 卡號欄位：前置圖示、自動4碼補空格、獨立紅字 -->
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    卡號 <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white text-muted">
+                                        <svg xmlns="http://w3.org" width="16" height="16" fill="currentColor" class="bi bi-credit-card-2-back" viewBox="0 0 16 16">
+                                            <path d="M11 5.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5zm-2 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5z" />
+                                            <path d="M2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm13 2v1.5H1V4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1M1 7.5h14V12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1z" />
+                                        </svg>
+                                    </span>
+                                    <input class="form-control" type="text" id="txtCardNumber" required placeholder="1233 6666 6666 6666" maxlength="19" data-error-target="#cardError">
+                                </div>
+                                <div id="cardError" class="text-danger small mt-1 d-none">此卡號無效</div>
+                            </div>
+
+                            <!-- 到期日與安全碼並排 -->
+                            <div class="row">
+                                <!-- 到期日 -->
+                                <div class="col-6 mb-3">
+                                    <label class="form-label">
+                                        到期日 <span class="text-danger">*</span>
+                                    </label>
+                                    <input class="form-control text-center" type="text" id="txtExpiry" required placeholder="MM/YY" maxlength="5" data-error-target="#expiryError">
+                                    <div id="expiryError" class="text-danger small mt-1 d-none">請輸入到期日。</div>
+                                </div>
+                                <!-- CVC 安全碼 -->
+                                <div class="col-6 mb-3">
+                                    <label class="form-label">
+                                        CVC 安全碼 <span class="text-danger">*</span>
+                                    </label>
+                                    <input class="form-control text-center" type="password" id="txtCvc" required placeholder="336" maxlength="3" data-error-target="#cvcError">
+                                    <div id="cvcError" class="text-danger small mt-1 d-none">請輸入安全碼。</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 應付金額與主要操作按鈕 -->
+                    <div class="card-body border-top mt-auto">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <span class="text-secondary fw-semibold">應付金額</span>
+                            <span class="h4 fw-bold mb-0">NT$ 4,800</span>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+                            模擬付款並送出訂房
+                        </button>
+
+                      
+                       
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </form>
+</div>
+
+<!-- 十、JavaScript 原型互動：卡號格式化、到期日補斜線與獨立紅字控制 -->
+<script>
+    (function() {
+        'use strict'
+        var form = document.getElementById('paymentForm')
+        var cardNumberInput = document.getElementById('txtCardNumber')
+        var expiryInput = document.getElementById('txtExpiry')
+
+        // 1. 信用卡卡號：連續輸入數字時自動 4 碼加空格格式化
+        if (cardNumberInput) {
+            cardNumberInput.addEventListener('input', function(e) {
+                var cursorPosition = e.target.selectionStart;
+                var originalLength = e.target.value.length;
+                var digitsOnly = e.target.value.replace(/\D/g, '');
+                var formattedValue = digitsOnly.replace(/(\d{4})(?=\d)/g, '$1 ');
+
+                e.target.value = formattedValue;
+
+                var newLength = formattedValue.length;
+                cursorPosition = cursorPosition + (newLength - originalLength);
+                e.target.setSelectionRange(cursorPosition, cursorPosition);
+            });
+        }
+
+        // 2. 到期日：自動補斜線格式化 (MM/YY)
+        if (expiryInput) {
+            expiryInput.addEventListener('input', function(e) {
+                var value = e.target.value.replace(/\D/g, '');
+                if (value.length > 2) {
+                    e.target.value = value.substring(0, 2) + '/' + value.substring(2, 4);
+                } else {
+                    e.target.value = value;
+                }
+            });
+        }
+
+        // 3. 整合表單提交與獨立錯誤文字控制
+        form.addEventListener('submit', function(event) {
+            event.preventDefault(); // 攔截預設送出以便展示原型錯誤
+
+            var isValid = true;
+            var inputs = form.querySelectorAll('input[required]');
+
+            inputs.forEach(function(input) {
+                var targetSelector = input.getAttribute('data-error-target');
+                var errorDiv = targetSelector ? document.querySelector(targetSelector) : null;
+
+                // 自訂檢驗標準
+                var isInputValid = input.checkValidity();
+                if (input.id === 'txtCardNumber' && input.value.length < 19) isInputValid = false;
+                if (input.id === 'txtExpiry' && input.value.length < 5) isInputValid = false;
+
+                if (!isInputValid) {
+                    isValid = false;
+                    input.classList.add('is-invalid');
+                    input.classList.remove('is-valid');
+                    if (errorDiv) errorDiv.classList.remove('d-none');
+                } else {
+                    input.classList.remove('is-invalid');
+                    input.classList.add('is-valid');
+                    if (errorDiv) errorDiv.classList.add('d-none');
+                }
+            });
+
+            // 驗證全過才導向成功頁面
+            if (isValid) {
+                form.submit();
+            }
+        }, false)
+    })()
+</script>
+
