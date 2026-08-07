@@ -1,14 +1,14 @@
 ﻿@{
-    string? action = @ViewContext.RouteData.Values["controller"]!.ToString();
+    string? controller = @ViewContext.RouteData.Values["controller"]!.ToString();
     // 到時決定資料夾後action重新判斷
-    if(action=="Home"){
-            Layout = "_ManagerLayout";
-            // Layout = "_BranchLayout";
-    }
-    else if(action=="Manager")
-    {
-            Layout = "_BranchLayout";
+    if(controller=="Home"){
             // Layout = "_ManagerLayout";
+            Layout = "_BranchLayout";
+    }
+    else if (controller == "Manager")
+    {
+            // Layout = "_BranchLayout";
+            Layout = "_ManagerLayout";
     }
     else
     {

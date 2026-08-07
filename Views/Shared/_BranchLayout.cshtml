@@ -1,6 +1,7 @@
 ﻿@{
     var pageTitle = ViewData["Title"] as string;
     var branchName = ViewData["BranchName"] as string;
+    var staffName = ViewData["StaffName"] as string;
 
     var currentAction = ViewContext.RouteData.Values["action"]!.ToString();
     var BranchController = ViewContext.RouteData.Values["controller"]!.ToString();
@@ -9,13 +10,8 @@
     //暫時 之後帶資料
     branchName = "台北館";
 
-    // var currentController =
-    //     ViewContext.RouteData.Values["controller"]?.ToString();
-
-    // var currentAction =
-    //     ViewContext.RouteData.Values["action"]?.ToString();
-
     // 判斷目前頁面用來設定側邊欄 active 狀態
+    // 到時候主頁面名稱決定再修改下方名詞
 
     var isIndex =  currentAction == "Index";
     var isLookup = currentAction == "Lookup";
@@ -23,13 +19,12 @@
     var isCheckOut = currentAction == "CheckOut";
     var isUnchecked = currentAction == "Unchecked";
     var isRooms = currentAction == "Rooms";
-    // 所選
-    string Check(bool checkAction)
+    // 自動判斷所在頁面亮起
+        string Check(bool checkAction)
     {
         return checkAction ? "active bg-primary-subtle text-dark" : "text-dark";
     }
     
-    // ...可依此類推對應你的 Controller 與 Action
 }
 
 <!DOCTYPE html>
@@ -58,7 +53,7 @@
             <nav class="col-md-3 col-lg-2 d-md-block bg-white border-end collapse p-3" id="adminSidebar">
                 <div class="position-sticky pt-3">
                     <h5 class="sidebar-heading px-3 mb-3 text-primary fw-bold">
-                        OO旅館管理系統
+                        @branchName 旅館管理系統
                     </h5>
 
                     <ul class="nav flex-column gap-1">
@@ -112,7 +107,7 @@
                 <div class="d-flex justify-content-between align-items-center pb-3 mb-4 border-bottom">
                     <h2 class="h4 mb-0 fw-bold">@pageTitle</h2>
                     <div class="text-secondary small">
-                        <i class="bi bi-person-circle me-1"></i> @branchName・櫃檯人員
+                        <i class="bi bi-person-circle me-1"></i> @branchName・櫃檯人員・@staffName
                     </div>
                 </div>
 

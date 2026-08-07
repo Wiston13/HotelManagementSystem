@@ -14,13 +14,14 @@
 
     // 判斷目前頁面用來設定側邊欄 active 狀態
 
-    var isIndex =  currentAction == "Index";
-    var isLookup = currentAction == "Lookup";
-    var isCheckIn = currentAction == "CheckIn";
-    var isCheckOut = currentAction == "CheckOut";
-    var isUnchecked = currentAction == "Unchecked";
+    // 到時候主頁面名稱決定再修改下方名詞
+    var isAccount = currentAction == "Account";
+    var isBranch = currentAction == "Branch";
+    var isPrice = currentAction == "Price";
     var isRooms = currentAction == "Rooms";
-    // 所選
+    var isOutput = currentAction == "Output";
+    var isLog = currentAction == "Log";
+    // 自動判斷所在頁面亮起
     string Check(bool checkAction)
     {
         return checkAction ? "active bg-primary-subtle text-dark" : "text-dark";
@@ -60,31 +61,36 @@
 
                     <ul class="nav flex-column gap-1">
                         <li class="nav-item">
-							<!---->
-                            <a class="nav-link rounded @(Check(isIndex))"
-                               asp-controller="@BranchController" asp-action="Index">
+                            <!--加入頁面後 true要修改為isAccount 看到時候實際主頁是index 還是Account -->
+                            <a class="nav-link rounded @(Check(true))"
+                               asp-controller="@BranchController" asp-action="Account">
                                 <i class="bi bi-person-circle me-2"></i>帳號管理
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link rounded @(Check(isLookup))"
-                               asp-controller="@BranchController" asp-action="Lookup">
+                            <a class="nav-link rounded @(Check(isBranch))"
+                               asp-controller="@BranchController" asp-action="Branch">
                                 <i class="bi bi-house-door me-2"></i>分館管理
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link rounded @(Check(isCheckIn))" asp-controller="@BranchController" asp-action="CheckIn">
+                            <a class="nav-link rounded @(Check(isPrice))" asp-controller="@BranchController" asp-action="Price">
                                 <i class="bi bi-cash-coin me-2"></i>房型與價格
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link rounded @(Check(isCheckOut))" asp-controller="@BranchController" asp-action="CheckOut">
+                            <a class="nav-link rounded @(Check(isRooms))" asp-controller="@BranchController" asp-action="Rooms">
                                 <i class="bi bi-house-gear me-2"></i>房間管理
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link rounded @(Check(isUnchecked) )" asp-controller="@BranchController" asp-action="Unchecked">
-                                <i class="bi bi-search me-2"></i>跨館查詢
+                            <a class="nav-link rounded @(Check(isOutput))" asp-controller="@BranchController" asp-action="Output">
+                                <i class="bi bi-file-earmark-arrow-down me-2"></i>資料輸出
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link rounded @(Check(isLog))" asp-controller="@BranchController" asp-action="Log">
+                                <i class="bi bi-pencil me-2"></i>操作紀錄
                             </a>
                         </li>
                         <hr class="my-2">
