@@ -1,0 +1,61 @@
+/* Check-in page */
+.check-in-page {
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding-bottom: 2rem;
+}
+
+.check-in-search,
+.check-in-panel {
+    border-radius: 0.9rem;
+}
+
+.check-in-search {
+    max-width: 960px;
+}
+
+.check-in-divider {
+    margin: 2.5rem 0;
+    border-color: var(--bs-border-color);
+    opacity: 1;
+}
+
+.check-in-page .check-in-detail-row {
+    border-bottom: 1px solid var(--bs-border-color-translucent);
+}
+
+.check-in-page .check-in-detail-row:first-child {
+    padding-top: 0;
+}
+
+.check-in-page .check-in-detail-row:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+}
+
+.check-in-page .detail-label {
+    flex: 0 0 6rem;
+}
+
+.check-in-page .detail-value {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 767.98px) {
+    .check-in-divider {
+        margin: 1.75rem 0;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .check-in-search .card-body,
+    .check-in-panel .card-body {
+        padding: 1.25rem;
+    }
+
+    .check-in-page .detail-label {
+        flex-basis: 4.5rem;
+    }
+}
