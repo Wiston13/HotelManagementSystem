@@ -8,5 +8,9 @@ namespace HotelManagementSystem.Controllers
         {
             return View();
         }
+        public IActionResult CheckOut()
+        {
+            return View();
+        }
     }
 }
