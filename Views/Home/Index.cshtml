@@ -1,4 +1,8 @@
 ﻿@{
+    Layout = "_CustomerLayout";
+}
+
+@{
     ViewData["Title"] = "Home Page";
 }
 
@@ -210,8 +214,8 @@
 
                     <!-- 選擇日期 (佔 4 份) -->
                     <div class="col-md-4">
-                        <label class="form-label text-muted small">入住日期</label>
-                        <input type="text" id="dateTime" class="form-control" value="" placeholder="選擇入住日期"
+                        <label class="form-label text-muted small">入住日期－退房日期</label>
+                        <input type="text" id="dateTime" class="form-control" value="" placeholder="選擇入住與退房日期"
                                style="">
                     </div>
 
@@ -219,9 +223,9 @@
                     
                     <!-- 人數 (佔 2 份) -->
                     <div class="col-md-2">
-                        <label class="form-label text-muted small">入住人數(房型)</label>
+                        <label class="form-label text-muted small">房型人數</label>
                         <select class="form-select" id="RoomSelect">
-                            <option value="" disabled selected hidden>選擇房型</option>
+                            <option value="" disabled selected hidden>選擇房型人數</option>
                             <option value="" disabled >請先選擇分館</option>
                             
                         </select>
@@ -365,7 +369,7 @@
         let selectedHotel = this.value;
         if (!selectedHotel) return;
 
-        RoomSelect.innerHTML = '<option value="" disabled selected hidden>選擇房型</option>';
+        RoomSelect.innerHTML = '<option value="" disabled selected hidden>選擇房型人數</option>';
         
         let roomArray = Array.from(validRoom);
         
