@@ -1,5 +1,316 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
 @{
+    ViewData["Title"] = "本館工作首頁";
 }
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/employee-home/Index.css" asp-append-version="true" />
+}
+
+<div class="employee-home-page">
+    <section aria-label="今日工作摘要">
+        <div class="row g-3 g-lg-4">
+            <div class="col-6 col-xl-3">
+                <article class="dashboard-stat card h-100 border-0 shadow-sm">
+                    <div class="card-body p-3 p-md-4">
+                        <p class="dashboard-stat__value mb-1">8</p>
+                        <p class="dashboard-stat__label text-secondary mb-0">今日待入住</p>
+                    </div>
+                </article>
+            </div>
+            <div class="col-6 col-xl-3">
+                <article class="dashboard-stat card h-100 border-0 shadow-sm">
+                    <div class="card-body p-3 p-md-4">
+                        <p class="dashboard-stat__value mb-1">6</p>
+                        <p class="dashboard-stat__label text-secondary mb-0">目前入住中</p>
+                    </div>
+                </article>
+            </div>
+            <div class="col-6 col-xl-3">
+                <article class="dashboard-stat card h-100 border-0 shadow-sm">
+                    <div class="card-body p-3 p-md-4">
+                        <p class="dashboard-stat__value mb-1">5</p>
+                        <p class="dashboard-stat__label text-secondary mb-0">今日待退房</p>
+                    </div>
+                </article>
+            </div>
+            <div class="col-6 col-xl-3">
+                <article class="dashboard-stat card h-100 border-0 shadow-sm">
+                    <div class="card-body p-3 p-md-4">
+                        <p class="dashboard-stat__value mb-1">3</p>
+                        <p class="dashboard-stat__label text-secondary mb-0">待清潔房間</p>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section class="employee-home-tasks mt-4 mt-md-5" aria-labelledby="work-list-title">
+        <h2 id="work-list-title" class="visually-hidden">工作清單</h2>
+
+        <ul class="nav nav-tabs employee-home-tabs" id="employeeHomeTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button id="today-tasks-tab"
+                        class="nav-link active"
+                        type="button"
+                        role="tab"
+                        data-bs-toggle="tab"
+                        data-bs-target="#today-tasks-pane"
+                        aria-controls="today-tasks-pane"
+                        aria-selected="true">
+                    今日待辦
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button id="today-check-ins-tab"
+                        class="nav-link"
+                        type="button"
+                        role="tab"
+                        data-bs-toggle="tab"
+                        data-bs-target="#today-check-ins-pane"
+                        aria-controls="today-check-ins-pane"
+                        aria-selected="false">
+                    今日待入住
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button id="today-check-outs-tab"
+                        class="nav-link"
+                        type="button"
+                        role="tab"
+                        data-bs-toggle="tab"
+                        data-bs-target="#today-check-outs-pane"
+                        aria-controls="today-check-outs-pane"
+                        aria-selected="false">
+                    今日待退房
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button id="active-stays-tab"
+                        class="nav-link"
+                        type="button"
+                        role="tab"
+                        data-bs-toggle="tab"
+                        data-bs-target="#active-stays-pane"
+                        aria-controls="active-stays-pane"
+                        aria-selected="false">
+                    目前已入住
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button id="rooms-to-clean-tab"
+                        class="nav-link"
+                        type="button"
+                        role="tab"
+                        data-bs-toggle="tab"
+                        data-bs-target="#rooms-to-clean-pane"
+                        aria-controls="rooms-to-clean-pane"
+                        aria-selected="false">
+                    待清潔房間
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content employee-home-task-list border border-top-0 bg-white shadow-sm" id="employeeHomeTabContent">
+            <div id="today-tasks-pane" class="tab-pane fade show active" role="tabpanel" aria-labelledby="today-tasks-tab" tabindex="0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 employee-home-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">項目</th>
+                                <th scope="col">顧客／房型</th>
+                                <th scope="col">狀態</th>
+                                <th scope="col" class="text-end">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="item-code">BK…018</td>
+                                <td>王小明</td>
+                                <td><span class="badge text-bg-warning">待入住</span></td>
+                                <td class="text-end"><button type="button" class="btn btn-outline-primary btn-sm fw-semibold">辦理入住</button></td>
+                            </tr>
+                            <tr>
+                                <td class="item-code">BK…024</td>
+                                <td>陳怡君</td>
+                                <td><span class="badge text-bg-warning">待入住</span></td>
+                                <td class="text-end"><button type="button" class="btn btn-outline-primary btn-sm fw-semibold">辦理入住</button></td>
+                            </tr>
+                            <tr>
+                                <td class="item-code">ST…011</td>
+                                <td>林志豪</td>
+                                <td><span class="badge text-bg-info">待退房</span></td>
+                                <td class="text-end"><button type="button" class="btn btn-outline-primary btn-sm fw-semibold">辦理退房</button></td>
+                            </tr>
+                            <tr>
+                                <td class="item-code">302</td>
+                                <td>標準雙人房</td>
+                                <td><span class="badge text-bg-secondary">待清潔</span></td>
+                                <td class="text-end"><button type="button" class="btn btn-outline-primary btn-sm fw-semibold">處理房況</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="today-check-ins-pane" class="tab-pane fade" role="tabpanel" aria-labelledby="today-check-ins-tab" tabindex="0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 employee-home-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">訂單編號</th>
+                                <th scope="col">顧客</th>
+                                <th scope="col">房型</th>
+                                <th scope="col">入住日期</th>
+                                <th scope="col">狀態</th>
+                                <th scope="col" class="text-end">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="item-code">BK…018</td>
+                                <td>王小明</td>
+                                <td>標準雙人房</td>
+                                <td>08/10</td>
+                                <td><span class="badge text-bg-warning">待入住</span></td>
+                                <td class="text-end"><button type="button" class="btn btn-outline-primary btn-sm fw-semibold">辦理入住</button></td>
+                            </tr>
+                            <tr>
+                                <td class="item-code">BK…024</td>
+                                <td>陳怡君</td>
+                                <td>豪華雙人房</td>
+                                <td>08/10</td>
+                                <td><span class="badge text-bg-warning">待入住</span></td>
+                                <td class="text-end"><button type="button" class="btn btn-outline-primary btn-sm fw-semibold">辦理入住</button></td>
+                            </tr>
+                            <tr>
+                                <td class="item-code">BK…031</td>
+                                <td>張雅婷</td>
+                                <td>家庭四人房</td>
+                                <td>08/10</td>
+                                <td><span class="badge text-bg-warning">待入住</span></td>
+                                <td class="text-end"><button type="button" class="btn btn-outline-primary btn-sm fw-semibold">辦理入住</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="today-check-outs-pane" class="tab-pane fade" role="tabpanel" aria-labelledby="today-check-outs-tab" tabindex="0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 employee-home-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">訂單編號</th>
+                                <th scope="col">房號</th>
+                                <th scope="col">顧客</th>
+                                <th scope="col">退房日期</th>
+                                <th scope="col">狀態</th>
+                                <th scope="col" class="text-end">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="item-code">ST…011</td>
+                                <td>501</td>
+                                <td>林志豪</td>
+                                <td>08/10</td>
+                                <td><span class="badge text-bg-info">待退房</span></td>
+                                <td class="text-end"><button type="button" class="btn btn-outline-primary btn-sm fw-semibold">辦理退房</button></td>
+                            </tr>
+                            <tr>
+                                <td class="item-code">ST…016</td>
+                                <td>603</td>
+                                <td>劉品妤</td>
+                                <td>08/10</td>
+                                <td><span class="badge text-bg-info">待退房</span></td>
+                                <td class="text-end"><button type="button" class="btn btn-outline-primary btn-sm fw-semibold">辦理退房</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="active-stays-pane" class="tab-pane fade" role="tabpanel" aria-labelledby="active-stays-tab" tabindex="0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 employee-home-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">訂單編號</th>
+                                <th scope="col">房號</th>
+                                <th scope="col">顧客</th>
+                                <th scope="col">入住日</th>
+                                <th scope="col">預計退房日</th>
+                                <th scope="col">狀態</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="item-code">ST…011</td>
+                                <td>501</td>
+                                <td>林志豪</td>
+                                <td>08/08</td>
+                                <td>08/10</td>
+                                <td><span class="badge text-bg-primary">入住中</span></td>
+                            </tr>
+                            <tr>
+                                <td class="item-code">ST…016</td>
+                                <td>603</td>
+                                <td>劉品妤</td>
+                                <td>08/07</td>
+                                <td>08/10</td>
+                                <td><span class="badge text-bg-primary">入住中</span></td>
+                            </tr>
+                            <tr>
+                                <td class="item-code">ST…021</td>
+                                <td>302</td>
+                                <td>黃冠宇</td>
+                                <td>08/09</td>
+                                <td>08/12</td>
+                                <td><span class="badge text-bg-primary">入住中</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="rooms-to-clean-pane" class="tab-pane fade" role="tabpanel" aria-labelledby="rooms-to-clean-tab" tabindex="0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 employee-home-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">房號</th>
+                                <th scope="col">房型</th>
+                                <th scope="col">樓層</th>
+                                <th scope="col">清潔狀態</th>
+                                <th scope="col" class="text-end">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="item-code">302</td>
+                                <td>標準雙人房</td>
+                                <td>3 樓</td>
+                                <td><span class="badge text-bg-secondary">待清潔</span></td>
+                                <td class="text-end"><button type="button" class="btn btn-outline-primary btn-sm fw-semibold">處理房況</button></td>
+                            </tr>
+                            <tr>
+                                <td class="item-code">407</td>
+                                <td>豪華雙人房</td>
+                                <td>4 樓</td>
+                                <td><span class="badge text-bg-secondary">待清潔</span></td>
+                                <td class="text-end"><button type="button" class="btn btn-outline-primary btn-sm fw-semibold">處理房況</button></td>
+                            </tr>
+                            <tr>
+                                <td class="item-code">605</td>
+                                <td>家庭四人房</td>
+                                <td>6 樓</td>
+                                <td><span class="badge text-bg-secondary">待清潔</span></td>
+                                <td class="text-end"><button type="button" class="btn btn-outline-primary btn-sm fw-semibold">處理房況</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
