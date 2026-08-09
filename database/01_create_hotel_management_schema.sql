@@ -352,7 +352,7 @@ GO
    歷史已退房紀錄不受此限制。
 */
 CREATE UNIQUE INDEX [UX_StayRecords_ActiveRoom]
-ON [dbo].[StayRecords] ([RoomId])
+ON [dbo].[StayRecords] ([RoomId], [ActualCheckOutAt])
 WHERE [ActualCheckOutAt] IS NULL;
 GO
 
