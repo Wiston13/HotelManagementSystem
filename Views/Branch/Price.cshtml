@@ -1,0 +1,107 @@
+﻿@{
+    ViewData["Title"] = "房型與固定價格管理"; 
+    Layout = "~/Views/Shared/_ManagerLayout.cshtml";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h3 class="fw-bold mb-1">房型及固定價格管理</h3>
+        <p class="text-muted small mb-0">依分館查詢與維護房型資料，採用啟停狀態管理。</p>
+    </div>
+    <button class="btn btn-primary px-4" data-bs-toggle="modal" data-bs-target="#roomTypeModal">新增房型</button>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-3">
+        <label class="form-label fw-bold small">選擇分館</label>
+        <select class="form-select">
+            <option selected>台北館</option>
+            <option>高雄館</option>
+        </select>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-4">房型名稱</th>
+                    <th>可住人數</th>
+                    <th>床型 (手動輸入)</th>
+                    <th>固定價格</th>
+                    <th>啟停狀態</th>
+                    <th class="text-end pe-4">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="ps-4 fw-bold">標準雙人房</td>
+                    <td>2 人</td>
+                    <td>一大床</td>
+                    <td>NT$ 2,800</td>
+                    <td><span class="badge bg-success">啟用</span></td>
+                    <td class="text-end pe-4">
+                        <button class="btn btn-link text-primary p-0 text-decoration-none" data-bs-toggle="modal" data-bs-target="#roomTypeModal">編輯</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="ps-4 fw-bold">三床豪華房</td>
+                    <td>3 人</td>
+                    <td>一大床 + 一小床</td>
+                    <td>NT$ 3,800</td>
+                    <td><span class="badge bg-secondary">停用</span></td>
+                    <td class="text-end pe-4">
+                        <button class="btn btn-link text-primary p-0 text-decoration-none" data-bs-toggle="modal" data-bs-target="#roomTypeModal">編輯</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal：房型編輯/新增 -->
+<div class="modal fade" id="roomTypeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">房型與固定價格維護</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">房型名稱 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" value="標準雙人房">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">可住人數 <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" value="2" min="1">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">床型說明 (手動輸入) <span class="text-danger">*</span></label>
+                            <!-- 依規則：床型由管理員手動輸入文字，不使用下拉選單 -->
+                            <input type="text" class="form-control" placeholder="例如：一大床 / 兩單人床" value="一大床">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">固定價格 <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" value="2800">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">啟停狀態 <span class="text-danger">*</span></label>
+                            <select class="form-select">
+                                <option value="true" selected>啟用</option>
+                                <option value="false">停用</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer justify-content-center border-0 pb-4">
+                <button type="button" class="btn btn-outline-secondary px-4 me-2" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary px-4">儲存變更</button>
+            </div>
+        </div>
+    </div>
+</div>

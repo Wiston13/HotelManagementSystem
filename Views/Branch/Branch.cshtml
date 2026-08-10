@@ -1,0 +1,93 @@
+﻿@{
+    ViewData["Title"] = "分館管理";
+    Layout = "~/Views/Shared/_ManagerLayout.cshtml";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h3 class="fw-bold mb-1">分館管理</h3>
+        <p class="text-muted small mb-0">管理員可查詢、新增及修改分館必要資料（設定接受或停止新訂房）</p>
+    </div>
+    <button class="btn btn-primary px-4" data-bs-toggle="modal" data-bs-target="#branchModal">新增分館</button>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-4">分館名稱</th>
+                    <th>地址</th>
+                    <th>聯絡電話</th>
+                    <th>接受新訂房</th>
+                    <th class="text-end pe-4">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="fw-bold ps-4">台北館</td>
+                    <td>台北市中正區...</td>
+                    <td>02-2345-6789</td>
+                    <td><span class="badge bg-success">接受</span></td>
+                    <td class="text-end pe-4">
+                        <button class="btn btn-link text-primary p-0 text-decoration-none" data-bs-toggle="modal" data-bs-target="#branchModal">編輯</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="fw-bold ps-4">高雄館</td>
+                    <td>高雄市前金區...</td>
+                    <td>07-2123-4567</td>
+                    <td><span class="badge bg-secondary">停止</span></td>
+                    <td class="text-end pe-4">
+                        <button class="btn btn-link text-primary p-0 text-decoration-none" data-bs-toggle="modal" data-bs-target="#branchModal">編輯</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal：分館編輯/新增 (已移除營運狀態欄位) -->
+<div class="modal fade" id="branchModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">分館資料維護</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">分館名稱 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" value="台北館">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">聯絡電話 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" value="02-2345-6789">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">分館地址 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" value="台北市中正區...">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">樓層 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" value="1-5F">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">新訂房設定 <span class="text-danger">*</span></label>
+                            <select class="form-select">
+                                <option value="true" selected>接受新訂房</option>
+                                <option value="false">停止新訂房</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer justify-content-center border-0 pb-4">
+                <button type="button" class="btn btn-outline-secondary px-4 me-2" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary px-4">儲存變更</button>
+            </div>
+        </div>
+    </div>
+</div>

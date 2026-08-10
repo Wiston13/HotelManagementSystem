@@ -1,0 +1,107 @@
+﻿@{
+    ViewData["Title"] = "房間管理";
+    Layout = "~/Views/Shared/_ManagerLayout.cshtml";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h3 class="fw-bold mb-1">房間管理</h3>
+        <p class="text-muted small mb-0">維護房間結構與供應狀態。系統不提供直接刪除入口以保留歷史紀錄。</p>
+    </div>
+    <button class="btn btn-primary px-4" data-bs-toggle="modal" data-bs-target="#roomModal">新增房間</button>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-3">
+        <label class="form-label fw-bold small">選擇分館</label>
+        <select class="form-select">
+            <option selected>台北館</option>
+            <option>高雄館</option>
+        </select>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-4">房號</th>
+                    <th>樓層</th>
+                    <th>所屬房型</th>
+                    <th>供應狀態</th>
+                    <th class="text-end pe-4">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="ps-4 fw-bold">301</td>
+                    <td>3F</td>
+                    <td>標準雙人房</td>
+                    <td><span class="badge bg-success">開放販售</span></td>
+                    <td class="text-end pe-4">
+                        <button class="btn btn-link text-primary p-0 text-decoration-none" data-bs-toggle="modal" data-bs-target="#roomModal">編輯</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="ps-4 fw-bold">305</td>
+                    <td>3F</td>
+                    <td>精緻雙床房</td>
+                    <td><span class="badge bg-secondary">停用</span></td>
+                    <td class="text-end pe-4">
+                        <button class="btn btn-link text-primary p-0 text-decoration-none" data-bs-toggle="modal" data-bs-target="#roomModal">編輯</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal：房間編輯/新增 -->
+<div class="modal fade" id="roomModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">房間資料維護</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">所屬分館</label>
+                        <input type="text" class="form-control bg-light" value="台北館" readonly>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">房號 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" value="305">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">樓層 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" value="3F">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">所屬房型 <span class="text-danger">*</span></label>
+                        <select class="form-select">
+                            <option selected>精緻雙床房</option>
+                            <option>標準雙人房</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">供應狀態 <span class="text-danger">*</span></label>
+                        <select class="form-select">
+                            <option selected>開放販售</option>
+                            <option>停用</option>
+                            <option>維護中</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer justify-content-center border-0 pb-4">
+                <button type="button" class="btn btn-outline-secondary px-4 me-2" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary px-4">儲存變更</button>
+            </div>
+        </div>
+    </div>
+</div>
