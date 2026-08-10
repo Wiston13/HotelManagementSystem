@@ -1,0 +1,121 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+    ViewData["Title"] = "訂房成功";
+}
+
+<div class="booking-success card border-0 shadow-sm mx-auto my-4 my-md-5 p-4 p-md-5 text-center">
+
+    <div class="success-icon mx-auto mb-3" aria-hidden="true">
+    </div>
+
+    <h2 class="h3 fw-bold mb-2">訂房成功</h2>
+
+    <p class="success-description text-secondary mb-4">
+        請保存訂單編號與聯絡電話，以便後續查詢
+    </p>
+
+    <div class="order-number rounded-3 fw-bold fs-5 py-3 px-2 mb-3">
+        訂單編號：BK20260813018
+    </div>
+    
+    <div class="booking-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
+        <p class="detail-label text-secondary mb-0">分館</p>
+        @* class裡的branch得等待後續課程決定要不要拔 *@
+        <p class="detail-value branch fw-semibold text-end mb-0">台北館</p>
+    </div>
+
+    <div class="booking-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
+        <p class="detail-label text-secondary mb-0">房型</p>
+        <p class="detail-value room-type fw-semibold text-end mb-0">標準雙人房</p>
+    </div>
+
+    <div class="booking-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
+        <p class="detail-label text-secondary mb-0">入住期間</p>
+        <p class="detail-value during-the-stay fw-semibold text-end mb-0">
+            2026/08/10 至 2026/08/12
+        </p>
+    </div>
+
+    <div class="booking-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
+        <p class="detail-label text-secondary mb-0">確認信</p>
+        <p class="detail-value email fw-semibold text-end mb-0">
+            已寄送至 name@example.com
+        </p>
+    </div>
+
+    <p class="cancel-notice text-secondary text-center mt-3 mb-0">
+        如有取消訂單需求，請於入住前一天 23：59 前，電話連絡訂房分館處理。
+    </p>
+
+    <a asp-controller="Booking"
+       asp-action="Lookup"
+       class="order-check btn btn-primary btn-lg fw-semibold w-100 mt-4">
+        查看訂單
+    </a>
+
+</div>
+
+@section Styles {
+    <style>
+        .booking-success {
+            width: calc(100% - 2rem);
+            max-width: 720px;
+            border-radius: 1rem;
+        }
+
+        .booking-success .success-icon {
+            display: grid;
+            width: 4rem;
+            height: 4rem;
+            place-items: center;
+            color: #2f765e;
+            background-color: #edf7f2;
+            border: 3px solid currentColor;
+            border-radius: 50%;
+        }
+
+        .booking-success .success-icon::before {
+            content: "\2713";
+            font-size: 2.25rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .booking-success .order-number {
+            color: #2874a6;
+            background-color: #e7f1f8;
+        }
+
+        .booking-success .booking-detail-row {
+            border-bottom: 1px solid var(--bs-border-color);
+        }
+
+        .booking-success .detail-label {
+            flex: 0 0 6rem;
+        }
+
+        .booking-success .detail-value {
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+
+        .booking-success .order-check {
+            --bs-btn-bg: #2879ae;
+            --bs-btn-border-color: #2879ae;
+            --bs-btn-hover-bg: #226a98;
+            --bs-btn-hover-border-color: #226a98;
+        }
+
+        @@media (max-width: 575.98px) {
+            .booking-success {
+                width: calc(100% - 1.5rem);
+            }
+
+            .booking-success .detail-label {
+                flex-basis: 4.5rem;
+            }
+        }
+    </style>    
+}
