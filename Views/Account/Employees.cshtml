@@ -1,0 +1,245 @@
+﻿@* 
+    頁面名稱：員工帳號管理 - 徹底修正大括號錯誤版 (Employees.cshtml)
+    遵守規範：顧客端前端最低規則 v0.1
+*@
+
+@{
+    // 改用絕對路徑指定，強迫系統去 Views/Shared 找公版
+    Layout = "~/Views/Shared/_ManagerLayout.cshtml";
+    ViewData["Title"] = "帳號管理";
+}
+
+<!-- 二、主要內容統一從 container py-4 開始 -->
+<div class="container py-4">
+    
+    <!-- 三、頁面標題 -->
+    <h1 class="h3 fw-bold mb-2">帳號管理</h1>
+    <p class="text-secondary mb-4">管理系統員工帳號、權限設定與啟用狀態。</p>
+
+    <!-- 八、頁面寬度與響應式 -->
+    <div class="row g-4">
+        <div class="col-12">
+            <!-- 四、內容區塊 -->
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center fw-semibold">
+                    <span>員工名單</span>
+                    <!-- 五、按鈕：主要操作 -->
+                    <button type="button" id="btnCreateNew" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#employeeModal">
+                        + 新增員工
+                    </button>
+                </div>
+                <div class="card-body">
+                    <!-- 九、表格與狀態：表格統一 -->
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>員工姓名</th>
+                                <th>員工帳號</th>
+                                <th>分館編號</th>
+                                <th>權限</th>
+                                <th>啟用狀態</th>
+                                <th class="text-end">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- 使用 data-* 屬性安全傳遞資料，徹底避開 HTML 行內的大括號與引號解析問題 -->
+                            <tr>
+                                <td>系統管理員</td>
+                                <td>0000000001</td>
+                                <td>A01</td>
+                                <td><span class="badge text-bg-secondary">0 總公司</span></td>
+                                <td><span class="badge text-bg-success">啟用</span></td>
+                                <td class="text-end">
+                                    <button class="btn btn-outline-primary btn-sm btn-edit" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#employeeModal"
+                                            data-name="系統管理員" 
+                                            data-account="0000000001" 
+                                            data-branch="A01" 
+                                            data-role="0" 
+                                            data-status="1">編輯</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>張小明</td>
+                                <td>1029384756</td>
+                                <td>B05</td>
+                                <td><span class="badge text-bg-secondary">1 員工</span></td>
+                                <td><span class="badge text-bg-success">啟用</span></td>
+                                <td class="text-end">
+                                    <button class="btn btn-outline-primary btn-sm btn-edit" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#employeeModal"
+                                            data-name="張小明" 
+                                            data-account="1029384756" 
+                                            data-branch="B05" 
+                                            data-role="1" 
+                                            data-status="1">編輯</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>王大同</td>
+                                <td>5647382910</td>
+                                <td>C02</td>
+                                <td><span class="badge text-bg-secondary">1 員工</span></td>
+                                <td><span class="badge text-bg-danger">停用</span></td>
+                                <td class="text-end">
+                                    <button class="btn btn-outline-primary btn-sm btn-edit" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#employeeModal"
+                                            data-name="王大同" 
+                                            data-account="5647382910" 
+                                            data-branch="C02" 
+                                            data-role="1" 
+                                            data-status="0">編輯</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap 內建彈跳視窗元件 -->
+<div class="modal fade" id="employeeModal" tabindex="-1" aria-labelledby="employeeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-semibold" id="employeeModalLabel">新增員工資料</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="employeeForm" method="post" novalidate>
+                    
+                    <!-- 六、表單：員工姓名 -->
+                    <div class="mb-3">
+                        <label class="form-label" for="employeeName">
+                            員工姓名 <span class="text-danger">*</span>
+                        </label>
+                        <input class="form-control" type="text" id="employeeName" required placeholder="請輸入姓名">
+                        <div class="invalid-feedback">請輸入員工姓名。</div>
+                    </div>
+
+                    <!-- 六、表單：員工帳號 -->
+                    <div class="mb-3">
+                        <label class="form-label" for="employeeAccount">
+                            員工帳號 (10位數字) <span class="text-danger">*</span>
+                        </label>
+                        <input class="form-control" type="text" id="employeeAccount" required pattern="\d{10}" maxlength="10" placeholder="例如：1029384756">
+                        <div class="invalid-feedback">請輸入10位數字的員工帳號。</div>
+                    </div>
+
+                    <!-- 六、表單：密碼 -->
+                    <div class="mb-3">
+                        <label class="form-label" for="employeePassword">
+                            密碼 <span class="text-danger">*</span>
+                        </label>
+                        <input class="form-control" type="password" id="employeePassword" required placeholder="請輸入密碼">
+                        <div class="invalid-feedback">請輸入密碼（系統將自動進行安全雜湊加密）。</div>
+                    </div>
+
+                    <!-- 六、表單：分館編號 -->
+                    <div class="mb-3">
+                        <label class="form-label" for="branchId">
+                            分館編號 <span class="text-danger">*</span>
+                        </label>
+                        <input class="form-control" type="text" id="branchId" required placeholder="例如：A01">
+                        <div class="invalid-feedback">請輸入分館編號。</div>
+                    </div>
+
+                    <!-- 六、表單：權限 -->
+                    <div class="mb-3">
+                        <label class="form-label" for="permissionRole">
+                            權限設定 <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="permissionRole" required>
+                            <option value="" selected disabled>請選擇權限</option>
+                            <option value="0">0 總公司</option>
+                            <option value="1">1 員工</option>
+                        </select>
+                        <div class="invalid-feedback">請選擇帳號權限。</div>
+                    </div>
+
+                    <!-- 六、表單：啟用狀態 -->
+                    <div class="mb-4">
+                        <label class="form-label" for="accountStatus">
+                            啟用狀態 <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="accountStatus" required>
+                            <option value="1" selected>啟用</option>
+                            <option value="0">停用</option>
+                        </select>
+                        <div class="invalid-feedback">請選擇啟用狀態。</div>
+                    </div>
+
+                    <!-- 五、按鈕：主要操作與次要操作 -->
+                    <div class="row g-2 pt-2 border-top">
+                        <div class="col-6">
+                            <button type="button" class="btn btn-outline-primary w-100" data-bs-dismiss="modal">取消</button>
+                        </div>
+                        <div class="col-6">
+                            <button type="submit" class="btn btn-primary w-100">儲存</button>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // 十、JavaScript 限制：改用標準事件監聽器，絕不混用 C# 程式碼區塊
+
+        // 點擊新增員工按鈕時
+        document.getElementById('btnCreateNew').addEventListener('click', function() {
+            var form = document.getElementById('employeeForm');
+            form.reset();
+            form.classList.remove('was-validated');
+            document.getElementById('employeeModalLabel').innerText = "新增員工資料";
+            document.getElementById('employeeAccount').disabled = false;
+        });
+
+        // 點擊編輯員工按鈕時：改用事件代理機制 (Event Delegation) 讀取 data-* 屬性
+        document.querySelectorAll('.btn-edit').forEach(function(button) {
+            button.addEventListener('click', function() {
+                var form = document.getElementById('employeeForm');
+                form.classList.remove('was-validated');
+                document.getElementById('employeeModalLabel').innerText = "編輯員工資料";
+
+                // 從按鈕的 data-* 屬性安全取值
+                document.getElementById('employeeName').value = this.getAttribute('data-name');
+                document.getElementById('employeeAccount').value = this.getAttribute('data-account');
+                document.getElementById('employeeAccount').disabled = true; // 帳號不開放修改
+                document.getElementById('branchId').value = this.getAttribute('data-branch');
+                document.getElementById('permissionRole').value = this.getAttribute('data-role');
+                document.getElementById('accountStatus').value = this.getAttribute('data-status');
+                document.getElementById('employeePassword').value = "********";
+            });
+        });
+
+        // 表單送出驗證
+        document.getElementById('employeeForm').addEventListener('submit', function(event) {
+            var form = event.target;
+
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            } else {
+                event.preventDefault();
+                alert('表單驗證成功！資料已備妥送出。');
+
+                var modalEl = document.getElementById('employeeModal');
+                var modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                modal.hide();
+            }
+
+            form.classList.add('was-validated');
+        }, false);
+    </script>
+}
+
+            
