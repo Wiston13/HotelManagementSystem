@@ -75,3 +75,30 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="checkInConfirmationModal" tabindex="-1" aria-labelledby="checkInConfirmationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content check-in-confirm-modal border-0 shadow">
+            <div class="modal-header">
+                <h2 class="modal-title h5 fw-bold" id="checkInConfirmationModalLabel">確認入住</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2">請確認入住前作業是否已完成。</p>
+                <p class="mb-0 text-secondary">是否確認指派此房間給旅客辦理入住？</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="confirmCheckInButton" data-bs-dismiss="modal">確定</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelector('.check-in-panel .btn-primary')?.addEventListener('click', function () {
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('checkInConfirmationModal')).show();
+        });
+    </script>
+}
