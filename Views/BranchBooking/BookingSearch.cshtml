@@ -1,19 +1,8 @@
 ﻿@{
     ViewData["Title"] = "本館訂單查詢";
-    Layout = "_BranchLayout";
-    // 假設你未來會從 ViewModel 或 ViewBag 傳入清單資料，這裡先用靜態排版示範
+    Layout = "_BranchLayout";    
 }
-
-@functions {
-    public class BookingData
-    {
-        public string? BookingNum { get; set; }
-        public DateTime BookingDate { get; set; }
-        public string? Name { get; set; }
-        public string? Roomtype { get; set; }
-        public string? BookingStatus { get; set; }
-    }
-}
+@model List<BookingData>
 
 @{
     string BookingStatus(string s)
@@ -24,129 +13,6 @@
         else r = "bg-secondary-subtle text-secondary";
         return r;
     }
-    var BookingData = new List<BookingData>()
-    {
-        new BookingData
-        {
-            BookingNum = "BK20260808001",
-            BookingDate = new DateTime(2026, 8, 8),
-            Name = "王小明",
-            Roomtype = "標準雙人房",
-            BookingStatus = "已退房"
-        },
-        new BookingData
-        {
-            BookingNum = "BK20260808002",
-            BookingDate = new DateTime(2026, 8, 8),
-            Name = "林雅雯",
-            Roomtype = "精緻雙床房",
-            BookingStatus = "已退房"
-        },
-        new BookingData
-        {
-            BookingNum = "BK20260809003",
-            BookingDate = new DateTime(2026, 8, 9),
-            Name = "張家豪",
-            Roomtype = "豪華雙人房",
-            BookingStatus = "已入住"
-        },
-        new BookingData
-        {
-            BookingNum = "BK20260809004",
-            BookingDate = new DateTime(2026, 8, 9),
-            Name = "陳美玲",
-            Roomtype = "標準單人房",
-            BookingStatus = "已入住"
-        },
-        new BookingData
-        {
-            BookingNum = "BK20260810018",
-            BookingDate = new DateTime(2026, 8, 10),
-            Name = "李志豪",
-            Roomtype = "標準雙人房",
-            BookingStatus = "已成立"
-        },
-        new BookingData
-        {
-            BookingNum = "BK20260810019",
-            BookingDate = new DateTime(2026, 8, 10),
-            Name = "黃淑芬",
-            Roomtype = "家庭四人房",
-            BookingStatus = "已成立"
-        },
-        new BookingData
-        {
-            BookingNum = "BK20260810020",
-            BookingDate = new DateTime(2026, 8, 10),
-            Name = "趙建國",
-            Roomtype = "精緻雙床房",
-            BookingStatus = "已取消"
-        },
-        new BookingData
-        {
-            BookingNum = "BK20260811021",
-            BookingDate = new DateTime(2026, 8, 11),
-            Name = "周怡君",
-            Roomtype = "標準雙人房",
-            BookingStatus = "已成立"
-        },
-        new BookingData
-        {
-            BookingNum = "BK20260811022",
-            BookingDate = new DateTime(2026, 8, 11),
-            Name = "吳冠宇",
-            Roomtype = "豪華雙人房",
-            BookingStatus = "逾期未入住"
-        },
-        new BookingData
-        {
-            BookingNum = "BK20260812023",
-            BookingDate = new DateTime(2026, 8, 12),
-            Name = "蔡依婷",
-            Roomtype = "標準單人房",
-            BookingStatus = "已成立"
-        },
-        new BookingData
-        {
-            BookingNum = "BK20260812024",
-            BookingDate = new DateTime(2026, 8, 12),
-            Name = "楊宗翰",
-            Roomtype = "標準雙人房",
-            BookingStatus = "已成立"
-        },
-        new BookingData
-        {
-            BookingNum = "BK20260813025",
-            BookingDate = new DateTime(2026, 8, 13),
-            Name = "許雅婷",
-            Roomtype = "家庭四人房",
-            BookingStatus = "已成立"
-        },
-        new BookingData
-        {
-            BookingNum = "BK20260813026",
-            BookingDate = new DateTime(2026, 8, 13),
-            Name = "鄭文傑",
-            Roomtype = "精緻雙床房",
-            BookingStatus = "已取消"
-        },
-        new BookingData
-        {
-            BookingNum = "BK20260814027",
-            BookingDate = new DateTime(2026, 8, 14),
-            Name = "謝佩如",
-            Roomtype = "標準雙人房",
-            BookingStatus = "已成立"
-        },
-        new BookingData
-        {
-            BookingNum = "BK20260815028",
-            BookingDate = new DateTime(2026, 8, 15),
-            Name = "郭家宏",
-            Roomtype = "豪華雙人房",
-            BookingStatus = "已成立"
-        }
-    };
 
 }
 
@@ -162,7 +28,7 @@
     <!-- 搜尋篩選區塊 (帶有卡片外觀與陰影) -->
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body p-4">
-            <form method="get" class="row g-3 align-items-end">
+            <form method="get" class="row g-3 align-items-end" id="searchForm">
 
                 <!-- 1. 關鍵字 (必填) -->
                 <div class="col-md-4">
@@ -173,6 +39,7 @@
                            class="form-control"
                            id="keyword"
                            name="keyword"
+                           value="@ViewBag.Keyword"
                            placeholder="訂單編號／姓名／電話">
                 </div>
 
@@ -189,6 +56,7 @@
                                class="form-control"
                                id="dateTime"
                                name="dateRange"
+                               value="@ViewBag.dateRange"
                                placeholder="請選擇日期區間">
                     </div>
                 </div>
@@ -198,13 +66,13 @@
                     <label for="orderStatus" class="form-label small fw-bold text-secondary">
                         訂單狀態
                     </label>
-                    <select class="form-select" id="orderStatus" name="orderStatus">
-                        <option value="" selected>全部狀態</option>
-                        <option value="Created">已成立</option>
-                        <option value="CheckIn">已入住</option>
-                        <option value="CheckOut">已退房</option>
-                        <option value="Cancelled">已取消</option>
-                        <option value="Overdue">逾期未入住</option>
+                    <select class="form-select" id="orderStatus" name="bookingStatus">
+                        <option value="" selected="@(string.IsNullOrEmpty(ViewBag.BookingStatus))">全部狀態</option>
+                        <option value="已成立" selected="@(ViewBag.BookingStatus=="已成立")">已成立</option>
+                        <option value="已入住" selected="@(ViewBag.BookingStatus=="已入住")">已入住</option>
+                        <option value="已退房" selected="@(ViewBag.BookingStatus=="已退房")">已退房</option>
+                        <option value="已取消" selected="@(ViewBag.BookingStatus=="已取消")">已取消</option>
+                        <option value="逾期未入住" selected="@(ViewBag.BookingStatus=="逾期未入住")">逾期未入住</option>
                     </select>
                 </div>
 
@@ -222,7 +90,7 @@
     
 
     <!-- 查詢結果列表區塊 -->
-    <div id="resultList" class="card border-0 shadow-sm d-none">
+    <div id="resultList" class="card border-0 shadow-sm @(Model!=null&&Model.Any()?"":"d-none")">
         <div class="card-body p-0">
 
             <div class="table-responsive" style="max-height: 580px; overflow-y: auto; background-color: #f8f9fa;">
@@ -233,22 +101,36 @@
                             <th class="py-3">入住日期</th>
                             <th class="py-3">顧客</th>
                             <th class="py-3">房型</th>
+                            <th class="py-3">電話</th>
                             <th class="py-3">狀態</th>
                             <th class="text-end pe-4 py-3">操作</th>
                         </tr>
                     </thead>
                     <tbody>
                         <!-- 動態生成訂單資料 -->
-                        @foreach (var item in BookingData)
+                        @foreach (var item in Model)
                         {
                             <tr>
                                 <td class="ps-4 fw-semibold text-primary">@item.BookingNum</td>
                                 <td>@item.BookingDate</td>
                                 <td>@item.Name</td>
                                 <td>@item.Roomtype</td>
+                                <td>0987654321</td>
                                 <td><span class="badge @BookingStatus(item.BookingStatus) px-2 py-1">@item.BookingStatus</span></td>
                                 <td class="text-end pe-4">
-                                    <a href="#" class="btn btn-sm btn-outline-primary px-3">查看</a>
+                                    <button type="button" class="btn btn-sm btn-outline-primary px-3 btn-detail"
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#bookingDetailModal"
+                                    data-bookingnum="@item.BookingNum"
+                                    data-name="@item.Name"
+                                    data-roomtype="@item.Roomtype"
+                                    data-bookingstatus="@item.BookingStatus"
+                                    data-bookingdate="@item.BookingDate.ToString("yyyy/MM/dd")"
+                                    data-phone="0912-345-678"          @* 假設你之後擴充的假資料欄位 *@
+                                    data-createtime="2026/07/26 19:10"
+                                    data-price="NT$ 4,800">
+                                    查看
+                                    </button>                    
                                 </td>
                             </tr>
                         }
@@ -258,6 +140,78 @@
         </div>
     </div>
 </div>
+
+<!-- Modal 彈跳視窗 -->
+<div class="modal fade" id="bookingDetailModal" tabindex="-1" aria-labelledby="bookingDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            
+            <!-- Modal 標題 -->
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold text-dark" id="bookingDetailModalLabel">訂單詳細資訊</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <!-- Modal 內容 (對應附圖的排版) -->
+            <div class="modal-body p-4">
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <span class="text-secondary small">訂單編號</span>
+                        <p id="modalBookingNum" class="fw-bold fs-6 mb-0 text-primary">-</p>
+                    </div>
+                    <div class="col-sm-6">
+                        <span class="text-secondary small">訂房人</span>
+                        <p id="modalName" class="fw-bold fs-6 mb-0">-</p>
+                    </div>
+                    
+                    <div class="col-sm-6">
+                        <span class="text-secondary small">聯絡電話</span>
+                        <p id="modalPhone" class="mb-0">-</p>
+                    </div>
+                    <div class="col-sm-6">
+                        <span class="text-secondary small">成立時間</span>
+                        <p id="modalCreateTime" class="mb-0">-</p>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <span class="text-secondary small">房型</span>
+                        <p id="modalRoomtype" class="mb-0">-</p>
+                    </div>
+                    <div class="col-sm-6">
+                        <span class="text-secondary small">住宿日期</span>
+                        <p id="modalBookingDate" class="mb-0">-</p>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <span class="text-secondary small">成交價格</span>
+                        <p id="modalPrice" class="fw-bold text-danger mb-0">-</p>
+                    </div>
+                    <div class="col-sm-6">
+                        <span class="text-secondary small">目前狀態</span>
+                        <p id="modalStatus" class="mb-0">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal 底部按鈕 (包含取消訂單按鈕) -->
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-outline-danger btn-sm px-3" id="cancelOrderBtn">
+                    <i class="bi bi-x-circle me-1"></i> 取消訂單
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm px-4" data-bs-dismiss="modal">關閉</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
 
 <style>
     .sticky-top {
@@ -276,21 +230,43 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            var resultList = document.getElementById("resultList");
-            const searchBtn = document.getElementById("searchBtn");
+            const searchForm = document.getElementById("searchForm");
             const keyword = document.getElementById("keyword");
+            const bookingDetailModal =document.getElementById("bookingDetailModal");
+           
+            bookingDetailModal.addEventListener("show.bs.modal",function(event){
+                const button = event.relatedTarget;
 
-            searchBtn.addEventListener("click", function(e) {
-                e.preventDefault();
-                if (keyword.value.trim() === "") {
+                const bookingNum = button.getAttribute('data-bookingnum');
+                const name = button.getAttribute('data-name');
+                const roomtype = button.getAttribute('data-roomtype');
+                const bookingStatus = button.getAttribute('data-bookingstatus');
+                const bookingDate = button.getAttribute('data-bookingdate');
+                const phone = button.getAttribute('data-phone');
+                const createTime = button.getAttribute('data-createtime');
+                const price = button.getAttribute('data-price');
+
+                document.getElementById('modalBookingNum').textContent = bookingNum;
+                document.getElementById('modalName').textContent = name;
+                document.getElementById('modalRoomtype').textContent = roomtype;
+                document.getElementById('modalStatus').textContent = bookingStatus;
+                document.getElementById('modalBookingDate').textContent = bookingDate + " ~ (依實際入住為主)";
+                document.getElementById('modalPhone').textContent = phone;
+                document.getElementById('modalCreateTime').textContent = createTime;
+                document.getElementById('modalPrice').textContent = price;
+            });
+    
+
+
+            searchForm.addEventListener("submit", function(e) {
+                if (keyword.value.trim() == "") {
+                    e.preventDefault();
                     keyword.classList.add("is-invalid");
-                    return;
-                }                                   
-                resultList.classList.remove("d-none");
+                }
             })
 
             keyword.addEventListener("input", function() {
-                if (keyword.value.trim() !== "") {
+                if (keyword.value.trim() != "") {
                     this.classList.remove("is-invalid");
                 }
             })
