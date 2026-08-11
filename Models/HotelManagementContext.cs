@@ -172,6 +172,7 @@ public partial class HotelManagementContext : DbContext
                 .HasMaxLength(20)
                 .IsUnicode(false)
                 .HasDefaultValue("Clean", "DF_Rooms_CleaningStatus");
+            entity.Property(e => e.DisabledReason).HasMaxLength(200);
             entity.Property(e => e.RoomNumber).HasMaxLength(10);
             entity.Property(e => e.SupplyStatus)
                 .HasMaxLength(20)
@@ -208,7 +209,7 @@ public partial class HotelManagementContext : DbContext
         {
             entity.HasIndex(e => e.BookingNumber, "UQ_StayRecords_BookingNumber").IsUnique();
 
-            entity.HasIndex(e => e.RoomId, "UX_StayRecords_ActiveRoom")
+            entity.HasIndex(e => new { e.RoomId, e.ActualCheckOutAt }, "UX_StayRecords_ActiveRoom")
                 .IsUnique()
                 .HasFilter("([ActualCheckOutAt] IS NULL)");
 
