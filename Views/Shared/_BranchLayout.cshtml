@@ -18,7 +18,7 @@
     var isCheckIn = currentAction == "CheckIn";
     var isCheckOut = currentAction == "CheckOut";
     var isUnchecked = currentAction == "Unchecked";
-    var isRoomStatus = currentAction == "Index";
+    var isRooms = currentAction == "Rooms";
     // 自動判斷所在頁面亮起
         string Check(bool checkAction)
     {
@@ -86,7 +86,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link rounded @(Check(isRoomStatus) )" asp-controller="RoomStatus" asp-action="Index">
+                            <a class="nav-link rounded @(Check(isRooms) )" asp-controller="@BranchController" asp-action="Rooms">
                                 <i class="bi bi-door-open me-2"></i>房間狀態
                             </a>
                         </li>
