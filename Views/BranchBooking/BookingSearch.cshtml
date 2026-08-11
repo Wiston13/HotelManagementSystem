@@ -1,0 +1,330 @@
+﻿@{
+    ViewData["Title"] = "本館訂單查詢";
+    Layout = "_BranchLayout";
+    // 假設你未來會從 ViewModel 或 ViewBag 傳入清單資料，這裡先用靜態排版示範
+}
+
+@functions {
+    public class BookingData
+    {
+        public string? BookingNum { get; set; }
+        public DateTime BookingDate { get; set; }
+        public string? Name { get; set; }
+        public string? Roomtype { get; set; }
+        public string? BookingStatus { get; set; }
+    }
+}
+
+@{
+    string BookingStatus(string s)
+    {
+        string r = "";
+        if (s == "已成立") r = "bg-success-subtle text-success";
+        else if (s == "已入住") r = "bg-info-subtle text-info";
+        else r = "bg-secondary-subtle text-secondary";
+        return r;
+    }
+    var BookingData = new List<BookingData>()
+    {
+        new BookingData
+        {
+            BookingNum = "BK20260808001",
+            BookingDate = new DateTime(2026, 8, 8),
+            Name = "王小明",
+            Roomtype = "標準雙人房",
+            BookingStatus = "已退房"
+        },
+        new BookingData
+        {
+            BookingNum = "BK20260808002",
+            BookingDate = new DateTime(2026, 8, 8),
+            Name = "林雅雯",
+            Roomtype = "精緻雙床房",
+            BookingStatus = "已退房"
+        },
+        new BookingData
+        {
+            BookingNum = "BK20260809003",
+            BookingDate = new DateTime(2026, 8, 9),
+            Name = "張家豪",
+            Roomtype = "豪華雙人房",
+            BookingStatus = "已入住"
+        },
+        new BookingData
+        {
+            BookingNum = "BK20260809004",
+            BookingDate = new DateTime(2026, 8, 9),
+            Name = "陳美玲",
+            Roomtype = "標準單人房",
+            BookingStatus = "已入住"
+        },
+        new BookingData
+        {
+            BookingNum = "BK20260810018",
+            BookingDate = new DateTime(2026, 8, 10),
+            Name = "李志豪",
+            Roomtype = "標準雙人房",
+            BookingStatus = "已成立"
+        },
+        new BookingData
+        {
+            BookingNum = "BK20260810019",
+            BookingDate = new DateTime(2026, 8, 10),
+            Name = "黃淑芬",
+            Roomtype = "家庭四人房",
+            BookingStatus = "已成立"
+        },
+        new BookingData
+        {
+            BookingNum = "BK20260810020",
+            BookingDate = new DateTime(2026, 8, 10),
+            Name = "趙建國",
+            Roomtype = "精緻雙床房",
+            BookingStatus = "已取消"
+        },
+        new BookingData
+        {
+            BookingNum = "BK20260811021",
+            BookingDate = new DateTime(2026, 8, 11),
+            Name = "周怡君",
+            Roomtype = "標準雙人房",
+            BookingStatus = "已成立"
+        },
+        new BookingData
+        {
+            BookingNum = "BK20260811022",
+            BookingDate = new DateTime(2026, 8, 11),
+            Name = "吳冠宇",
+            Roomtype = "豪華雙人房",
+            BookingStatus = "逾期未入住"
+        },
+        new BookingData
+        {
+            BookingNum = "BK20260812023",
+            BookingDate = new DateTime(2026, 8, 12),
+            Name = "蔡依婷",
+            Roomtype = "標準單人房",
+            BookingStatus = "已成立"
+        },
+        new BookingData
+        {
+            BookingNum = "BK20260812024",
+            BookingDate = new DateTime(2026, 8, 12),
+            Name = "楊宗翰",
+            Roomtype = "標準雙人房",
+            BookingStatus = "已成立"
+        },
+        new BookingData
+        {
+            BookingNum = "BK20260813025",
+            BookingDate = new DateTime(2026, 8, 13),
+            Name = "許雅婷",
+            Roomtype = "家庭四人房",
+            BookingStatus = "已成立"
+        },
+        new BookingData
+        {
+            BookingNum = "BK20260813026",
+            BookingDate = new DateTime(2026, 8, 13),
+            Name = "鄭文傑",
+            Roomtype = "精緻雙床房",
+            BookingStatus = "已取消"
+        },
+        new BookingData
+        {
+            BookingNum = "BK20260814027",
+            BookingDate = new DateTime(2026, 8, 14),
+            Name = "謝佩如",
+            Roomtype = "標準雙人房",
+            BookingStatus = "已成立"
+        },
+        new BookingData
+        {
+            BookingNum = "BK20260815028",
+            BookingDate = new DateTime(2026, 8, 15),
+            Name = "郭家宏",
+            Roomtype = "豪華雙人房",
+            BookingStatus = "已成立"
+        }
+    };
+
+}
+
+
+<div class="container-fluid px-4">
+    <!-- 頁面標題 -->
+    <div class="mb-4">
+        <h2 class="fw-bold fs-3 text-dark">本館訂單查詢</h2>
+    </div>
+
+
+  
+    <!-- 搜尋篩選區塊 (帶有卡片外觀與陰影) -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <form method="get" class="row g-3 align-items-end">
+
+                <!-- 1. 關鍵字 (必填) -->
+                <div class="col-md-4">
+                    <label for="keyword" class="form-label small fw-bold text-secondary">
+                        關鍵字 <span class="text-danger">*必填</span>
+                    </label>
+                    <input type="text"
+                           class="form-control"
+                           id="keyword"
+                           name="keyword"
+                           placeholder="訂單編號／姓名／電話">
+                </div>
+
+                <!-- 2. 入住日期區間 (簡單 input，供後續套用日曆插件) -->
+                <div class="col-md-3">
+                    <label for="dateRange" class="form-label small fw-bold text-secondary">
+                        入住日期區間 <span class="text-muted fw-normal">(選填)</span>
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white text-muted">
+                            <i class="bi bi-calendar3"></i>
+                        </span>
+                        <input type="text"
+                               class="form-control"
+                               id="dateTime"
+                               name="dateRange"
+                               placeholder="請選擇日期區間">
+                    </div>
+                </div>
+
+                <!-- 3. 訂單狀態 (預設全部狀態) -->
+                <div class="col-md-3">
+                    <label for="orderStatus" class="form-label small fw-bold text-secondary">
+                        訂單狀態
+                    </label>
+                    <select class="form-select" id="orderStatus" name="orderStatus">
+                        <option value="" selected>全部狀態</option>
+                        <option value="Created">已成立</option>
+                        <option value="CheckIn">已入住</option>
+                        <option value="CheckOut">已退房</option>
+                        <option value="Cancelled">已取消</option>
+                        <option value="Overdue">逾期未入住</option>
+                    </select>
+                </div>
+
+                <!-- 4. 查詢按鈕 -->
+                <div class="col-md-2">
+                    <button id="searchBtn" type="submit" class="btn btn-primary w-100 fw-semibold">
+                        查詢
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    
+
+    <!-- 查詢結果列表區塊 -->
+    <div id="resultList" class="card border-0 shadow-sm d-none">
+        <div class="card-body p-0">
+
+            <div class="table-responsive" style="max-height: 580px; overflow-y: auto; background-color: #f8f9fa;">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light text-secondary small sticky-top">
+                        <tr>
+                            <th class="ps-4 py-3">訂單</th>
+                            <th class="py-3">入住日期</th>
+                            <th class="py-3">顧客</th>
+                            <th class="py-3">房型</th>
+                            <th class="py-3">狀態</th>
+                            <th class="text-end pe-4 py-3">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- 動態生成訂單資料 -->
+                        @foreach (var item in BookingData)
+                        {
+                            <tr>
+                                <td class="ps-4 fw-semibold text-primary">@item.BookingNum</td>
+                                <td>@item.BookingDate</td>
+                                <td>@item.Name</td>
+                                <td>@item.Roomtype</td>
+                                <td><span class="badge @BookingStatus(item.BookingStatus) px-2 py-1">@item.BookingStatus</span></td>
+                                <td class="text-end pe-4">
+                                    <a href="#" class="btn btn-sm btn-outline-primary px-3">查看</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .sticky-top {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+</style>
+
+
+@section Scripts {
+    @*插件*@
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/zh.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var resultList = document.getElementById("resultList");
+            const searchBtn = document.getElementById("searchBtn");
+            const keyword = document.getElementById("keyword");
+
+            searchBtn.addEventListener("click", function(e) {
+                e.preventDefault();
+                if (keyword.value.trim() === "") {
+                    keyword.classList.add("is-invalid");
+                    return;
+                }                                   
+                resultList.classList.remove("d-none");
+            })
+
+            keyword.addEventListener("input", function() {
+                if (keyword.value.trim() !== "") {
+                    this.classList.remove("is-invalid");
+                }
+            })
+        })
+        
+
+        // 日期顯示區
+        let maxRangeDate = new Date();
+        maxRangeDate.setDate(maxRangeDate.getDate() + 60);
+        flatpickr("#dateTime", {
+            mode: "range",
+            maxDate: maxRangeDate,
+            dateFormat: "Y-m-d",
+            altInput: true,
+            altFormat: "Y.m.d",
+            showMonths: 1,
+            locale: {
+                weekdays: {
+                    shorthand: ["日", "一", "二", "三", "四", "五", "六"],
+                    longhand: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"]
+                }, months: {
+                    shorthand: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],
+                    longhand: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"]
+                },
+                rangeSeparator: " - ",
+            },
+            onClose: function(selectedDates, dateStr, instance) {
+                // 如果選了兩個日期，且起訖是同一天
+                if (selectedDates.length === 2 && selectedDates[0].getTime() === selectedDates[1].getTime()) {
+                    let nextDay = new Date(selectedDates[0]);
+                    nextDay.setDate(nextDay.getDate() + 1); // 自動加一天
+                    instance.setDate([selectedDates[0], nextDay], true);
+                }
+            }
+        });
+    </script>
+}
