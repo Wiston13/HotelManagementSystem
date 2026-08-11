@@ -48,7 +48,7 @@
 							<label class="form-label">
 								姓名 <span class="text-danger">*</span>
 							</label>
-							<input class="form-control" type="text" id="txtName" required placeholder="例如:王小明"
+							<input class="form-control" type="text" id="txtName" required placeholder="例如：王小明"
 								   pattern="[^\d]*" maxlength="50"
 								   oninput="this.value = this.value.replace(/\d/g, '')"
 								   data-error-target="#nameError">
@@ -59,7 +59,7 @@
 							<label class="form-label">
 								聯絡電話 <span class="text-danger">*</span>
 							</label>
-							<input class="form-control" type="tel" id="txtPhone" required placeholder="例如:0912-345-678" data-error-target="#phoneError">
+							<input class="form-control" type="tel" id="txtPhone" required placeholder="例如：0912345678" data-error-target="#phoneError">
 							<div id="phoneError" class="text-danger small mt-1 d-none">請輸入聯絡電話。</div>
 						</div>
 						<!-- 電子信箱欄位 -->
@@ -67,7 +67,7 @@
 							<label class="form-label">
 								電子信箱 <span class="text-danger">*</span>
 							</label>
-							<input class="form-control" type="email" id="txtEmail" required placeholder="例如:name@example.com" data-error-target="#emailError">
+							<input class="form-control" type="email" id="txtEmail" required placeholder="例如：name@example.com" data-error-target="#emailError">
 							<div id="emailError" class="text-danger small mt-1 d-none">請輸入正確的電子信箱格式。</div>
 						</div>
 					</div>
@@ -94,7 +94,7 @@
 											<path d="M2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm13 2v1.5H1V4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1M1 7.5h14V12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1z" />
 										</svg>
 									</span>
-									<input class="form-control" type="text" id="txtCardNumber" required placeholder="1233 6666 6666 6666" maxlength="19" data-error-target="#cardError">
+									<input class="form-control" type="text" id="txtCardNumber" required placeholder="4242 4242 4242 4242" maxlength="19" data-error-target="#cardError">
 								</div>
 								<div id="cardError" class="text-danger small mt-1 d-none">此卡號無效</div>
 							</div>
@@ -106,8 +106,14 @@
 									<label class="form-label">
 										到期日 <span class="text-danger">*</span>
 									</label>
-									<input class="form-control text-center" type="text" id="txtExpiry" required placeholder="MM/YY" maxlength="5" data-error-target="#expiryError">
-									<div id="expiryError" class="text-danger small mt-1 d-none">請輸入到期日。</div>
+									<input class="form-control text-center"
+										   type="text"
+										   id="txtExpiry"
+										   required
+										   placeholder="MM/YY"
+										   maxlength="5"
+										   data-error-target="#expiryError">
+									<div id="expiryError" class="text-danger small mt-1 d-none">到期日無效或已過期</div>
 								</div>
 								<!-- CVC 安全碼 -->
 								<div class="col-6 mb-3">
@@ -331,6 +337,61 @@
 			});
 		}
 
+
+		// 信用卡卡號 Luhn 檢查
+		function isValidCardNumber(cardNumber) {
+			var digits = cardNumber.replace(/\D/g, '');
+
+			// 一般信用卡卡號至少 13 碼、最多 19 碼
+			if (digits.length < 13 || digits.length > 19) {
+				return false;
+			}
+			var sum = 0;
+			var shouldDouble = false;
+			for (var i = digits.length - 1; i >= 0; i--) {
+				var digit = parseInt(digits.charAt(i), 10);
+				if (shouldDouble) {
+					digit *= 2;
+					if (digit > 9) {
+						digit -= 9;
+					}
+				}
+				sum += digit;
+				shouldDouble = !shouldDouble;
+			}
+			return sum % 10 === 0;
+		}
+
+		// 信用卡到期日驗證
+		function isValidExpiry(expiry) {
+			// 必須符合 MM/YY
+			var match = expiry.match(/^(\d{2})\/(\d{2})$/);
+			if (!match) {
+				return false;
+			}
+
+			var month = parseInt(match[1], 10);
+			var year = parseInt(match[2], 10);
+			// 月份必須為 01～12
+			if (month < 1 || month > 12) {
+				return false;
+			}
+			// 取得目前年月
+			var now = new Date();
+			var currentMonth = now.getMonth() + 1;
+			var currentYear = now.getFullYear() % 100;
+			// 到期年份早於今年 → 已過期
+			if (year < currentYear) {
+				return false;
+			}
+			// 同一年但月份已過 → 已過期
+			if (year === currentYear && month < currentMonth) {
+				return false;
+			}
+			return true;
+		}
+
+
 		// 3. 整合表單提交與獨立錯誤文字控制
 		form.addEventListener('submit', function(event) {
 			event.preventDefault(); // 攔截預設送出以便展示原型錯誤
@@ -343,9 +404,20 @@
 				var errorDiv = targetSelector ? document.querySelector(targetSelector) : null;
 
 				// 自訂檢驗標準
-				var isInputValid = input.checkValidity();
-				if (input.id === 'txtCardNumber' && input.value.length < 19) isInputValid = false;
-				if (input.id === 'txtExpiry' && input.value.length < 5) isInputValid = false;
+				var isInputValid = input.checkValidity();				
+				if (input.id === 'txtCardNumber') {
+					var cardNumber = input.value.replace(/\D/g, '');
+					// 卡號必須為 13～19 碼，並通過 Luhn 檢查
+					if (!isValidCardNumber(cardNumber)) {
+						isInputValid = false;
+					}
+				}
+				if (input.id === 'txtExpiry') {
+					// 到期日必須符合 MM/YY、月份有效且尚未過期
+					if (!isValidExpiry(input.value)) {
+						isInputValid = false;
+					}
+				}
 
 				if (!isInputValid) {
 					isValid = false;
