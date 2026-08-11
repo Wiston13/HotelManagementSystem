@@ -6,6 +6,7 @@
     1. 此腳本為開發／測試用可重建版本。
     2. 若資料表已存在，會依相依順序 DROP 後重新建立，因此原資料會被刪除。
     3. OperationTypes 的固定類型與其他測試資料請放在 SampleData 腳本中。
+    4. 第一版所有業務日期與時間以台灣時間（Asia/Taipei）為準。
 */
 
 USE [master];
@@ -108,6 +109,7 @@ CREATE TABLE [dbo].[Rooms]
         CONSTRAINT [DF_Rooms_SupplyStatus] DEFAULT ('Open'),
     [CleaningStatus]    varchar(20) NOT NULL
         CONSTRAINT [DF_Rooms_CleaningStatus] DEFAULT ('Clean'),
+    [DisabledReason]    nvarchar(200) NULL,
 
     CONSTRAINT [PK_Rooms]
         PRIMARY KEY ([RoomId]),
@@ -123,8 +125,28 @@ CREATE TABLE [dbo].[Rooms]
         CHECK ([SupplyStatus] IN ('Open', 'Reserved', 'Disabled')),
 
     CONSTRAINT [CK_Rooms_CleaningStatus]
-        CHECK ([CleaningStatus] IN ('Clean', 'NeedsCleaning'))
-);
+        CHECK ([CleaningStatus] IN ('Clean', 'NeedsCleaning')),
+
+    /*
+       只有停用房間可保存停用原因。
+       停用時原因必填且不能只有空白；
+       恢復開放販售後必須清除停用原因。
+    */
+    CONSTRAINT [CK_Rooms_DisabledReason]
+        CHECK
+        (
+            (
+                [SupplyStatus] = 'Disabled'
+                AND [DisabledReason] IS NOT NULL
+                AND LEN(LTRIM(RTRIM([DisabledReason]))) > 0
+            )
+            OR
+            (
+                [SupplyStatus] <> 'Disabled'
+                AND [DisabledReason] IS NULL
+            )
+        )
+    );
 GO
 
 /* =========================================================
@@ -182,11 +204,13 @@ CREATE TABLE [dbo].[Bookings]
     [CheckInDate]                   date NOT NULL,
     [CheckOutDate]                  date NOT NULL,
     [RoomTypeNameSnapshot]          nvarchar(50) NOT NULL,
+    [MaxOccupancySnapshot]          tinyint NOT NULL,
     [NightlyPriceSnapshot]          decimal(10,2) NOT NULL,
     [TotalAmount]                   decimal(12,2) NOT NULL,
     [BookingStatus]                 varchar(20) NOT NULL,
     [CreatedAt]                     datetime2(0) NOT NULL
-        CONSTRAINT [DF_Bookings_CreatedAt] DEFAULT (SYSDATETIME()),
+        CONSTRAINT [DF_Bookings_CreatedAt]
+        DEFAULT (CONVERT(datetime2(0), SYSDATETIMEOFFSET() AT TIME ZONE 'Taipei Standard Time')),
     [CancellationCause]             varchar(30) NULL,
     [CancellationReason]            nvarchar(500) NULL,
     [CancelledAt]                   datetime2(0) NULL,
@@ -205,6 +229,9 @@ CREATE TABLE [dbo].[Bookings]
 
     CONSTRAINT [CK_Bookings_DateRange]
         CHECK ([CheckOutDate] > [CheckInDate]),
+
+    CONSTRAINT [CK_Bookings_MaxOccupancySnapshot]
+        CHECK ([MaxOccupancySnapshot] > 0),
 
     CONSTRAINT [CK_Bookings_NightlyPriceSnapshot]
         CHECK ([NightlyPriceSnapshot] > 0),
@@ -325,7 +352,7 @@ GO
    歷史已退房紀錄不受此限制。
 */
 CREATE UNIQUE INDEX [UX_StayRecords_ActiveRoom]
-ON [dbo].[StayRecords] ([RoomId])
+ON [dbo].[StayRecords] ([RoomId], [ActualCheckOutAt])
 WHERE [ActualCheckOutAt] IS NULL;
 GO
 
@@ -361,7 +388,8 @@ CREATE TABLE [dbo].[OperationLogs]
     [OperationLogId]            int IDENTITY(1,1) NOT NULL,
     [TargetBranchId]            int NOT NULL,
     [OperatedAt]                datetime2(0) NOT NULL
-        CONSTRAINT [DF_OperationLogs_OperatedAt] DEFAULT (SYSDATETIME()),
+        CONSTRAINT [DF_OperationLogs_OperatedAt]
+        DEFAULT (CONVERT(datetime2(0), SYSDATETIMEOFFSET() AT TIME ZONE 'Taipei Standard Time')),
     [OperatorEmployeeNumber]    varchar(20) NOT NULL,
     [OperationTypeId]           int NOT NULL,
     [TargetType]                varchar(30) NOT NULL,
@@ -401,7 +429,7 @@ ON [dbo].[Bookings]
 );
 GO
 
-/* 每日 12:00 NoShow 批次判定 */
+/* 訂單相關功能執行前，查找並補判已達退房日 12:00 的 NoShow */
 CREATE INDEX [IX_Bookings_NoShow]
 ON [dbo].[Bookings] ([BookingStatus], [CheckOutDate])
 INCLUDE ([BookingNumber]);
@@ -451,12 +479,18 @@ GO
 
    以下跨表／流程規則由後端在交易中驗證，不用額外資料表：
    - Check-in 的 Booking、Room 必須同分館且 Room 為原訂房型
-   - ActualGuestCount 不得超過 RoomTypes.MaxOccupancy
+   - ActualGuestCount 不得超過 Bookings.MaxOccupancySnapshot
    - Check-in：建立 StayRecord + Booking -> CheckedIn + OperationLog 同交易
    - Check-out：住房退房欄位 + Booking -> Completed
                 + Room -> NeedsCleaning + OperationLog 同交易
    - 取消：Bookings 取消欄位 + Booking -> Cancelled
            + 房量釋放效果 + OperationLog 同交易
-   - 清潔完成：Room -> Clean + OperationLog 同交易
-   - NoShow 為系統每日 12:00 批次判定，不建立員工 OperationLog
+   - 可售房量：原退房日已過但尚未實際 Check-out 的有效住房，
+               自原退房日起至完成 Check-out 前，仍須額外占用該房型供應，且不得與原訂單重複扣除
+   - 房間停用：Room -> Disabled 時必須同時保存 DisabledReason；
+             Disabled -> Open 時清除 DisabledReason
+   - 清潔狀態：無住客房間可在 Clean / NeedsCleaning 間雙向切換
+             + OperationLog 同交易
+   - NoShow 不使用背景排程；訂單相關功能執行前依台灣時間補判，且不建立員工 OperationLog
    ========================================================= */
+
