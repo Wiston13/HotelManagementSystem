@@ -1,0 +1,117 @@
+@{
+    ViewData["Title"] = "辦理入住";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/stay/CheckIn.css" asp-append-version="true" />
+}
+
+<div class="check-in-page">
+    <p class="text-secondary mb-4">輸入訂單編號，查詢對應的入住資訊。</p>
+
+    <section class="check-in-search card border-0 shadow-sm" aria-labelledby="check-in-search-title">
+        <div class="card-body p-4">
+            <h2 id="check-in-search-title" class="visually-hidden">查詢訂單</h2>
+            <div class="row g-3 align-items-end">
+                <div class="col-md-8 col-lg-7">
+                    <label for="bookingLookup" class="form-label text-secondary">訂單編號</label>
+                    <input id="bookingLookup"
+                           class="form-control form-control-lg"
+                           type="text"
+                           value="BK20260810018"
+                           aria-label="訂單編號" />
+                </div>
+                <div class="col-md-4 col-lg-3">
+                    <button type="button" class="btn btn-primary btn-lg fw-semibold w-100">查詢</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <hr class="check-in-divider" />
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <section class="check-in-panel card h-100 border-0 shadow-sm" aria-labelledby="stay-information-title">
+                <div class="card-body p-4 p-md-5">
+                    <h2 id="stay-information-title" class="h4 fw-bold mb-4">入住資料</h2>
+
+                    <div class="check-in-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
+                        <p class="detail-label text-secondary mb-0">顧客</p>
+                        <p class="detail-value guest-name fw-semibold text-end mb-0">王小明</p>
+                    </div>
+                    <div class="check-in-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
+                        <p class="detail-label text-secondary mb-0">訂房電話</p>
+                        <p class="detail-value contact-phone fw-semibold text-end mb-0">0912345678</p>
+                    </div>
+                    <div class="check-in-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
+                        <p class="detail-label text-secondary mb-0">房型</p>
+                        <p class="detail-value room-type fw-semibold text-end mb-0">標準雙人房</p>
+                    </div>
+                    <div class="check-in-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
+                        <p class="detail-label text-secondary mb-0">住宿</p>
+                        <p class="detail-value during-the-stay fw-semibold text-end mb-0">08/10 — 08/12</p>
+                    </div>
+                    <div class="check-in-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
+                        <p class="detail-label text-secondary mb-0">訂單狀態</p>
+                        <p class="detail-value booking-status fw-semibold text-end mb-0">已成立</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div class="col-lg-5">
+            <section class="check-in-panel card h-100 border-0 shadow-sm" aria-labelledby="room-assignment-title">
+                <div class="card-body p-4 p-md-5 d-flex flex-column">
+                    <h2 id="room-assignment-title" class="h4 fw-bold mb-3">指派實體房間</h2>
+
+                    <label for="roomAssignment" class="form-label text-secondary mb-2">可入住房間</label>
+                    <select id="roomAssignment" class="form-select form-select-lg" aria-describedby="roomAssignmentHint">
+                        <option value="302">302｜已清潔</option>
+                    </select>
+                    <p id="roomAssignmentHint" class="form-text mt-2 mb-4">
+                        僅列出同房型、可用且已清潔的房間。
+                    </p>
+
+                    <label for="actualGuestCount" class="form-label text-secondary mb-2">實際入住人數</label>
+                    <input id="actualGuestCount"
+                           class="form-control form-control-lg mb-4"
+                           type="number"
+                           min="1"
+                           step="1"
+                           value="2"
+                           aria-label="實際入住人數" />
+
+                    <button type="button" class="btn btn-primary btn-lg fw-semibold w-100 mt-auto">確認入住</button>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="checkInConfirmationModal" tabindex="-1" aria-labelledby="checkInConfirmationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content check-in-confirm-modal border-0 shadow">
+            <div class="modal-header">
+                <h2 class="modal-title h5 fw-bold" id="checkInConfirmationModalLabel">確認入住</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2">請確認入住前作業是否已完成。</p>
+                <p class="mb-0 text-secondary">是否確認指派此房間給旅客辦理入住？</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="confirmCheckInButton" data-bs-dismiss="modal">確定</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelector('.check-in-panel .btn-primary')?.addEventListener('click', function () {
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('checkInConfirmationModal')).show();
+        });
+    </script>
+}
