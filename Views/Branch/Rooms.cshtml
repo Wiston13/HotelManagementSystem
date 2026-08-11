@@ -6,17 +6,28 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <h3 class="fw-bold mb-1">房間管理</h3>
-        <p class="text-muted small mb-0">維護房間結構與供應狀態。系統不提供直接刪除入口以保留歷史紀錄。</p>
+        <p class="text-muted small mb-0">依分館與房型查詢房間列表，維護房號、樓層與啟停狀態。</p>
     </div>
-    <button class="btn btn-primary px-4" data-bs-toggle="modal" data-bs-target="#roomModal">新增房間</button>
+    <!-- 新增房間按鈕：傳入 'add' 觸發 JS -->
+    <button class="btn btn-primary px-4" data-bs-toggle="modal" data-bs-target="#roomModal" onclick="openRoomModal('add')">
+        <i class="bi bi-plus-lg me-1"></i>新增房間
+    </button>
 </div>
 
-<div class="row mb-3">
+<div class="row mb-3 g-2">
     <div class="col-md-3">
         <label class="form-label fw-bold small">選擇分館</label>
         <select class="form-select">
             <option selected>台北館</option>
             <option>高雄館</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label fw-bold small">篩選房型</label>
+        <select class="form-select">
+            <option selected>全部房型</option>
+            <option>標準雙人房</option>
+            <option>三床豪華房</option>
         </select>
     </div>
 </div>
@@ -27,29 +38,51 @@
             <thead class="table-light">
                 <tr>
                     <th class="ps-4">房號</th>
-                    <th>樓層</th>
                     <th>所屬房型</th>
-                    <th>供應狀態</th>
+                    <th>樓層</th>
+                    <th>啟停狀態</th>
                     <th class="text-end pe-4">操作</th>
                 </tr>
             </thead>
             <tbody>
+                <!-- 示範資料列 1 -->
                 <tr>
                     <td class="ps-4 fw-bold">301</td>
-                    <td>3F</td>
                     <td>標準雙人房</td>
-                    <td><span class="badge bg-success">開放販售</span></td>
+                    <td>3</td>
+                    <td><span class="badge bg-success">啟用</span></td>
                     <td class="text-end pe-4">
-                        <button class="btn btn-link text-primary p-0 text-decoration-none" data-bs-toggle="modal" data-bs-target="#roomModal">編輯</button>
+                        <button class="btn btn-link text-primary p-0 text-decoration-none"
+                                data-bs-toggle="modal"
+                                data-bs-target="#roomModal"
+                                data-id="1"
+                                data-number="301"
+                                data-type="標準雙人房"
+                                data-floor="3"
+                                data-status="true"
+                                onclick="openRoomModal('edit', this)">
+                            編輯
+                        </button>
                     </td>
                 </tr>
+                <!-- 示範資料列 2 -->
                 <tr>
-                    <td class="ps-4 fw-bold">305</td>
-                    <td>3F</td>
-                    <td>精緻雙床房</td>
+                    <td class="ps-4 fw-bold">502</td>
+                    <td>三床豪華房</td>
+                    <td>5</td>
                     <td><span class="badge bg-secondary">停用</span></td>
                     <td class="text-end pe-4">
-                        <button class="btn btn-link text-primary p-0 text-decoration-none" data-bs-toggle="modal" data-bs-target="#roomModal">編輯</button>
+                        <button class="btn btn-link text-primary p-0 text-decoration-none"
+                                data-bs-toggle="modal"
+                                data-bs-target="#roomModal"
+                                data-id="2"
+                                data-number="502"
+                                data-type="三床豪華房"
+                                data-floor="5"
+                                data-status="false"
+                                onclick="openRoomModal('edit', this)">
+                            編輯
+                        </button>
                     </td>
                 </tr>
             </tbody>
@@ -57,51 +90,81 @@
     </div>
 </div>
 
-<!-- Modal：房間編輯/新增 -->
+<!-- Modal：房間編輯 / 新增 -->
 <div class="modal fade" id="roomModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title fw-bold">房間資料維護</h5>
+                <!-- 動態顯示 Modal 標題 -->
+                <h5 class="modal-title fw-bold" id="roomModalTitle">房間資料維護</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">所屬分館</label>
-                        <input type="text" class="form-control bg-light" value="台北館" readonly>
-                    </div>
-                    <div class="row g-3 mb-3">
+                <form id="roomForm">
+                    <!-- 隱藏欄位：儲存 PK (RoomId) -->
+                    <input type="hidden" id="roomId" name="RoomId" value="0">
+
+                    <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label fw-bold">房號 <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" value="305">
+                            <input type="text" class="form-control" id="roomNumber" name="RoomNumber" placeholder="例如：301" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">所屬房型 <span class="text-danger">*</span></label>
+                            <select class="form-select" id="roomType" name="RoomType" required>
+                                <option value="標準雙人房">標準雙人房</option>
+                                <option value="三床豪華房">三床豪華房</option>
+                            </select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">樓層 <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" value="3F">
+                            <!-- 純數字輸入框 -->
+                            <input type="number" class="form-control" id="floor" name="Floor" min="1" placeholder="例如：3" required>
                         </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">所屬房型 <span class="text-danger">*</span></label>
-                        <select class="form-select">
-                            <option selected>精緻雙床房</option>
-                            <option>標準雙人房</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">供應狀態 <span class="text-danger">*</span></label>
-                        <select class="form-select">
-                            <option selected>開放販售</option>
-                            <option>停用</option>
-                            <option>維護中</option>
-                        </select>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">啟停狀態 <span class="text-danger">*</span></label>
+                            <select class="form-select" id="isActive" name="IsActive">
+                                <option value="true">啟用</option>
+                                <option value="false">停用</option>
+                            </select>
+                        </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer justify-content-center border-0 pb-4">
                 <button type="button" class="btn btn-outline-secondary px-4 me-2" data-bs-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-primary px-4">儲存變更</button>
+                <button type="button" class="btn btn-primary px-4" id="btnSaveRoom">儲存變更</button>
             </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        // 處理 Modal 彈出時的 logic (區分新增或編輯)
+        function openRoomModal(mode, btnElement = null) {
+            const modalTitle = document.getElementById('roomModalTitle');
+            const saveBtn = document.getElementById('btnSaveRoom');
+            const form = document.getElementById('roomForm');
+
+            if (mode === 'add') {
+                // 新增模式：設定標題與按鈕文字為「新增房間」、清空欄位、PK設為 0
+                modalTitle.textContent = '新增房間';
+                saveBtn.textContent = '新增房間';
+                form.reset();
+                document.getElementById('roomId').value = '0';
+                document.getElementById('isActive').value = 'true';
+            } else if (mode === 'edit' && btnElement) {
+                // 編輯模式：設定標題為「編輯房間資料」、按鈕文字為「儲存變更」、帶入資料
+                modalTitle.textContent = '編輯房間資料';
+                saveBtn.textContent = '儲存變更';
+
+                document.getElementById('roomId').value = btnElement.getAttribute('data-id') || '0';
+                document.getElementById('roomNumber').value = btnElement.getAttribute('data-number') || '';
+                document.getElementById('roomType').value = btnElement.getAttribute('data-type') || '標準雙人房';
+                document.getElementById('floor').value = btnElement.getAttribute('data-floor') || '1';
+                document.getElementById('isActive').value = btnElement.getAttribute('data-status') || 'true';
+            }
+        }
+    </script>
+}

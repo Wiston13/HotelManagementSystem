@@ -1,5 +1,5 @@
 ﻿@{
-    ViewData["Title"] = "房型與固定價格管理"; 
+    ViewData["Title"] = "房型與固定價格管理";
     Layout = "~/Views/Shared/_ManagerLayout.cshtml";
 }
 
@@ -8,7 +8,10 @@
         <h3 class="fw-bold mb-1">房型及固定價格管理</h3>
         <p class="text-muted small mb-0">依分館查詢與維護房型資料，採用啟停狀態管理。</p>
     </div>
-    <button class="btn btn-primary px-4" data-bs-toggle="modal" data-bs-target="#roomTypeModal">新增房型</button>
+    <!-- 新增房型按鈕：傳入 'add' 觸發 JS -->
+    <button class="btn btn-primary px-4" data-bs-toggle="modal" data-bs-target="#roomTypeModal" onclick="openRoomTypeModal('add')">
+        <i class="bi bi-plus-lg me-1"></i>新增房型
+    </button>
 </div>
 
 <div class="row mb-3">
@@ -35,6 +38,7 @@
                 </tr>
             </thead>
             <tbody>
+                <!-- 示範資料列 1 -->
                 <tr>
                     <td class="ps-4 fw-bold">標準雙人房</td>
                     <td>2 人</td>
@@ -42,9 +46,21 @@
                     <td>NT$ 2,800</td>
                     <td><span class="badge bg-success">啟用</span></td>
                     <td class="text-end pe-4">
-                        <button class="btn btn-link text-primary p-0 text-decoration-none" data-bs-toggle="modal" data-bs-target="#roomTypeModal">編輯</button>
+                        <button class="btn btn-link text-primary p-0 text-decoration-none"
+                                data-bs-toggle="modal"
+                                data-bs-target="#roomTypeModal"
+                                data-id="1"
+                                data-name="標準雙人房"
+                                data-capacity="2"
+                                data-bed="一大床"
+                                data-price="2800"
+                                data-status="true"
+                                onclick="openRoomTypeModal('edit', this)">
+                            編輯
+                        </button>
                     </td>
                 </tr>
+                <!-- 示範資料列 2 -->
                 <tr>
                     <td class="ps-4 fw-bold">三床豪華房</td>
                     <td>3 人</td>
@@ -52,7 +68,18 @@
                     <td>NT$ 3,800</td>
                     <td><span class="badge bg-secondary">停用</span></td>
                     <td class="text-end pe-4">
-                        <button class="btn btn-link text-primary p-0 text-decoration-none" data-bs-toggle="modal" data-bs-target="#roomTypeModal">編輯</button>
+                        <button class="btn btn-link text-primary p-0 text-decoration-none"
+                                data-bs-toggle="modal"
+                                data-bs-target="#roomTypeModal"
+                                data-id="2"
+                                data-name="三床豪華房"
+                                data-capacity="3"
+                                data-bed="一大床 + 一小床"
+                                data-price="3800"
+                                data-status="false"
+                                onclick="openRoomTypeModal('edit', this)">
+                            編輯
+                        </button>
                     </td>
                 </tr>
             </tbody>
@@ -65,33 +92,35 @@
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title fw-bold">房型與固定價格維護</h5>
+                <h5 class="modal-title fw-bold" id="roomTypeModalTitle">房型與固定價格維護</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form>
+                <form id="roomTypeForm">
+                    <!-- 隱藏欄位：儲存 PK (RoomTypeId) -->
+                    <input type="hidden" id="roomTypeId" name="RoomTypeId" value="0">
+
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label fw-bold">房型名稱 <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" value="標準雙人房">
+                            <input type="text" class="form-control" id="typeName" name="TypeName" placeholder="例如：標準雙人房" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">可住人數 <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" value="2" min="1">
+                            <input type="number" class="form-control" id="capacity" name="Capacity" min="1" placeholder="例如：2" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">床型說明 (手動輸入) <span class="text-danger">*</span></label>
-                            <!-- 依規則：床型由管理員手動輸入文字，不使用下拉選單 -->
-                            <input type="text" class="form-control" placeholder="例如：一大床 / 兩單人床" value="一大床">
+                            <input type="text" class="form-control" id="bedType" name="BedType" placeholder="例如：一大床 / 兩單人床" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">固定價格 <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" value="2800">
+                            <input type="number" class="form-control" id="basePrice" name="BasePrice" placeholder="例如：2800" required>
                         </div>
                         <div class="col-12">
                             <label class="form-label fw-bold">啟停狀態 <span class="text-danger">*</span></label>
-                            <select class="form-select">
-                                <option value="true" selected>啟用</option>
+                            <select class="form-select" id="isActive" name="IsActive">
+                                <option value="true">啟用</option>
                                 <option value="false">停用</option>
                             </select>
                         </div>
@@ -100,8 +129,38 @@
             </div>
             <div class="modal-footer justify-content-center border-0 pb-4">
                 <button type="button" class="btn btn-outline-secondary px-4 me-2" data-bs-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-primary px-4">儲存變更</button>
+                <button type="button" class="btn btn-primary px-4" id="btnSaveRoomType">儲存變更</button>
             </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        function openRoomTypeModal(mode, btnElement = null) {
+            const modalTitle = document.getElementById('roomTypeModalTitle');
+            const saveBtn = document.getElementById('btnSaveRoomType');
+            const form = document.getElementById('roomTypeForm');
+
+            if (mode === 'add') {
+                // 新增模式：標題改為「新增房型」、按鈕改為「新增房型」、清空欄位
+                modalTitle.textContent = '新增房型';
+                saveBtn.textContent = '新增房型';
+                form.reset();
+                document.getElementById('roomTypeId').value = '0';
+                document.getElementById('isActive').value = 'true';
+            } else if (mode === 'edit' && btnElement) {
+                // 編輯模式：標題改為「編輯房型與固定價格」、按鈕改為「儲存變更」、帶入資料
+                modalTitle.textContent = '編輯房型與固定價格';
+                saveBtn.textContent = '儲存變更';
+
+                document.getElementById('roomTypeId').value = btnElement.getAttribute('data-id') || '0';
+                document.getElementById('typeName').value = btnElement.getAttribute('data-name') || '';
+                document.getElementById('capacity').value = btnElement.getAttribute('data-capacity') || '1';
+                document.getElementById('bedType').value = btnElement.getAttribute('data-bed') || '';
+                document.getElementById('basePrice').value = btnElement.getAttribute('data-price') || '0';
+                document.getElementById('isActive').value = btnElement.getAttribute('data-status') || 'true';
+            }
+        }
+    </script>
+}
