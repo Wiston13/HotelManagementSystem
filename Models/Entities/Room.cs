@@ -19,6 +19,8 @@ public partial class Room
 
     public string CleaningStatus { get; set; } = null!;
 
+    public string? DisabledReason { get; set; }
+
     public virtual RoomType RoomType { get; set; } = null!;
 
     public virtual ICollection<StayRecord> StayRecords { get; set; } = new List<StayRecord>();
