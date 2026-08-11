@@ -109,6 +109,7 @@ CREATE TABLE [dbo].[Rooms]
         CONSTRAINT [DF_Rooms_SupplyStatus] DEFAULT ('Open'),
     [CleaningStatus]    varchar(20) NOT NULL
         CONSTRAINT [DF_Rooms_CleaningStatus] DEFAULT ('Clean'),
+    [DisabledReason]    nvarchar(200) NULL,
 
     CONSTRAINT [PK_Rooms]
         PRIMARY KEY ([RoomId]),
@@ -124,8 +125,28 @@ CREATE TABLE [dbo].[Rooms]
         CHECK ([SupplyStatus] IN ('Open', 'Reserved', 'Disabled')),
 
     CONSTRAINT [CK_Rooms_CleaningStatus]
-        CHECK ([CleaningStatus] IN ('Clean', 'NeedsCleaning'))
-);
+        CHECK ([CleaningStatus] IN ('Clean', 'NeedsCleaning')),
+
+    /*
+       只有停用房間可保存停用原因。
+       停用時原因必填且不能只有空白；
+       恢復開放販售後必須清除停用原因。
+    */
+    CONSTRAINT [CK_Rooms_DisabledReason]
+        CHECK
+        (
+            (
+                [SupplyStatus] = 'Disabled'
+                AND [DisabledReason] IS NOT NULL
+                AND LEN(LTRIM(RTRIM([DisabledReason]))) > 0
+            )
+            OR
+            (
+                [SupplyStatus] <> 'Disabled'
+                AND [DisabledReason] IS NULL
+            )
+        )
+    );
 GO
 
 /* =========================================================
@@ -331,7 +352,7 @@ GO
    歷史已退房紀錄不受此限制。
 */
 CREATE UNIQUE INDEX [UX_StayRecords_ActiveRoom]
-ON [dbo].[StayRecords] ([RoomId])
+ON [dbo].[StayRecords] ([RoomId], [ActualCheckOutAt])
 WHERE [ActualCheckOutAt] IS NULL;
 GO
 
@@ -466,7 +487,10 @@ GO
            + 房量釋放效果 + OperationLog 同交易
    - 可售房量：原退房日已過但尚未實際 Check-out 的有效住房，
                自原退房日起至完成 Check-out 前，仍須額外占用該房型供應，且不得與原訂單重複扣除
-   - 清潔完成：Room -> Clean + OperationLog 同交易
+   - 房間停用：Room -> Disabled 時必須同時保存 DisabledReason；
+             Disabled -> Open 時清除 DisabledReason
+   - 清潔狀態：無住客房間可在 Clean / NeedsCleaning 間雙向切換
+             + OperationLog 同交易
    - NoShow 不使用背景排程；訂單相關功能執行前依台灣時間補判，且不建立員工 OperationLog
    ========================================================= */
 
