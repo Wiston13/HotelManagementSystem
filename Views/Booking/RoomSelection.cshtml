@@ -101,7 +101,16 @@
         <!-- ================= 右側：訂房確認摘要卡片 ================= -->
         <div class="col-lg-4">
             <div class="card p-4 shadow-sm border-0 bg-light">
-                <h4 class="fw-bold mb-3">房型選擇</h4>
+                
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="fw-bold mb-0">房型選擇</h4>
+
+                    <span class="small text-secondary">
+                        *選擇房型不代表房間已保留
+                    </span>
+                </div>
+
 
                 <div class="d-flex justify-content-between py-2 border-bottom">
                     <span class="text-muted">分館</span>
@@ -124,13 +133,6 @@
                     <span class="text-muted h5 mb-0">總金額</span>
                     <h4 class="text-danger fw-bold mb-0" id="displayTotalPrice">NT$ 0</h4>
                 </div>
-
-
-
-                <p class="small text-secondary mb-3">
-                    <strong>提醒：</strong>選擇房型不代表房間已保留，請繼續完成訂房流程。
-                </p>
-
 
 
                 <!-- 送出表單至第三頁 (Payment) -->
