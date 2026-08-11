@@ -7,7 +7,8 @@
 }
 
 .check-out-search,
-.check-out-panel {
+.check-out-panel,
+.check-out-confirm-modal {
     border-radius: 0.9rem;
 }
 
@@ -32,6 +33,11 @@
     overflow-wrap: anywhere;
 }
 
+.check-out-action {
+    display: block;
+    width: 490px;
+}
+
 @media (max-width: 575.98px) {
     .check-out-search .card-body,
     .check-out-panel .card-header,
@@ -42,4 +48,9 @@
     .check-out-page .detail-label {
         flex-basis: 5.5rem;
     }
+
+    .check-out-action {
+        width: 100%;
+    }
+
 }
