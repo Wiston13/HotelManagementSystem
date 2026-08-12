@@ -10,6 +10,7 @@
         string r = "";
         if (s == "已成立") r = "bg-success-subtle text-success";
         else if (s == "已入住") r = "bg-info-subtle text-info";
+        else if (s == "已取消") r = "bg-danger-subtle text-danger";
         else r = "bg-secondary-subtle text-secondary";
         return r;
     }
@@ -118,19 +119,24 @@
                                 <td>0987654321</td>
                                 <td><span class="badge @BookingStatus(item.BookingStatus) px-2 py-1">@item.BookingStatus</span></td>
                                 <td class="text-end pe-4">
-                                    <button type="button" class="btn btn-sm btn-outline-primary px-3 btn-detail"
+                                    
+                                        @* <button type="button" class="btn btn-sm btn-outline-secondary px-3 btn-detail" disabled></button> *@
+                                    
+                                        <button type="button" class="btn btn-sm btn-outline-primary px-3 btn-detail"                                    
                                     data-bs-toggle="modal" 
                                     data-bs-target="#bookingDetailModal"
                                     data-bookingnum="@item.BookingNum"
                                     data-name="@item.Name"
                                     data-roomtype="@item.Roomtype"
+                                    data-createtime="@item.BookingDate"
                                     data-bookingstatus="@item.BookingStatus"
-                                    data-bookingdate="@item.BookingDate.ToString("yyyy/MM/dd")"
-                                    data-phone="0912-345-678"          @* 假設你之後擴充的假資料欄位 *@
-                                    data-createtime="2026/07/26 19:10"
-                                    data-price="NT$ 4,800">
-                                    查看
-                                    </button>                    
+                                    data-startdate="@item.StartDate.ToString("yyyy/MM/dd")"
+                                    data-enddate="@item.EndDate.ToString("yyyy/MM/dd")"
+                                    data-phone="@item.Phone"
+                                    data-price="@item.Price"> 查看
+                                </button>    
+                                                                      
+                                               
                                 </td>
                             </tr>
                         }
@@ -195,9 +201,9 @@
 
             <!-- Modal 底部按鈕 (包含取消訂單按鈕) -->
             <div class="modal-footer bg-light">
-                <button type="button" class="btn btn-outline-danger btn-sm px-3" id="cancelOrderBtn">
-                    <i class="bi bi-x-circle me-1"></i> 取消訂單
-                </button>
+                    <a id="goToCancelBtn" href="#" class="btn btn-sm btn-outline-danger">
+                        <i class="bi bi-x-circle me-1"></i> 取消訂單</a>                   
+                
                 <button type="button" class="btn btn-secondary btn-sm px-4" data-bs-dismiss="modal">關閉</button>
             </div>
 
@@ -232,6 +238,7 @@
         document.addEventListener("DOMContentLoaded", function() {
             const searchForm = document.getElementById("searchForm");
             const keyword = document.getElementById("keyword");
+            //modal帶入資料
             const bookingDetailModal =document.getElementById("bookingDetailModal");
            
             bookingDetailModal.addEventListener("show.bs.modal",function(event){
@@ -241,19 +248,38 @@
                 const name = button.getAttribute('data-name');
                 const roomtype = button.getAttribute('data-roomtype');
                 const bookingStatus = button.getAttribute('data-bookingstatus');
-                const bookingDate = button.getAttribute('data-bookingdate');
-                const phone = button.getAttribute('data-phone');
                 const createTime = button.getAttribute('data-createtime');
+                const phone = button.getAttribute('data-phone');
+                const bookingDate = button.getAttribute('data-bookingdate');
+                const startDate = button.getAttribute('data-startdate');
+                const endDate = button.getAttribute('data-enddate');
                 const price = button.getAttribute('data-price');
 
                 document.getElementById('modalBookingNum').textContent = bookingNum;
                 document.getElementById('modalName').textContent = name;
                 document.getElementById('modalRoomtype').textContent = roomtype;
                 document.getElementById('modalStatus').textContent = bookingStatus;
-                document.getElementById('modalBookingDate').textContent = bookingDate + " ~ (依實際入住為主)";
+                document.getElementById('modalBookingDate').textContent = startDate + " - " +endDate;
                 document.getElementById('modalPhone').textContent = phone;
                 document.getElementById('modalCreateTime').textContent = createTime;
                 document.getElementById('modalPrice').textContent = price;
+
+                
+
+                const goToCancelBtn = document.getElementById('goToCancelBtn');
+                console.log(bookingStatus);
+                if(bookingStatus=="已取消"){                    
+                    goToCancelBtn.classList.add("btn-outline-secondary");
+                    goToCancelBtn.classList.remove("btn-outline-danger");
+                    goToCancelBtn.href="";
+                    goToCancelBtn.disabled=true;
+                }
+                else{                    
+                    goToCancelBtn.classList.add("btn-outline-danger");
+                    goToCancelBtn.classList.remove("btn-outline-secondary");
+                    goToCancelBtn.disabled=false;
+                    goToCancelBtn.href = `/BranchBooking/BookingResult?bookingNum=${bookingNum}`;
+                }
             });
     
 
