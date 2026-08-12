@@ -37,15 +37,23 @@ namespace HotelManagementSystem.Controllers
             // =======================================================
             if (Username == "1234567890" && Password == "admin123")
             {
-                // 💡 關鍵跳轉語法：導向 HomeController 的 Index 動作（即專案首頁）
+                //  成功登入，導向您的「總管理畫面」
+                return RedirectToAction("Employees", "Staff");
+            }
+            //  一般員工 (新建立的判斷軌道)
+            else if (Username == "8888888888" && Password == "staff123")
+            {
+                // 成功登入，導向「員工專屬管理頁面」
+                //  這裡假設您有一個 EmployeeController，裡面的 Action 叫 Index
                 return RedirectToAction("Index", "Home");
             }
+            //  帳密輸入錯誤
             else
             {
-                // 帳密不正確時，回傳錯誤訊息給前端顯示
                 ViewBag.ErrorMessage = "員工帳號或密碼輸入錯誤，請重新輸入！";
                 return View();
             }
+        
         }
         [HttpPost]
         [ValidateAntiForgeryToken]

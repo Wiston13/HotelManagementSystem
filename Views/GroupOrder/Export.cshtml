@@ -1,0 +1,182 @@
+﻿@* 飯店後台：跨分館訂單資料輸出頁 *@
+@{
+    Layout = "~/Views/Shared/_ManagerLayout.cshtml";
+    ViewData["Title"] = "訂單資料輸出";
+}
+
+<div class="container py-4">
+    <h1 class="h3 fw-bold mb-2">訂單資料輸出</h1>
+    <p class="text-secondary mb-4">選擇分館及日期區間，檢視跨分館訂單並可選擇匯出完整資料</p>
+
+    <!-- 查詢條件區塊 -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <form id="exportForm" onsubmit="return false;">
+                <div class="row g-3 align-items-end">
+                    <div class="col-12 col-md-4">
+                        <label class="form-label fw-semibold">選擇分館</label>
+                        <select class="form-select" id="branchSelect">
+                            <option value="全部分館" selected>全部分館</option>
+                            <option value="台北館">台北館</option>
+                            <option value="台中館">台中館</option>
+                            <option value="高雄館">高雄館</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-5">
+                        <label class="form-label fw-semibold">日期區間</label>
+                        <div class="input-group">
+                            <input type="date" class="form-control" id="dateStart" value="2026-08-15">
+                            <span class="input-group-text bg-light text-secondary">至</span>
+                            <input type="date" class="form-control" id="dateEnd" value="2026-09-15">
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-3 d-grid">
+                        <button type="button" class="btn btn-primary py-2" id="btnSearch">查詢</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 訂單明細表格區塊 (預設隱藏) -->
+    <div class="card mb-4 shadow-sm d-none" id="resultCard">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="fw-bold mb-0 text-dark" id="totalCountText">共 0 筆</h5>
+            <button type="button" class="btn btn-outline-primary btn-sm" id="btnExport">📥 輸出訂單 csv 檔</button>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" style="font-size: 0.9rem; min-width: 1600px;">
+                <thead class="table-light">
+                    <tr>
+                        <th>訂單編號</th>
+                        <th>分館</th>
+                        <th>房型名稱</th>
+                        <th>房型編號</th>
+                        <th>訂房人姓名</th>
+                        <th>聯絡電話</th>
+                        <th>電子信箱</th>
+                        <th>入住日期</th>
+                        <th>退房日期</th>
+                        <th class="text-end">每晚價格</th>
+                        <th class="text-end">總金額</th>
+                        <th>訂單狀態</th>
+                        <th>建立時間</th>
+                        <th>取消因素</th>
+                    </tr>
+                </thead>
+                <tbody id="resultTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 查無資料提示區塊 -->
+    <div class="card mb-4 shadow-sm text-center py-5 d-none" id="noDataCard">
+        <div class="card-body">
+            <div class="text-secondary mb-3" style="font-size: 2.5rem;">🔍</div>
+            <h5 class="fw-bold mb-2">很抱歉，在此篩選條件下查無任何資料</h5>
+            <p class="text-muted small mb-0">請嘗試調整您的查詢日期或分館條件後重新查詢。</p>
+        </div>
+    </div>
+</div>
+
+<!-- 核心控制腳本 (確保不被截斷、完全體一體化) -->
+<!-- 核心控制腳本 (已移除分館 ID 備註) -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const dateStart = document.getElementById("dateStart");
+        const dateEnd = document.getElementById("dateEnd");
+        const btnSearch = document.getElementById("btnSearch");
+        const resultCard = document.getElementById("resultCard");
+        const noDataCard = document.getElementById("noDataCard");
+        const totalCountText = document.getElementById("totalCountText");
+        const resultTableBody = document.getElementById("resultTableBody");
+        const branchSelect = document.getElementById("branchSelect");
+        const btnExport = document.getElementById("btnExport");
+
+        const orderMockData = [
+            { booking_no: "BK20260815001", branch_id: 1, branch_name: "台北館", room_type_id: 101, guest_name: "陳小明", phone: "0912345678", email: "ming@example.com", check_in: "2026-08-15", check_out: "2026-08-18", room_type_snapshot: "豪華雙人房", price_snapshot: 3500.00, total_amount: 10500.00, status: "Completed", created_at: "2026-08-01 12:00:00", cancel_reason: "" },
+            { booking_no: "BK20260820002", branch_id: 1, branch_name: "台北館", room_type_id: 102, guest_name: "張美麗", phone: "0922334455", email: "mary@example.com", check_in: "2026-08-20", check_out: "2026-08-22", room_type_snapshot: "尊爵套房", price_snapshot: 6000.00, total_amount: 12000.00, status: "Paid", created_at: "2026-08-05 14:25:10", cancel_reason: "" },
+            { booking_no: "BK20260825003", branch_id: 2, branch_name: "台中館", room_type_id: 201, guest_name: "王大同", phone: "0933445566", email: "datong@example.com", check_in: "2026-08-25", check_out: "2026-08-26", room_type_snapshot: "經典單人房", price_snapshot: 2000.00, total_amount: 2000.00, status: "CheckedIn", created_at: "2026-08-10 09:15:00", cancel_reason: "" },
+            { booking_no: "BK20260901004", branch_id: 3, branch_name: "高雄館", room_type_id: 301, guest_name: "李四端", phone: "0955667788", email: "shiduan@example.com", check_in: "2026-09-01", check_out: "2026-09-03", room_type_snapshot: "海景雙人房", price_snapshot: 4000.00, total_amount: 8000.00, status: "Cancelled", created_at: "2026-08-12 18:30:22", cancel_reason: "GuestRequest" },
+            { booking_no: "BK20260910005", branch_id: 2, branch_name: "台中館", room_type_id: 202, guest_name: "趙精靈", phone: "0988776655", email: "elf@example.com", check_in: "2026-09-10", check_out: "2026-09-12", room_type_snapshot: "溫馨家庭房", price_snapshot: 5500.00, total_amount: 11000.00, status: "NoShow", created_at: "2026-08-20 11:05:43", cancel_reason: "HotelUnableToFulfill" }
+        ];
+
+        let currentFilteredData = [];
+
+        function updateDateConstraints() {
+            if (dateStart.value) { dateEnd.setAttribute("min", dateStart.value); }
+            if (dateEnd.value) { dateStart.setAttribute("max", dateEnd.value); }
+        }
+        updateDateConstraints();
+        dateStart.addEventListener("change", updateDateConstraints);
+        dateEnd.addEventListener("change", updateDateConstraints);
+
+        btnSearch.addEventListener("click", function() {
+            const sDate = dateStart.value;
+            const eDate = dateEnd.value;
+            const selectedBranch = branchSelect.value;
+
+            currentFilteredData = orderMockData.filter(item => {
+                if (item.check_in < sDate || item.check_in > eDate) return false;
+                if (selectedBranch !== "全部分館" && item.branch_name !== selectedBranch) return false;
+                return true;
+            });
+
+            resultTableBody.innerHTML = "";
+
+            if (currentFilteredData.length > 0) {
+                totalCountText.innerText = `共 ${currentFilteredData.length} 筆`;
+                currentFilteredData.forEach(item => {
+                    const tr = document.createElement("tr");
+                    let badgeClass = "text-bg-secondary";
+                    if (item.status === "Paid" || item.status === "Completed") badgeClass = "text-bg-success";
+                    if (item.status === "CheckedIn") badgeClass = "text-bg-warning";
+                    if (item.status === "Cancelled" || item.status === "NoShow") badgeClass = "text-bg-danger";
+
+                    // 這裡已經修正，移除了括號 ID
+                    tr.innerHTML = `
+                            <td class="fw-semibold text-primary">${item.booking_no}</td>
+                            <td>${item.branch_name}</td>
+                            <td>${item.room_type_snapshot}</td>
+                            <td>${item.room_type_id}</td>
+                            <td>${item.guest_name}</td>
+                            <td>${item.phone}</td>
+                            <td class="text-truncate" style="max-width: 150px;">${item.email}</td>
+                            <td>${item.check_in}</td>
+                            <td>${item.check_out}</td>
+                            <td class="text-end">$${item.price_snapshot.toFixed(2)}</td>
+                            <td class="text-end fw-semibold text-dark">$${item.total_amount.toFixed(2)}</td>
+                            <td><span class="badge ${badgeClass}">${item.status}</span></td>
+                            <td class="small text-secondary">${item.created_at}</td>
+                            <td><span class="text-danger small">${item.cancel_reason || '-'}</span></td>
+                        `;
+                    resultTableBody.appendChild(tr);
+                });
+                resultCard.classList.remove("d-none");
+                noDataCard.classList.add("d-none");
+            } else {
+                resultCard.classList.add("d-none");
+                noDataCard.classList.remove("d-none");
+            }
+        });
+
+        btnExport.addEventListener("click", function() {
+            if (currentFilteredData.length === 0) return;
+            const headers = ["訂單編號(varchar)", "分館編號(int)", "房型編號(int)", "訂房人姓名(nvarchar)", "聯絡電話(varchar)", "電子信箱(varchar)", "入住日期(date)", "退房日期(date)", "房型名稱快照(nvarchar)", "每晚價格快照(decimal)", "總金額(decimal)", "訂單狀態(varchar)", "建立時間(datetime2)", "取消因素(varchar)"];
+            const csvRows = [headers.join(",")];
+            currentFilteredData.forEach(item => {
+                const row = [`"${item.booking_no}"`, item.branch_id, item.room_type_id, `"${item.guest_name}"`, `"${item.phone}"`, `"${item.email}"`, item.check_in, item.check_out, `"${item.room_type_snapshot}"`, item.price_snapshot.toFixed(2), item.total_amount.toFixed(2), `"${item.status}"`, `"${item.created_at}"`, `"${item.cancel_reason}"`];
+                csvRows.push(row.join(","));
+            });
+            const csvContent = "\uFEFF" + csvRows.join("\n");
+            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", "GroupOrders_Export.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+    });
+</script>

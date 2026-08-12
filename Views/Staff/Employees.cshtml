@@ -1,4 +1,4 @@
-﻿@* 
+﻿@*
     頁面名稱：員工帳號管理 - 徹底修正大括號錯誤版 (Employees.cshtml)
     遵守規範：顧客端前端最低規則 v0.1
 *@
@@ -11,7 +11,7 @@
 
 <!-- 二、主要內容統一從 container py-4 開始 -->
 <div class="container py-4">
-    
+
     <!-- 三、頁面標題 -->
     <h1 class="h3 fw-bold mb-2">帳號管理</h1>
     <p class="text-secondary mb-4">管理系統員工帳號、權限設定與啟用狀態。</p>
@@ -50,14 +50,16 @@
                                 <td><span class="badge text-bg-secondary">0 總公司</span></td>
                                 <td><span class="badge text-bg-success">啟用</span></td>
                                 <td class="text-end">
-                                    <button class="btn btn-outline-primary btn-sm btn-edit" 
-                                            data-bs-toggle="modal" 
+                                    <button class="btn btn-outline-primary btn-sm btn-edit"
+                                            data-bs-toggle="modal"
                                             data-bs-target="#employeeModal"
-                                            data-name="系統管理員" 
-                                            data-account="0000000001" 
-                                            data-branch="A01" 
-                                            data-role="0" 
-                                            data-status="1">編輯</button>
+                                            data-name="系統管理員"
+                                            data-account="0000000001"
+                                            data-branch="A01"
+                                            data-role="0"
+                                            data-status="1">
+                                        編輯
+                                    </button>
                                 </td>
                             </tr>
                             <tr>
@@ -67,14 +69,16 @@
                                 <td><span class="badge text-bg-secondary">1 員工</span></td>
                                 <td><span class="badge text-bg-success">啟用</span></td>
                                 <td class="text-end">
-                                    <button class="btn btn-outline-primary btn-sm btn-edit" 
-                                            data-bs-toggle="modal" 
+                                    <button class="btn btn-outline-primary btn-sm btn-edit"
+                                            data-bs-toggle="modal"
                                             data-bs-target="#employeeModal"
-                                            data-name="張小明" 
-                                            data-account="1029384756" 
-                                            data-branch="B05" 
-                                            data-role="1" 
-                                            data-status="1">編輯</button>
+                                            data-name="張小明"
+                                            data-account="1029384756"
+                                            data-branch="B05"
+                                            data-role="1"
+                                            data-status="1">
+                                        編輯
+                                    </button>
                                 </td>
                             </tr>
                             <tr>
@@ -84,14 +88,16 @@
                                 <td><span class="badge text-bg-secondary">1 員工</span></td>
                                 <td><span class="badge text-bg-danger">停用</span></td>
                                 <td class="text-end">
-                                    <button class="btn btn-outline-primary btn-sm btn-edit" 
-                                            data-bs-toggle="modal" 
+                                    <button class="btn btn-outline-primary btn-sm btn-edit"
+                                            data-bs-toggle="modal"
                                             data-bs-target="#employeeModal"
-                                            data-name="王大同" 
-                                            data-account="5647382910" 
-                                            data-branch="C02" 
-                                            data-role="1" 
-                                            data-status="0">編輯</button>
+                                            data-name="王大同"
+                                            data-account="5647382910"
+                                            data-branch="C02"
+                                            data-role="1"
+                                            data-status="0">
+                                        編輯
+                                    </button>
                                 </td>
                             </tr>
                         </tbody>
@@ -112,7 +118,7 @@
             </div>
             <div class="modal-body">
                 <form id="employeeForm" method="post" novalidate>
-                    
+
                     <!-- 六、表單：員工姓名 -->
                     <div class="mb-3">
                         <label class="form-label" for="employeeName">

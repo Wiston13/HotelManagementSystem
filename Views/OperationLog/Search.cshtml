@@ -1,0 +1,232 @@
+﻿@* 飯店後台：基本操作紀錄查詢頁 *@
+@{
+    // 使用您的後台公版 Layout
+    Layout = "~/Views/Shared/_ManagerLayout.cshtml";
+    ViewData["Title"] = "操作紀錄";
+}
+
+<div class="container py-4">
+    <!-- 頁面標題區塊 -->
+    <h1 class="h3 fw-bold mb-2">基本操作紀錄查詢</h1>
+    <p class="text-secondary mb-4">查詢系統內各帳號的操作歷程紀錄</p>
+
+    <!-- 查詢條件區塊 (Card) -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <form id="searchForm" onsubmit="return false;">
+                <!-- 第一排：日期區間、分館、操作類型 -->
+                <div class="row g-3 mb-3">
+                    <div class="col-12 col-md-4">
+                        <label class="form-label">
+                            日期區間 <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <input type="date" class="form-control" id="dateStart" value="2026-08-10">
+                            <span class="input-group-text bg-light text-secondary">至</span>
+                            <input type="date" class="form-control" id="dateEnd" value="2026-08-11">
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                        <label class="form-label">
+                            分館 <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="branchSelect">
+                            <option value="台北館" selected>台北館</option>
+                            <option value="台中館">台中館</option>
+                            <option value="高雄館">高雄館</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                        <label class="form-label">
+                            操作類型 <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="typeSelect">
+                            <option value="全部類型" selected>全部類型</option>
+                            <option value="Check-in">Check-in</option>
+                            <option value="Check-out">Check-out</option>
+                            <option value="解除保留">解除保留</option>
+                            <option value="停用帳號">停用帳號</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 第二排：操作者、操作對象、查詢按鈕 -->
+                <div class="row g-3 align-items-end">
+                    <div class="col-12 col-md-4">
+                        <label class="form-label">操作者 <span class="text-secondary">＊選填</span></label>
+                        <input type="text" class="form-control" id="operatorInput" placeholder="姓名 / 帳號">
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                        <label class="form-label">操作對象 <span class="text-secondary">＊選填</span></label>
+                        <input type="text" class="form-control" id="targetInput" placeholder="編號 / 房號">
+                    </div>
+
+                    <div class="col-12 col-md-4 d-grid">
+                        <button type="button" class="btn btn-primary" id="btnSearch">
+                            查詢
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 查詢結果列表區塊（預設隱藏 d-none） -->
+    <div class="card mb-4 shadow-sm d-none" id="resultCard">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 20%;">時間</th>
+                        <th style="width: 20%;">分館</th>
+                        <th style="width: 20%;">操作者</th>
+                        <th style="width: 20%;">操作類型</th>
+                        <th style="width: 20%;">操作對象</th>
+                    </tr>
+                </thead>
+                <tbody id="resultTableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 查無資料的友善提示區塊（預設隱藏 d-none） -->
+    <div class="card mb-4 shadow-sm text-center py-5 d-none" id="noDataCard">
+        <div class="card-body">
+            <div class="text-secondary mb-3" style="font-size: 2.5rem;">🔍</div>
+            <h5 class="fw-bold mb-2">很抱歉，在此篩選條件下查無任何資料</h5>
+            <p class="text-muted small mb-0">請嘗試調整您的查詢日期或篩選條件後重新查詢。</p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const dateStart = document.getElementById("dateStart");
+            const dateEnd = document.getElementById("dateEnd");
+            const btnSearch = document.getElementById("btnSearch");
+            const resultCard = document.getElementById("resultCard");
+            const noDataCard = document.getElementById("noDataCard");
+            const resultTableBody = document.getElementById("resultTableBody");
+            
+            const branchSelect = document.getElementById("branchSelect");
+            const typeSelect = document.getElementById("typeSelect");
+            const operatorInput = document.getElementById("operatorInput");
+            const targetInput = document.getElementById("targetInput");
+
+            // 1. 原始模擬資料集
+            const mockData = [
+                { date: "2026-08-10", displayTime: "08/10 16:05", branch: "台北館", operator: "林怡君", type: "解除保留", target: "房間 304" },
+                { date: "2026-08-10", displayTime: "08/10 16:05", branch: "台北館", operator: "林怡君", type: "Check-in", target: "BK...018" },
+                { date: "2026-08-11", displayTime: "08/11 11:38", branch: "台北館", operator: "張雅婷", type: "Check-out", target: "BK...024" },
+                { date: "2026-08-11", displayTime: "08/11 12:10", branch: "高雄館", operator: "系統管理員", type: "停用帳號", target: "kaohsiung03" }
+            ];
+
+            // 2. 鎖定日期上限為今天（2026-08-11）
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const todayStr = `${year}-${month}-${day}`;
+
+            // 3. 核心修正：交叉防呆限制邏輯（左不變大於右，右不變小於左）
+            function updateDateConstraints() {
+                // 兩者皆不能超過今天
+                dateStart.setAttribute("max", todayStr);
+                
+                // 開始日期選了什麼，結束日期的最小值（min）就是什麼（防呆：右邊不能小於左邊）
+                if (dateStart.value) {
+                    dateEnd.setAttribute("min", dateStart.value);
+                }
+                
+                // 結束日期選了什麼，開始日期的最大值（max）就是什麼（防呆：左邊不能大於右邊）
+                if (dateEnd.value) {
+                    // 若結束日期比今天小，則開始日期最大隻能選到結束日期
+                    if (dateEnd.value < todayStr) {
+                        dateStart.setAttribute("max", dateEnd.value);
+                    } else {
+                        dateStart.setAttribute("max", todayStr);
+                    }
+                } else {
+                    dateEnd.setAttribute("max", todayStr);
+                }
+            }
+
+            // 初始執行一次，讓畫面上高亮限制立刻生效
+            updateDateConstraints();
+
+            // 當使用者手動變更日期時，立即動態調整對方的限制範圍
+            dateStart.addEventListener("change", function() {
+                // 如果使用者透過鍵盤硬打出不合法的日期，進行自動修正
+                if (dateEnd.value && dateStart.value > dateEnd.value) {
+                    dateStart.value = dateEnd.value;
+                }
+                if (dateStart.value > todayStr) {
+                    dateStart.value = todayStr;
+                }
+                updateDateConstraints();
+            });
+
+            dateEnd.addEventListener("change", function() {
+                if (dateStart.value && dateEnd.value < dateStart.value) {
+                    dateEnd.value = dateStart.value;
+                }
+                if (dateEnd.value > todayStr) {
+                    dateEnd.value = todayStr;
+                }
+                updateDateConstraints();
+            });
+
+            // 4. 搜尋與過濾繪製邏輯
+            btnSearch.addEventListener("click", function() {
+                const sDate = dateStart.value;
+                const eDate = dateEnd.value;
+                const branch = branchSelect.value;
+                const type = typeSelect.value;
+                const operator = operatorInput.value.trim().toLowerCase();
+                const target = targetInput.value.trim().toLowerCase();
+
+                // 最後安全總檢查：確保傳出的日期區間正確才執行搜尋
+                if (sDate > eDate) {
+                    alert("開始日期不能大於結束日期！");
+                    return;
+                }
+
+                const filtered = mockData.filter(item => {
+                    if (item.date < sDate || item.date > eDate) return false;
+                    if (item.branch !== branch) return false;
+                    if (type !== "全部類型" && item.type !== type) return false;
+                    if (operator && !item.operator.toLowerCase().includes(operator)) return false;
+                    if (target && !item.target.toLowerCase().includes(target)) return false;
+                    return true;
+                });
+
+                resultTableBody.innerHTML = "";
+
+                if (filtered.length > 0) {
+                    filtered.forEach(item => {
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `
+                            <td class="text-secondary">${item.displayTime}</td>
+                            <td>${item.branch}</td>
+                            <td>${item.operator}</td>
+                            <td>${item.type}</td>
+                            <td>${item.target}</td>
+                        `;
+                        resultTableBody.appendChild(tr);
+                    });
+                    resultCard.classList.remove("d-none");
+                    noDataCard.classList.add("d-none");
+                } else {
+                    // 沒資料：切換顯示
+                    resultCard.classList.add("d-none");
+                    noDataCard.classList.remove("d-none");
+                }
+            });
+        });
+    </script>
+}
