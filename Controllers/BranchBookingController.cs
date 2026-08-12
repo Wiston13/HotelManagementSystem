@@ -10,6 +10,16 @@ public class BookingData
     public string? BookingStatus { get; set; }
 }
 
+public class BookingDetail
+{
+    public string? BookingNum { get; set; }
+    public DateTime StartDate { get; set; }
+    public DateTime EndDate { get; set; }
+    public DateTime ConfirmedDate { get; set; }
+    public string? Price { get; set; }
+
+}
+
 namespace HotelManagementSystem.Controllers
 {
     
@@ -145,6 +155,8 @@ namespace HotelManagementSystem.Controllers
 
         public IActionResult BookingSearch(string keyword,string dateRange, string bookingStatus)
         {
+
+
             var allData = GetMockData();
             var query = allData.AsQueryable();
 
