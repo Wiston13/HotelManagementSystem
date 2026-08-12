@@ -33,9 +33,18 @@
 			</form>
 		</div>
 	</section>
+</div>
+<hr class="check-in-divider" />
 
-	<hr class="check-in-divider" />
+@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+{
+	<div class="alert alert-danger mt-4">
+		@Model.ErrorMessage
+	</div>
+}
 
+@if (Model.HasResult)
+{
 	<div class="row g-4">
 		<div class="col-lg-7">
 			<section class="check-in-panel card h-100 border-0 shadow-sm" aria-labelledby="stay-information-title">
@@ -44,23 +53,23 @@
 
 					<div class="check-in-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
 						<p class="detail-label text-secondary mb-0">顧客</p>
-						<p class="detail-value guest-name fw-semibold text-end mb-0">王小明</p>
+						<p class="detail-value guest-name fw-semibold text-end mb-0">@Model.BookerName</p>
 					</div>
 					<div class="check-in-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
 						<p class="detail-label text-secondary mb-0">訂房電話</p>
-						<p class="detail-value contact-phone fw-semibold text-end mb-0">0912345678</p>
+						<p class="detail-value contact-phone fw-semibold text-end mb-0">@Model.ContactPhone</p>
 					</div>
 					<div class="check-in-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
 						<p class="detail-label text-secondary mb-0">房型</p>
-						<p class="detail-value room-type fw-semibold text-end mb-0">標準雙人房</p>
+						<p class="detail-value room-type fw-semibold text-end mb-0">@Model.RoomTypeName</p>
 					</div>
 					<div class="check-in-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
 						<p class="detail-label text-secondary mb-0">住宿</p>
-						<p class="detail-value during-the-stay fw-semibold text-end mb-0">08/10 — 08/12</p>
+						<p class="detail-value during-the-stay fw-semibold text-end mb-0">@Model.CheckInDate.ToString() — @Model.CheckOutDate.ToString()</p>
 					</div>
 					<div class="check-in-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
 						<p class="detail-label text-secondary mb-0">訂單狀態</p>
-						<p class="detail-value booking-status fw-semibold text-end mb-0">已成立</p>
+						<p class="detail-value booking-status fw-semibold text-end mb-0">@Model.BookingStatus</p>
 					</div>
 				</div>
 			</section>
@@ -93,26 +102,27 @@
 			</section>
 		</div>
 	</div>
-</div>
-
-<div class="modal fade" id="checkInConfirmationModal" tabindex="-1" aria-labelledby="checkInConfirmationModalLabel" aria-hidden="true">
-	<div class="modal-dialog modal-dialog-centered">
-		<div class="modal-content check-in-confirm-modal border-0 shadow">
-			<div class="modal-header">
-				<h2 class="modal-title h5 fw-bold" id="checkInConfirmationModalLabel">確認入住</h2>
-				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
-			</div>
-			<div class="modal-body">
-				<p class="mb-2">請確認入住前作業是否已完成。</p>
-				<p class="mb-0 text-secondary">是否確認指派此房間給旅客辦理入住？</p>
-			</div>
-			<div class="modal-footer">
-				<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
-				<button type="button" class="btn btn-primary" id="confirmCheckInButton" data-bs-dismiss="modal">確定</button>
+	
+	<div class="modal fade" id="checkInConfirmationModal" tabindex="-1" aria-labelledby="checkInConfirmationModalLabel" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content check-in-confirm-modal border-0 shadow">
+				<div class="modal-header">
+					<h2 class="modal-title h5 fw-bold" id="checkInConfirmationModalLabel">確認入住</h2>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+				</div>
+				<div class="modal-body">
+					<p class="mb-2">請確認入住前作業是否已完成。</p>
+					<p class="mb-0 text-secondary">是否確認指派此房間給旅客辦理入住？</p>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+					<button type="button" class="btn btn-primary" id="confirmCheckInButton" data-bs-dismiss="modal">確定</button>
+				</div>
 			</div>
 		</div>
 	</div>
-</div>
+}
+
 
 @section Scripts {
 	<script>
