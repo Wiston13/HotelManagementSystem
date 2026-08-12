@@ -42,10 +42,20 @@
 
     <!-- 主體容器：使用 CSS Grid 或 Flex 讓側邊欄與右側內容並排 -->
     <div class="container-fluid flex-grow-1 d-flex flex-column p-0">
+        <div class="d-md-none p-3 border-bottom bg-white">
+            <button class="btn btn-outline-primary"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#branchSidebar"
+                    aria-controls="branchSidebar"
+                    aria-expanded="false">
+                <i class="bi bi-list me-1"></i>功能選單
+            </button>
+        </div>
         <div class="row g-0 flex-grow-1">
 
             <!-- 左側邊欄 (Sidebar) -->
-            <nav class="col-md-3 col-lg-2 d-md-block bg-white border-end collapse p-3" id="adminSidebar">
+            <nav class="col-md-3 col-lg-2 d-md-block bg-white border-end collapse p-3" id="branchSidebar">
                 <div class="position-sticky pt-3">
                     <h5 class="sidebar-heading px-3 mb-3 text-primary fw-bold">
                         @branchName 旅館管理系統
@@ -87,7 +97,10 @@
                 <div class="d-flex justify-content-between align-items-center pb-3 mb-4 border-bottom">
                     <h2 class="h4 mb-0 fw-bold">@pageTitle</h2>
                     <div class="text-secondary small">
-                        <i class="bi bi-person-circle me-1"></i> @branchName・櫃檯人員・@staffName
+                        <i class="bi bi-person-circle me-1"></i> @branchName・櫃檯人員 @if (!string.IsNullOrWhiteSpace(staffName))
+                        {
+                            <text>・@staffName</text>
+                        }
                     </div>
                 </div>
 
