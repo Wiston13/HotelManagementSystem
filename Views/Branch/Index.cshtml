@@ -8,7 +8,7 @@
         <h3 class="fw-bold mb-1">分館管理</h3>
         <p class="text-muted small mb-0">管理員可查詢、新增及修改分館必要資料（設定接受或停止新訂房）</p>
     </div>
-    <!-- 新增分館按鈕：觸發 Modal 並傳送 action="add" -->
+    <!-- 新增分館按鈕 -->
     <button class="btn btn-primary px-4" data-bs-toggle="modal" data-bs-target="#branchModal" onclick="openBranchModal('add')">
         <i class="bi bi-plus-lg me-1"></i>新增分館
     </button>
@@ -20,7 +20,7 @@
             <thead class="table-light">
                 <tr>
                     <th class="ps-4">分館名稱</th>
-                    <th>區域</th>
+                    <th>區域 (縣市)</th>
                     <th>地址</th>
                     <th>聯絡電話</th>
                     <th>接受新訂房</th>
@@ -31,18 +31,17 @@
                 <!-- 示範資料列 1 -->
                 <tr>
                     <td class="fw-bold ps-4">台北館</td>
-                    <td><span class="badge bg-light text-dark border">北部</span></td>
+                    <td><span class="badge bg-light text-dark border">台北市</span></td>
                     <td>台北市中正區...</td>
                     <td>0223456789</td>
                     <td><span class="badge bg-success">接受</span></td>
                     <td class="text-end pe-4">
-                        <!-- 編輯按鈕：透過 data-* 屬性將該筆資料傳入 JavaScript -->
                         <button class="btn btn-link text-primary p-0 text-decoration-none"
                                 data-bs-toggle="modal"
                                 data-bs-target="#branchModal"
                                 data-id="1"
                                 data-name="台北館"
-                                data-region="北部"
+                                data-region="台北市"
                                 data-phone="0223456789"
                                 data-address="台北市中正區..."
                                 data-accepts="true"
@@ -56,7 +55,7 @@
                 <!-- 示範資料列 2 -->
                 <tr>
                     <td class="fw-bold ps-4">高雄館</td>
-                    <td><span class="badge bg-light text-dark border">南部</span></td>
+                    <td><span class="badge bg-light text-dark border">高雄市</span></td>
                     <td>高雄市前金區...</td>
                     <td>0721234567</td>
                     <td><span class="badge bg-secondary">停止</span></td>
@@ -66,7 +65,7 @@
                                 data-bs-target="#branchModal"
                                 data-id="2"
                                 data-name="高雄館"
-                                data-region="南部"
+                                data-region="高雄市"
                                 data-phone="0721234567"
                                 data-address="高雄市前金區..."
                                 data-accepts="false"
@@ -87,12 +86,11 @@
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <!-- 動態顯示 Modal 標題 -->
                 <h5 class="modal-title fw-bold" id="branchModalTitle">分館資料維護</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="branchForm">
+                <form id="branchForm" asp-controller="Branch" asp-action="Save" method="post">
                     <!-- 隱藏欄位：儲存 PK (BranchId) -->
                     <input type="hidden" id="branchId" name="BranchId" value="0">
 
@@ -102,8 +100,9 @@
                             <input type="text" class="form-control" id="branchName" name="BranchName" required placeholder="例如：台北館">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">區域</label>
-                            <input type="text" class="form-control" id="region" name="Region" placeholder="例如：北部、中部、南部">
+                            <label class="form-label fw-bold">區域 (縣市)</label>
+                            <!-- 僅提醒輸入縣市 -->
+                            <input type="text" class="form-control" id="region" name="Region" placeholder="例如：台北市、台中市（僅填縣市）">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">聯絡電話 <span class="text-danger">*</span></label>
@@ -133,7 +132,7 @@
             </div>
             <div class="modal-footer justify-content-center border-0 pb-4">
                 <button type="button" class="btn btn-outline-secondary px-4 me-2" data-bs-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-primary px-4" id="btnSaveBranch">儲存變更</button>
+                <button type="button" class="btn btn-primary px-4" id="btnSaveBranch" onclick="confirmAndSubmit()">儲存變更</button>
             </div>
         </div>
     </div>
@@ -141,21 +140,21 @@
 
 @section Scripts {
     <script>
-        // 處理 Modal 彈出時的 logic (區分新增或編輯)
+        let currentMode = 'add';
+
         function openBranchModal(mode, btnElement = null) {
+            currentMode = mode;
             const modalTitle = document.getElementById('branchModalTitle');
             const saveBtn = document.getElementById('btnSaveBranch');
             const form = document.getElementById('branchForm');
 
             if (mode === 'add') {
-                // 新增模式：設定標題為「新增分館」、按鈕文字改為「新增分館」、清空欄位、PK設為 0
                 modalTitle.textContent = '新增分館';
                 saveBtn.textContent = '新增分館';
                 form.reset();
                 document.getElementById('branchId').value = '0';
                 document.getElementById('acceptsNewBookings').value = 'true';
             } else if (mode === 'edit' && btnElement) {
-                // 編輯模式：設定標題為「編輯分館資料」、按鈕文字改為「儲存變更」、抓取資料並塞回表單
                 modalTitle.textContent = '編輯分館資料';
                 saveBtn.textContent = '儲存變更';
 
@@ -167,6 +166,45 @@
                 document.getElementById('acceptsNewBookings').value = btnElement.getAttribute('data-accepts') || 'true';
                 document.getElementById('imageUrl').value = btnElement.getAttribute('data-imageurl') || '';
                 document.getElementById('description').value = btnElement.getAttribute('data-description') || '';
+            }
+        }
+
+        function confirmAndSubmit() {
+            const form = document.getElementById('branchForm');
+
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const name = document.getElementById('branchName').value;
+            const region = document.getElementById('region').value || '未填寫';
+            const phone = document.getElementById('phone').value;
+            const address = document.getElementById('address').value;
+            const accepts = document.getElementById('acceptsNewBookings').value === 'true' ? '接受新訂房' : '停止新訂房';
+
+            let message = '';
+
+            if (currentMode === 'add') {
+                message = `【確認新增分館】\n\n` +
+                    `確定要新增以下資料嗎？\n` +
+                    `• 分館名稱：${name}\n` +
+                    `• 區域：${region}\n` +
+                    `• 聯絡電話：${phone}\n` +
+                    `• 分館地址：${address}\n` +
+                    `• 訂房設定：${accepts}`;
+            } else {
+                message = `【確認修改分館】\n\n` +
+                    `確定要儲存【${name}】的變更嗎？\n` +
+                    `• 分館名稱：${name}\n` +
+                    `• 區域：${region}\n` +
+                    `• 聯絡電話：${phone}\n` +
+                    `• 分館地址：${address}\n` +
+                    `• 訂房設定：${accepts}`;
+            }
+
+            if (confirm(message)) {
+                form.submit();
             }
         }
     </script>

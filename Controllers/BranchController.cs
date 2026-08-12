@@ -4,22 +4,30 @@ namespace HotelManagementSystem.Controllers
 {
     public class BranchController : Controller
     {
-        // 1. 分館管理
-        public IActionResult Branch()
+        // GET: /Branch/ 或 /Branch/Index
+        // 顯示分館管理主頁面
+        [HttpGet]
+        public IActionResult Index()
         {
-            return View(); 
+            return View(); // 對應 Views/Branch/Index.cshtml
         }
 
-        // 2. 房型與固定價格管理
-        public IActionResult Price()
+        // POST: /Branch/Save
+        // 處理新增或編輯分館資料
+        [HttpPost]
+        public IActionResult Save(int branchId, string branchName, string? region, string phone, string address, bool acceptsNewBookings, string? imageUrl, string? description)
         {
-            return View(); 
-        }
+            if (branchId == 0)
+            {
+                // TODO: 執行「新增分館」資料庫邏輯
+            }
+            else
+            {
+                // TODO: 執行「修改分館」資料庫邏輯
+            }
 
-        // 3. 房間管理
-        public IActionResult Rooms()
-        {
-            return View(); 
+            // 儲存完成後重導向回主頁面
+            return RedirectToAction(nameof(Index));
         }
     }
 }
