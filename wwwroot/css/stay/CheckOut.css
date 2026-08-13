@@ -1,0 +1,56 @@
+/* Check-out page */
+.check-out-page {
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding-bottom: 2rem;
+}
+
+.check-out-search,
+.check-out-panel,
+.check-out-confirm-modal {
+    border-radius: 0.9rem;
+}
+
+.check-out-search {
+    max-width: 960px;
+}
+
+.check-out-page .check-out-detail-row {
+    border-bottom: 1px solid var(--bs-border-color-translucent);
+}
+
+.check-out-page .check-out-detail-row:first-child {
+    padding-top: 0;
+}
+
+.check-out-page .detail-label {
+    flex: 0 0 6rem;
+}
+
+.check-out-page .detail-value {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.check-out-action {
+    display: block;
+    width: 490px;
+}
+
+@media (max-width: 575.98px) {
+    .check-out-search .card-body,
+    .check-out-panel .card-header,
+    .check-out-panel .card-body {
+        padding: 1.25rem;
+    }
+
+    .check-out-page .detail-label {
+        flex-basis: 5.5rem;
+    }
+
+    .check-out-action {
+        width: 100%;
+    }
+
+}

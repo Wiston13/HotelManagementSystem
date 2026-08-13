@@ -1,5 +1,7 @@
 ﻿@{
-    string? controller = @ViewContext.RouteData.Values["controller"]!.ToString();
-    // 到時決定Controller後做判斷
-     Layout = "_CustomerLayout";
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+
+    Layout = controller is "EmployeeHome" or "Stay" or "RoomStatus"
+        ? "_BranchLayout"
+        : "_CustomerLayout";
 }
