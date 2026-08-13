@@ -30,7 +30,7 @@
                 </div>
                 <div class="card-body">
                     <!-- 九、表格與狀態：表格統一 -->
-                    <table class="table table-hover align-middle">
+                    <table class="table table-hover align-middle" id="employeeTable">
                         <thead>
                             <tr>
                                 <th>員工姓名</th>
@@ -133,7 +133,8 @@
                         <label class="form-label" for="employeeAccount">
                             員工帳號 (10位數字) <span class="text-danger">*</span>
                         </label>
-                        <input class="form-control" type="text" id="employeeAccount" required pattern="\d{10}" maxlength="10" placeholder="例如：1029384756">
+                        <!-- 加上 readonly 防止使用者不小心修改到自動生成的流水號 -->
+                        <input class="form-control" type="text" id="employeeAccount" required pattern="\d{10}" maxlength="10" placeholder="系統自動生成中..." readonly>
                         <div class="invalid-feedback">請輸入10位數字的員工帳號。</div>
                     </div>
 
@@ -155,19 +156,6 @@
                         <div class="invalid-feedback">請輸入分館編號。</div>
                     </div>
 
-                    <!-- 六、表單：權限 -->
-                    <div class="mb-3">
-                        <label class="form-label" for="permissionRole">
-                            權限設定 <span class="text-danger">*</span>
-                        </label>
-                        <select class="form-select" id="permissionRole" required>
-                            <option value="" selected disabled>請選擇權限</option>
-                            <option value="0">0 總公司</option>
-                            <option value="1">1 員工</option>
-                        </select>
-                        <div class="invalid-feedback">請選擇帳號權限。</div>
-                    </div>
-
                     <!-- 六、表單：啟用狀態 -->
                     <div class="mb-4">
                         <label class="form-label" for="accountStatus">
@@ -179,18 +167,12 @@
                         </select>
                         <div class="invalid-feedback">請選擇啟用狀態。</div>
                     </div>
-
-                    <!-- 五、按鈕：主要操作與次要操作 -->
-                    <div class="row g-2 pt-2 border-top">
-                        <div class="col-6">
-                            <button type="button" class="btn btn-outline-primary w-100" data-bs-dismiss="modal">取消</button>
-                        </div>
-                        <div class="col-6">
-                            <button type="submit" class="btn btn-primary w-100">儲存</button>
-                        </div>
-                    </div>
-
+                    
                 </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="btnSaveEmployee">儲存</button>
             </div>
         </div>
     </div>
@@ -198,54 +180,91 @@
 
 @section Scripts {
     <script>
-        // 十、JavaScript 限制：改用標準事件監聽器，絕不混用 C# 程式碼區塊
+        document.addEventListener("DOMContentLoaded", function () {
+            const btnCreateNew = document.getElementById("btnCreateNew");
+            const employeeAccountInput = document.getElementById("employeeAccount");
+            const modalTitle = document.getElementById("employeeModalLabel");
+            const employeeForm = document.getElementById("employeeForm");
 
-        // 點擊新增員工按鈕時
-        document.getElementById('btnCreateNew').addEventListener('click', function() {
-            var form = document.getElementById('employeeForm');
-            form.reset();
-            form.classList.remove('was-validated');
-            document.getElementById('employeeModalLabel').innerText = "新增員工資料";
-            document.getElementById('employeeAccount').disabled = false;
-        });
-
-        // 點擊編輯員工按鈕時：改用事件代理機制 (Event Delegation) 讀取 data-* 屬性
-        document.querySelectorAll('.btn-edit').forEach(function(button) {
-            button.addEventListener('click', function() {
-                var form = document.getElementById('employeeForm');
-                form.classList.remove('was-validated');
-                document.getElementById('employeeModalLabel').innerText = "編輯員工資料";
-
-                // 從按鈕的 data-* 屬性安全取值
-                document.getElementById('employeeName').value = this.getAttribute('data-name');
-                document.getElementById('employeeAccount').value = this.getAttribute('data-account');
-                document.getElementById('employeeAccount').disabled = true; // 帳號不開放修改
-                document.getElementById('branchId').value = this.getAttribute('data-branch');
-                document.getElementById('permissionRole').value = this.getAttribute('data-role');
-                document.getElementById('accountStatus').value = this.getAttribute('data-status');
-                document.getElementById('employeePassword').value = "********";
-            });
-        });
-
-        // 表單送出驗證
-        document.getElementById('employeeForm').addEventListener('submit', function(event) {
-            var form = event.target;
-
-            if (!form.checkValidity()) {
-                event.preventDefault();
-                event.stopPropagation();
-            } else {
-                event.preventDefault();
-                alert('表單驗證成功！資料已備妥送出。');
-
-                var modalEl = document.getElementById('employeeModal');
-                var modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-                modal.hide();
+            // 1. 監聽「+ 新增員工」按鈕點擊事件
+            if (btnCreateNew) {
+                btnCreateNew.addEventListener("click", function () {
+                    // 切換彈窗標題為新增
+                    modalTitle.innerText = "新增員工資料";
+                    // 清空表單舊資料
+                    employeeForm.reset();
+                    
+                    // 【關鍵修改】設定帳號輸入框為 disabled，使其外觀變灰且完全無法點擊、修改
+                    employeeAccountInput.disabled = true;
+                    
+                    // 計算並自動帶入 10 碼民國年流水號
+                    employeeAccountInput.value = generateNextSerialNumber();
+                });
             }
 
-            form.classList.add('was-validated');
-        }, false);
+            // 2. 監聽表格中所有「編輯」按鈕
+            const editButtons = document.querySelectorAll(".btn-edit");
+            editButtons.forEach(btn => {
+                btn.addEventListener("click", function () {
+                    modalTitle.innerText = "編輯員工資料";
+                    
+                    // 編輯時同樣將帳號設為 disabled 反灰不可修改
+                    employeeAccountInput.disabled = true; 
+                    
+                    // 帶入原本該列員工的資料
+                    document.getElementById("employeeName").value = this.getAttribute("data-name") || "";
+                    employeeAccountInput.value = this.getAttribute("data-account") || "";
+                    document.getElementById("branchId").value = this.getAttribute("data-branch") || "";
+                    document.getElementById("accountStatus").value = this.getAttribute("data-status") || "1";
+                    document.getElementById("employeePassword").value = "********"; 
+                });
+            });
+
+            /**
+             * 核心函式：自動生成下一個 10 碼民國年當日流水號 (格式如：1150813001)
+             */
+            function generateNextSerialNumber() {
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const day = String(today.getDate()).padStart(2, '0');
+
+                // 轉為 3 碼民國年
+                const taiwanYear = String(year - 1911).padStart(3, '0');
+                const datePrefix = `${taiwanYear}${month}${day}`;
+
+                // 撈取目前畫面表格中最大尾數
+                const rows = document.querySelectorAll("#employeeTable tbody tr");
+                let maxSequence = 0;
+
+                rows.forEach(row => {
+                    if (row.cells && row.cells[1]) {
+                        const accountText = row.cells[1].innerText.trim();
+                        if (accountText.startsWith(datePrefix) && accountText.length === 10) {
+                            const seq = parseInt(accountText.substring(7, 10), 10);
+                            if (!isNaN(seq) && seq > maxSequence) {
+                                maxSequence = seq;
+                            }
+                        }
+                    }
+                });
+
+                const nextSequenceStr = String(maxSequence + 1).padStart(3, '0');
+                return `${datePrefix}${nextSequenceStr}`;
+            }
+
+            // 3. 【表單送出防呆】因為欄位設為 disabled 後，表單 submit 時預設不會傳送該欄位值給後端
+            // 必須在點擊「儲存」送出前，短暫解除 disabled，或者透過隱藏欄位傳送
+            const btnSaveEmployee = document.getElementById("btnSaveEmployee");
+            if (btnSaveEmployee) {
+                btnSaveEmployee.addEventListener("click", function () {
+                    // 送出前解除鎖定，確保後端控制器 (Controller) 能順利接收到 employeeAccount 的值
+                    employeeAccountInput.disabled = false;
+                    
+                    // 執行表單送出 (如果你是用 Ajax 送，也可以直接在 Ajax 裡抓 value)
+                    employeeForm.submit();
+                });
+            }
+        });
     </script>
 }
-
-            
