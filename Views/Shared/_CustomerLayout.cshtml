@@ -12,6 +12,9 @@
 
     var isBookingLookupPage =
         currentController == "Booking" && currentAction == "Lookup";
+
+    var isGuestGuidePage = 
+        currentController == "Home" && currentAction == "GuestGuide";
 }
 
 <!DOCTYPE html>
@@ -84,6 +87,14 @@
                                asp-controller="Booking"
                                asp-action="Lookup">
                                 訂單查詢
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link @(isGuestGuidePage ? "active fw-semibold" : "")"
+                                asp-controller="Home"
+                                asp-action="GuestGuide">
+                                房客須知
                             </a>
                         </li>
 

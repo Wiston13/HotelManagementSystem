@@ -1,6 +1,15 @@
 ﻿@{
+    Layout = "_CustomerLayout";
+}
+
+@{
     ViewData["Title"] = "Home Page";
 }
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/home/Index.css" asp-append-version="true" />
+}
+
 
 @functions {
     public class HotelItem
@@ -210,8 +219,8 @@
 
                     <!-- 選擇日期 (佔 4 份) -->
                     <div class="col-md-4">
-                        <label class="form-label text-muted small">入住日期</label>
-                        <input type="text" id="dateTime" class="form-control" value="" placeholder="選擇入住日期"
+                        <label class="form-label text-muted small">入住日期－退房日期</label>
+                        <input type="text" id="dateTime" class="form-control" value="" placeholder="選擇入住與退房日期"
                                style="">
                     </div>
 
@@ -219,9 +228,9 @@
                     
                     <!-- 人數 (佔 2 份) -->
                     <div class="col-md-2">
-                        <label class="form-label text-muted small">入住人數(房型)</label>
+                        <label class="form-label text-muted small">房型人數</label>
                         <select class="form-select" id="RoomSelect">
-                            <option value="" disabled selected hidden>選擇房型</option>
+                            <option value="" disabled selected hidden>選擇房型人數</option>
                             <option value="" disabled >請先選擇分館</option>
                             
                         </select>
@@ -365,7 +374,7 @@
         let selectedHotel = this.value;
         if (!selectedHotel) return;
 
-        RoomSelect.innerHTML = '<option value="" disabled selected hidden>選擇房型</option>';
+        RoomSelect.innerHTML = '<option value="" disabled selected hidden>選擇房型人數</option>';
         
         let roomArray = Array.from(validRoom);
         
@@ -424,115 +433,6 @@
     });
 </script>
 
-
-<!--     以下為首頁區        -->
-<!--          css            -->
-<style>
-
-    /* 確保所有分館圖片高度一致，自動裁切不會變形 */
-    .branch-img-trigger {
-        object-fit: cover;
-        height: 250px;
-        cursor: pointer;
-        transition: transform 0.3s ease, opacity 0.3s ease;
-    }
-
-        .branch-img-trigger:hover {
-            transform: scale(1.02);
-            opacity: 0.9;
-        }
-
-    /* 詳細介紹區塊的大圖 */
-    .detail-img-cover {
-        object-fit: cover;
-        height: 400px;
-        width: 100%;
-    }
-
-    /* 半透明 X 關閉按鈕 */
-    .close-detail-btn {
-        position: absolute;
-        top: 15px;
-        left: 15px;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background-color: rgba(0, 0, 0, 0.4);
-        color: white;
-        border: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        z-index: 10;
-        transition: background-color 0.3s;
-    }
-
-        .close-detail-btn:hover {
-            background-color: rgba(0, 0, 0, 0.7);
-        }
-
-    /* 讓按鈕容器維持適當內距，避免焦點外框被切掉 */
-    .region-wrapper {
-        position: relative;
-        padding: 0 40px; /* 左右留空間給絕對定位的箭頭 */
-    }
-
-    /* 滾動區域 */
-    .region-scroll {
-        display: flex;
-        gap: 12px;
-        overflow-x: auto;
-        scrollbar-width: none; /* Firefox */
-        -ms-overflow-style: none; /* IE and Edge */
-        scroll-behavior: smooth;
-        padding: 6px 4px; /* 上下留點空間給 focus 的藍色外框 */
-    }
-
-        .region-scroll::-webkit-scrollbar {
-            display: none; /* Chrome, Safari */
-        }
-
-        .region-scroll .btn {
-            flex: 0 0 calc(25% - 11px); /* 4個一排：25% 減掉間距分攤 */
-            min-width: 140px; /* 手機或小螢幕時保持最小寬度，啟用水平滾動 */
-            white-space: nowrap;
-        }
-
-    /* 左右箭頭按鈕絕對定位在兩側 */
-    .scroll-arrow {
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        z-index: 5;
-        width: 38px;
-        height: 38px;
-        border-radius: 50%;
-        background-color: #ffffff;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-        border: 1px solid #dee2e6;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: opacity 0.3s;
-    }
-
-        .scroll-arrow.left-arrow {
-            left: 0;
-        }
-
-        .scroll-arrow.right-arrow {
-            right: 0;
-        }
-
-        /* 隱藏時的狀態 */
-        .scroll-arrow.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-</style>
 
 <!--      html       -->
 
