@@ -28,16 +28,16 @@
 						<small class="text-secondary fw-normal ms-1">請輸入完整訂單編號（英文字母區分大小寫）。</small>
 
 						<input type="text" class="form-control" id="orderNo" placeholder="例如：BK20260810018" />
-						
+
 					</div>
 
 					<div class="col-12 col-lg-5">
 						<label class="form-label">聯絡電話<span class="text-danger">*</span></label>
-						<input type="text" class="form-control" id="phone" placeholder="例如：0912345678"/>
-						
+						<input type="text" class="form-control" id="phone" placeholder="例如：0912345678" />
+
 					</div>
 
-					<div class="col-12 col-lg-2 d-grid">                        
+					<div class="col-12 col-lg-2 d-grid">
 						<button type="button" class="btn btn-primary" id="btnSearch">查詢</button>
 					</div>
 
@@ -64,8 +64,6 @@
 
 	</div>
 	<!-- end 搜尋區塊 -->
-
-
 	<!-- "查無資料"顯示區 -->
 	<div id="noResult" class="alert alert-warning mt-4 d-none">查無符合的訂單資料！</div>
 
@@ -73,7 +71,7 @@
 	<!-- 查詢結果顯示區 -->
 	<div class="card mt-4 d-none" id="orderResult">
 
-		<div class="card-header d-flex justify-content-between align-items-center">			
+		<div class="card-header d-flex justify-content-between align-items-center">
 			<!-- 訂單編號 -->
 			<span class="fw-semibold" id="resultOrderNo"></span>
 			<!-- 訂單狀態 -->
@@ -86,7 +84,7 @@
 
 				<div class="col-12">
 					<div class="row border-bottom pb-2">
-						<div class="col-md-4 text-secondary">分館／房型</div>						
+						<div class="col-md-4 text-secondary">分館／房型</div>
 						<!-- 顯示 預訂分館．房型 區塊 -->
 						<div class="col-md-8 fw-semibold text-md-end" id="resultRoom"></div>
 					</div>
@@ -120,8 +118,8 @@
 					</div>
 				</div>
 
-			</div>        
-		
+			</div>
+
 		</div>
 
 
@@ -141,35 +139,35 @@
 
 
 
-@section Styles{
+@section Styles {
 
 	<style>
-		/* 
-		筆記：Bootstrap 的 invalid-feedback 預設是 display:none，顯示錯誤訊息時會讓輸入框高度改變（兩個輸入框和查詢按鈕無法對齊），
-		所以改成 -> 預留錯誤訊息空間、隱藏文字，驗證失敗時再顯示文字。
-		*/
+		/*
+						筆記：Bootstrap 的 invalid-feedback 預設是 display:none，顯示錯誤訊息時會讓輸入框高度改變（兩個輸入框和查詢按鈕無法對齊），
+						所以改成 -> 預留錯誤訊息空間、隱藏文字，驗證失敗時再顯示文字。
+						*/
 
 
 		/* ps. 錯誤訊息 --> class="invalid-feedback" */
 
 		.invalid-feedback {
-			display: block;      
-			min-height: 24px;    /* 預留錯誤訊息高度 */
-			visibility: hidden;  /* 預設隱藏訊息文字 */
+			display: block;
+			min-height: 24px; /* 預留錯誤訊息高度 */
+			visibility: hidden; /* 預設隱藏訊息文字 */
 		}
 
-		/* ps. 驗證失敗時：class="invalid-feedback show" */
+			/* ps. 驗證失敗時：class="invalid-feedback show" */
 
-		.invalid-feedback.show {
-			visibility: visible;
-		}
+			.invalid-feedback.show {
+				visibility: visible;
+			}
 	</style>
 
 }
 
 
 
-@section Scripts{
+@section Scripts {
 
 	<script>
 
@@ -184,7 +182,7 @@
 				checkOut: "2026/08/12",
 				customer: "王小明",
 				total: 4800,
-				status: "已成立"
+				status: "已付款"
 			},
 			{
 				orderNo: "BK20260810019",
@@ -200,7 +198,7 @@
 		];
 
 		const orderNoPattern = /^[A-Za-z0-9]+$/;  // 訂單編號格式驗證（僅允許英數字）
-		const phonePattern = /^[0-9\-\s]+$/;  // 聯絡電話格式驗證（允許數字、+、-、()、空格）
+		const phonePattern = /^[0-9\-\s]+$/;  // 聯絡電話格式驗證（允許數字、-、空格）
 
 
 		// 將聯絡電話中的非數字字元移除，僅保留數字
@@ -213,10 +211,10 @@
 		function validateOrderNo() {
 			const orderNo = document.getElementById("orderNo");
 			const orderError = document.getElementById("orderError");
-			
+
 			// 取得輸入值，移除前後空白
 			const value = orderNo.value.trim();
-			
+
 			// 驗證是否為空值
 			if (value === "") {
 				orderNo.classList.add("is-invalid");
@@ -224,7 +222,7 @@
 				orderError.classList.add("show");
 				return false;
 			}
-			
+
 			// 驗證是否符合訂單編號格式
 			if (!orderNoPattern.test(value)) {
 				orderNo.classList.add("is-invalid");
@@ -246,10 +244,10 @@
 		function validatePhone() {
 			const phone = document.getElementById("phone");
 			const phoneError = document.getElementById("phoneError");
-			
+
 			// 取得輸入值，移除前後空白
 			const value = phone.value.trim();
-			
+
 			// 驗證是否為空值
 			if (value === "") {
 				phone.classList.add("is-invalid");
@@ -257,7 +255,7 @@
 				phoneError.classList.add("show");
 				return false;
 			}
-			
+
 			// 驗證是否符合聯絡電話格式
 			if (!phonePattern.test(value)) {
 				phone.classList.add("is-invalid");
@@ -269,7 +267,7 @@
 			// 輸入框驗證通過
 			phone.classList.remove("is-invalid");  // 移除錯誤樣式
 			phoneError.classList.remove("show");  // 隱藏錯誤訊息
-			
+
 			// 回傳驗證成功
 			return true;
 		}
@@ -281,7 +279,7 @@
 		function clearResult() {
 			const result = document.getElementById("orderResult");
 			const noResult = document.getElementById("noResult");
-	
+
 			// 隱藏查詢成功和查無資料區塊
 			result.classList.add("d-none");
 			noResult.classList.add("d-none");
@@ -301,7 +299,7 @@
 		// 根據訂單狀態設定 Bootstrap Badge 樣式
 		function getStatusBadgeClass(status) {
 			switch (status) {
-				case "已成立":
+				case "已付款":
 					return "text-bg-success";
 				case "已取消":
 					return "text-bg-danger";
@@ -317,13 +315,13 @@
 			document.getElementById("resultOrderNo").textContent = "訂單 " + order.orderNo;
 
 			// 設定訂單狀態顯示
-			const statusBadge = document.getElementById("resultStatus");    
-			statusBadge.textContent = order.status;  // 設定文字    
-			statusBadge.className = "badge";  // 移除舊顏色    
+			const statusBadge = document.getElementById("resultStatus");
+			statusBadge.textContent = order.status;  // 設定文字
+			statusBadge.className = "badge";  // 移除舊顏色
 			statusBadge.classList.add(  // 加入新的顏色
 				getStatusBadgeClass(order.status)
 			);
-			
+
 			// 將訂單資料顯示到畫面
 			document.getElementById("resultRoom").textContent = order.branch + "・" + order.roomType;
 			document.getElementById("resultDate").textContent = order.checkIn + " - " + order.checkOut;
@@ -348,16 +346,16 @@
 
 
 		// 查詢按鈕點擊事件
-		document.getElementById("btnSearch").addEventListener("click", function (e) {
+		document.getElementById("btnSearch").addEventListener("click", function(e) {
 			e.preventDefault(); // 防止表單送出後重新整理頁面
 
 			let isValid = true;
-			
+
 			// 訂單編號輸入框驗證失敗
 			if (!validateOrderNo()) {
 				isValid = false;
 			}
-			
+
 			// 聯絡電話輸入框驗證失敗
 			if (!validatePhone()) {
 				isValid = false;
@@ -367,14 +365,14 @@
 			if (!isValid) {
 				clearResult();  // 清空並隱藏結果區塊
 				return;
-			}	
+			}
 
 			// 清除上一次查詢結果
 			clearResult();
 
 			// 將輸入的電話轉為純數字
 			const inputPhone = normalizePhone(phone.value);
-			
+
 			// 比對訂單編號及聯絡電話是否符合（ps.輸入的電話、資料庫取得的電話一律轉成純數字再比對）　
 			const order = orderData.find(x =>
 				x.orderNo === orderNo.value.trim() &&
@@ -396,12 +394,12 @@
 
 
 		// 訂單編號輸入時即時驗證
-		document.getElementById("orderNo").addEventListener("input", function () {
+		document.getElementById("orderNo").addEventListener("input", function() {
 			validateOrderNo();
 		});
 
 		// 聯絡電話輸入時即時驗證
-		document.getElementById("phone").addEventListener("input", function () {
+		document.getElementById("phone").addEventListener("input", function() {
 			validatePhone();
 		});
 
