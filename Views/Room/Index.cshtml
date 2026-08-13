@@ -103,7 +103,7 @@
                                 data-roomtype-id="3"
                                 data-number="801"
                                 data-floor="8"
-                                data-supply="Open"
+                                data-supply="Reserved"
                                 data-disabled-reason=""
                                 onclick="openRoomModal('edit', this)">
                             編輯
@@ -127,6 +127,8 @@
                 <form id="roomForm" asp-controller="Room" asp-action="Save" method="post">
                     <input type="hidden" id="roomId" name="RoomId" value="0">
                     <input type="hidden" id="branchId" name="BranchId" value="1">
+                    <!-- 當 supplyStatus 為 disabled 時，由此 Hidden input 負責 POST 送出 SupplyStatus -->
+                    <input type="hidden" id="supplyStatusHidden" name="SupplyStatus" value="Open" disabled>
 
                     <div class="row g-3">
                         <div class="col-md-6">
@@ -249,8 +251,19 @@
             const modalTitle = document.getElementById('roomModalTitle');
             const saveBtn = document.getElementById('btnSaveRoom');
             const form = document.getElementById('roomForm');
+            const supplySelect = document.getElementById('supplyStatus');
+            const supplyHidden = document.getElementById('supplyStatusHidden');
 
             const currentBranchId = document.getElementById('branchFilter').value;
+
+            // 重置供應狀態選單為預設（只保留 Open / Disabled）
+            supplySelect.innerHTML = `
+                        <option value="Open">開放販售</option>
+                        <option value="Disabled">停用</option>
+                    `;
+            supplySelect.disabled = false;
+            supplySelect.name = "SupplyStatus";
+            supplyHidden.disabled = true;
 
             if (mode === 'add') {
                 modalTitle.textContent = '新增房間';
@@ -259,7 +272,7 @@
 
                 document.getElementById('roomId').value = '0';
                 document.getElementById('branchId').value = currentBranchId;
-                document.getElementById('supplyStatus').value = 'Open';
+                supplySelect.value = 'Open';
                 document.getElementById('disabledReason').value = '';
 
                 loadModalRoomTypes(currentBranchId);
@@ -270,15 +283,27 @@
 
                 const targetBranchId = btnElement.getAttribute('data-branch-id') || currentBranchId;
                 const targetRoomTypeId = btnElement.getAttribute('data-roomtype-id');
-                const supplyStatus = btnElement.getAttribute('data-supply') || 'Open';
+                const rawSupply = btnElement.getAttribute('data-supply') || 'Open';
                 const disabledReason = btnElement.getAttribute('data-disabled-reason') || '';
 
                 document.getElementById('roomId').value = btnElement.getAttribute('data-id') || '0';
                 document.getElementById('branchId').value = targetBranchId;
                 document.getElementById('roomNumber').value = btnElement.getAttribute('data-number') || '';
                 document.getElementById('floor').value = btnElement.getAttribute('data-floor') || '1';
-                document.getElementById('supplyStatus').value = (supplyStatus === 'Disabled') ? 'Disabled' : 'Open';
                 document.getElementById('disabledReason').value = disabledReason;
+
+                if (rawSupply === 'Reserved') {
+                    // 若為保留房，動態加入選項並禁用下拉選單，啟用隱藏欄位傳值
+                    supplySelect.innerHTML += `<option value="Reserved">保留（由分館員工管理）</option>`;
+                    supplySelect.value = 'Reserved';
+                    supplySelect.disabled = true;
+                    supplySelect.removeAttribute("name");
+
+                    supplyHidden.value = 'Reserved';
+                    supplyHidden.disabled = false;
+                } else {
+                    supplySelect.value = (rawSupply === 'Disabled') ? 'Disabled' : 'Open';
+                }
 
                 loadModalRoomTypes(targetBranchId, targetRoomTypeId);
                 toggleDisabledReason();
