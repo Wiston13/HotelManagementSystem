@@ -13,6 +13,9 @@
         public string? ErrorMessage { get; set; }
         public bool CanCheckIn { get; set; }
         public List<RoomOption> AvailableRooms { get; set; } = new List<RoomOption>();
+        public int? SelectedRoomId { get; set; }
+        public byte? ActualGuestCount { get; set; }
+        public byte? MaxOccupancy { get; set; }
     }
 
     public class RoomOption

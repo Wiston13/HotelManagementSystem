@@ -63,16 +63,29 @@ namespace HotelManagementSystem.Controllers
 
             model.CanCheckIn = true;
 
-            if (model.CanCheckIn)
-            {
-                model.HasResult = true;
-                model.BookerName = booking.BookerName;
-                model.ContactPhone = booking.ContactPhone;
-                model.RoomTypeName = booking.RoomTypeNameSnapshot;
-                model.CheckInDate = booking.CheckInDate;
-                model.CheckOutDate = booking.CheckOutDate;
-                model.BookingStatus = booking.BookingStatus;
-            }
+
+            model.HasResult = true;
+            model.BookerName = booking.BookerName;
+            model.ContactPhone = booking.ContactPhone;
+            model.RoomTypeName = booking.RoomTypeNameSnapshot;
+            model.CheckInDate = booking.CheckInDate;
+            model.CheckOutDate = booking.CheckOutDate;
+            model.BookingStatus = booking.BookingStatus;
+            model.MaxOccupancy = booking.MaxOccupancySnapshot;
+
+            model.AvailableRooms = _context.Rooms
+                .Where(r =>
+                    r.BranchId == booking.BranchId &&
+                    r.RoomTypeId == booking.RoomTypeId &&
+                    r.SupplyStatus == "Open" &&
+                    r.CleaningStatus == "Clean" &&
+                    !r.StayRecords.Any(s => s.ActualCheckOutAt == null))
+                .Select(r => new RoomOption
+                {
+                    RoomId = r.RoomId,
+                    RoomNumber = r.RoomNumber
+                })
+                .ToList();
 
             return View(model);
         }

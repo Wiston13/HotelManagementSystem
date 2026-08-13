@@ -81,20 +81,24 @@
 					<h2 id="room-assignment-title" class="h4 fw-bold mb-3">指派實體房間</h2>
 
 					<label for="roomAssignment" class="form-label text-secondary mb-2">可入住房間</label>
-					<select id="roomAssignment" class="form-select form-select-lg" aria-describedby="roomAssignmentHint">
-						<option value="302">302｜已清潔</option>
+					<select asp-for="SelectedRoomId" id="roomAssignment" class="form-select form-select-lg" >
+						<option value="">請選擇房間</option>
+						@foreach (var room in Model.AvailableRooms)
+						{
+							<option value="@room.RoomId">
+								@room.RoomNumber
+							</option>
+						}
 					</select>
-					<p id="roomAssignmentHint" class="form-text mt-2 mb-4">
-						僅列出同房型、可用且已清潔的房間。
-					</p>
 
 					<label for="actualGuestCount" class="form-label text-secondary mb-2">實際入住人數</label>
-					<input id="actualGuestCount"
+					<input asp-for="ActualGuestCount"
 						   class="form-control form-control-lg mb-4"
 						   type="number"
 						   min="1"
-						   step="1"
-						   value="2"
+						   max="@Model.MaxOccupancy"
+						   value="1"
+						   step="1" 
 						   aria-label="實際入住人數" />
 
 					<button type="button" class="btn btn-primary btn-lg fw-semibold w-100 mt-auto">確認入住</button>
