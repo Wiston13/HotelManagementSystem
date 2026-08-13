@@ -44,7 +44,7 @@
                 </tr>
             </thead>
             <tbody id="roomTableBody">
-                <!-- 示範資料列 1 (台北館 BranchId=1, RoomTypeId=1) -->
+                <!-- 示範資料列 1 -->
                 <tr data-branch-id="1" data-roomtype-id="1">
                     <td class="ps-4 fw-bold">301</td>
                     <td>標準雙人房</td>
@@ -60,12 +60,13 @@
                                 data-number="301"
                                 data-floor="3"
                                 data-supply="Open"
+                                data-disabled-reason=""
                                 onclick="openRoomModal('edit', this)">
                             編輯
                         </button>
                     </td>
                 </tr>
-                <!-- 示範資料列 2 (台北館 BranchId=1, RoomTypeId=2) -->
+                <!-- 示範資料列 2 -->
                 <tr data-branch-id="1" data-roomtype-id="2">
                     <td class="ps-4 fw-bold">502</td>
                     <td>三床豪華房</td>
@@ -81,12 +82,13 @@
                                 data-number="502"
                                 data-floor="5"
                                 data-supply="Disabled"
+                                data-disabled-reason="空調設備故障修繕中"
                                 onclick="openRoomModal('edit', this)">
                             編輯
                         </button>
                     </td>
                 </tr>
-                <!-- 示範資料列 3 (高雄館 BranchId=2, RoomTypeId=3) -->
+                <!-- 示範資料列 3（現場保留房，列表支援呈現） -->
                 <tr data-branch-id="2" data-roomtype-id="3" style="display: none;">
                     <td class="ps-4 fw-bold">801</td>
                     <td>海景雙人房</td>
@@ -101,7 +103,8 @@
                                 data-roomtype-id="3"
                                 data-number="801"
                                 data-floor="8"
-                                data-supply="Reserved"
+                                data-supply="Open"
+                                data-disabled-reason=""
                                 onclick="openRoomModal('edit', this)">
                             編輯
                         </button>
@@ -122,7 +125,6 @@
             </div>
             <div class="modal-body">
                 <form id="roomForm" asp-controller="Room" asp-action="Save" method="post">
-                    <!-- 隱藏欄位：PK (RoomId) 與 FK (BranchId) -->
                     <input type="hidden" id="roomId" name="RoomId" value="0">
                     <input type="hidden" id="branchId" name="BranchId" value="1">
 
@@ -134,7 +136,6 @@
                         <div class="col-md-6">
                             <label class="form-label fw-bold">所屬房型 <span class="text-danger">*</span></label>
                             <select class="form-select" id="roomTypeId" name="RoomTypeId" required>
-                                <!-- JS 動態載入該分館對應房型 -->
                             </select>
                         </div>
                         <div class="col-md-6">
@@ -143,11 +144,16 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">供應狀態 <span class="text-danger">*</span></label>
-                            <select class="form-select" id="supplyStatus" name="SupplyStatus">
+                            <select class="form-select" id="supplyStatus" name="SupplyStatus" onchange="toggleDisabledReason()">
                                 <option value="Open">開放販售</option>
-                                <option value="Reserved">保留</option>
                                 <option value="Disabled">停用</option>
                             </select>
+                        </div>
+
+                        <!-- 停用原因欄位 -->
+                        <div class="col-12" id="disabledReasonGroup" style="display: none;">
+                            <label class="form-label fw-bold">停用原因 <span class="text-danger">*</span></label>
+                            <textarea id="disabledReason" name="DisabledReason" class="form-control" rows="3" maxlength="200" placeholder="請輸入停用原因（例如：冷氣維修中、水電保養等）"></textarea>
                         </div>
                     </div>
                 </form>
@@ -223,6 +229,21 @@
             }
         }
 
+        function toggleDisabledReason() {
+            const supplyStatus = document.getElementById('supplyStatus').value;
+            const disabledReasonGroup = document.getElementById('disabledReasonGroup');
+            const disabledReasonInput = document.getElementById('disabledReason');
+
+            if (supplyStatus === 'Disabled') {
+                disabledReasonGroup.style.display = 'block';
+                disabledReasonInput.required = true;
+            } else {
+                disabledReasonGroup.style.display = 'none';
+                disabledReasonInput.required = false;
+                disabledReasonInput.value = '';
+            }
+        }
+
         function openRoomModal(mode, btnElement = null) {
             currentMode = mode;
             const modalTitle = document.getElementById('roomModalTitle');
@@ -239,22 +260,28 @@
                 document.getElementById('roomId').value = '0';
                 document.getElementById('branchId').value = currentBranchId;
                 document.getElementById('supplyStatus').value = 'Open';
+                document.getElementById('disabledReason').value = '';
 
                 loadModalRoomTypes(currentBranchId);
+                toggleDisabledReason();
             } else if (mode === 'edit' && btnElement) {
                 modalTitle.textContent = '編輯房間資料';
                 saveBtn.textContent = '儲存變更';
 
                 const targetBranchId = btnElement.getAttribute('data-branch-id') || currentBranchId;
                 const targetRoomTypeId = btnElement.getAttribute('data-roomtype-id');
+                const supplyStatus = btnElement.getAttribute('data-supply') || 'Open';
+                const disabledReason = btnElement.getAttribute('data-disabled-reason') || '';
 
                 document.getElementById('roomId').value = btnElement.getAttribute('data-id') || '0';
                 document.getElementById('branchId').value = targetBranchId;
                 document.getElementById('roomNumber').value = btnElement.getAttribute('data-number') || '';
                 document.getElementById('floor').value = btnElement.getAttribute('data-floor') || '1';
-                document.getElementById('supplyStatus').value = btnElement.getAttribute('data-supply') || 'Open';
+                document.getElementById('supplyStatus').value = (supplyStatus === 'Disabled') ? 'Disabled' : 'Open';
+                document.getElementById('disabledReason').value = disabledReason;
 
                 loadModalRoomTypes(targetBranchId, targetRoomTypeId);
+                toggleDisabledReason();
             }
         }
 
@@ -277,17 +304,18 @@
 
             const supplySelect = document.getElementById('supplyStatus');
             const supplyText = supplySelect.options[supplySelect.selectedIndex].text;
+            const disabledReason = document.getElementById('disabledReason').value;
 
             let message = '';
 
             if (currentMode === 'add') {
                 message = `【確認新增房間】\n\n` +
-                    `確定要新增以下房間資料嗎？\n` +
                     `• 所屬分館：${branchText}\n` +
                     `• 房號：${roomNumber}\n` +
                     `• 所屬房型：${roomTypeText}\n` +
                     `• 樓層：${floor} 樓\n` +
-                    `• 供應狀態：${supplyText}`;
+                    `• 供應狀態：${supplyText}` +
+                    (supplySelect.value === 'Disabled' ? `\n• 停用原因：${disabledReason}` : '');
             } else {
                 message = `【確認修改房間】\n\n` +
                     `確定要儲存房號【${roomNumber}】的變更嗎？\n` +
@@ -295,7 +323,8 @@
                     `• 房號：${roomNumber}\n` +
                     `• 所屬房型：${roomTypeText}\n` +
                     `• 樓層：${floor} 樓\n` +
-                    `• 供應狀態：${supplyText}`;
+                    `• 供應狀態：${supplyText}` +
+                    (supplySelect.value === 'Disabled' ? `\n• 停用原因：${disabledReason}` : '');
             }
 
             if (confirm(message)) {
