@@ -8,7 +8,7 @@
     // 靜態頁面展示用假資料
     var BranchName = "台北館";
     var CheckInDate = new DateTime(2026, 8, 14);
-    var CheckOutDate = new DateTime(2026, 8, 15);
+    var CheckOutDate = new DateTime(2026, 8, 16);
 
     var Nights = (CheckOutDate - CheckInDate).Days;
 
@@ -18,29 +18,23 @@
         {
             RoomTypeId = 1,
             RoomName = "標準雙人房",
-            Description = "舒適雙人房",
+            BedType = "一大床",
+            MaxOccupancy = 2,
+            Description = "基本雙人房型。",
             Price = 2400m,
             Stock = 3
         },
         new
         {
             RoomTypeId = 2,
-            RoomName = "豪華雙人房",
-            Description = "寬敞豪華雙人房",
+            RoomName = "精緻雙床房",
+            BedType = "兩小床",
+            MaxOccupancy = 2,
+            Description = "舒適雙人房型。",
             Price = 3000m,
             Stock = 2
-        },
-        new
-        {
-            RoomTypeId = 3,
-            RoomName = "家庭房",
-            Description = "適合家庭入住",
-            Price = 3600m,
-            Stock = 0
         }
     };
-}
-
 }
 
 
@@ -76,45 +70,47 @@
                                 @* <div class="bg-light text-center border rounded p-3 me-3 d-flex align-items-center justify-content-center" style="width: 110px; height: 80px;">
                                     <small class="text-muted">房型照片</small>
                                 </div> *@
-
-
                                 @* 假資料（靜態頁面展示用） *@
                                 <img src="https://images.unsplash.com/photo-1631049307264-da0ec9d70304?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
                                      alt="@room.RoomName"
                                      class="rounded me-3"
-                                     style="width: 110px; height: 80px; object-fit: cover;">
-
+                                     style="width: 160px; height: 120px; object-fit: cover;">
 
                                 <div>
-                                    <h5 class="card-title fw-bold mb-1">@room.RoomName</h5>
+                                    @* 房型名稱 + 剩餘數量 *@
+                                    <div class="d-flex align-items-baseline mb-1">
+                                        <h5 class="card-title fw-bold mb-0">@room.RoomName</h5>
+                                        <small class="text-secondary ms-2" style="position: relative; top: -1px;">
+                                            ・剩餘 @room.Stock 間
+                                        </small>
+                                    </div>
+                                    @* 床型 *@
+                                    <div class="text-secondary mb-2">
+                                        @room.BedType
+                                    </div>
+                                    @* 最多入住人數 *@
+                                    <div class="mb-2">
+                                        <span class="badge bg-light text-secondary border fw-normal" style="font-size: 0.75rem;">
+                                            最多 @room.MaxOccupancy 人
+                                        </span>
+                                    </div>
+                                    @* 房型描述 *@
                                     <p class="card-text text-muted mb-0">
                                         @room.Description
-                                        @if (room.Stock > 0)
-                                        {
-                                            <span class="text-secondary ms-2">・ 剩餘 @room.Stock 間</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-danger ms-2">・ 無庫存</span>
-                                        }
                                     </p>
                                 </div>
+
                             </div>
 
-                            <div class="text-end">
-                                <h4 class="text-primary fw-bold mb-2">NT$ @room.Price.ToString("N0")<small class="fs-6 fw-normal">／晚</small>
+                            <div class="text-end align-self-end">
+                                <h4 class="text-primary fw-bold mb-2">
+                                    NT$ @room.Price.ToString("N0")
+                                    <small class="fs-6 fw-normal">／晚</small>
                                 </h4>
-                                @if (room.Stock > 0)
-                                {
-                                    <button type="button" class="btn btn-outline-primary px-4"
-                                            onclick="selectRoom(@room.RoomTypeId, '@room.RoomName', @room.Price)">
+                                <button type="button" class="btn btn-outline-primary px-4"
+                                        onclick="selectRoom(@room.RoomTypeId, '@room.RoomName', @room.Price)">
                                         選擇
-                                    </button>
-                                }
-                                else
-                                {
-                                    <button class="btn btn-secondary px-4" disabled>已售完</button>
-                                }
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -123,7 +119,7 @@
             else
             {
                 <div class="alert alert-warning p-4 text-center">
-                    目前選擇的日期無剩餘庫存，請重新選擇其他日期或分館。
+                    目前沒有符合條件的可訂房型，請重新選擇日期、分館或房型人數。
                 </div>
             }
         </div>
