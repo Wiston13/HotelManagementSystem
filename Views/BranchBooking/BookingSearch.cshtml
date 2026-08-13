@@ -19,10 +19,7 @@
 
 
 <div class="container-fluid px-4">
-    <!-- 頁面標題 -->
-    <div class="mb-4">
-        <h2 class="fw-bold fs-3 text-dark">本館訂單查詢</h2>
-    </div>
+    
 
 
   
@@ -122,7 +119,7 @@
                                     
                                         @* <button type="button" class="btn btn-sm btn-outline-secondary px-3 btn-detail" disabled></button> *@
                                     
-                                        <button type="button" class="btn btn-sm btn-outline-primary px-3 btn-detail"                                    
+                                <button type="button" class="btn btn-sm btn-outline-primary px-3 btn-detail"                                    
                                     data-bs-toggle="modal" 
                                     data-bs-target="#bookingDetailModal"
                                     data-bookingnum="@item.BookingNum"
@@ -199,12 +196,35 @@
                 </div>
             </div>
 
+            <!-- 輸入取消原因區塊 -->
+            <div id="cancelReasonSection" class="d-none mt-4 mx-1 p-3 bg-light border rounded">
+                <h6 class="fw-bold text-danger mb-3">請填寫取消原因</h6>
+                <div class="mb-3">
+                    <label class="form-label">選擇取消原因</label>
+                    <select class="form-select" id="cancelReasonSelect">
+                        <option value="請選擇..." disabled selected>請選擇...</option>
+                        <option value="顧客因素">顧客因素</option>
+                        <option value="飯店因素">飯店因素</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">備註說明</label>
+                    <textarea class="form-control" id="cancelMemo" rows="2" placeholder="請輸入詳細原因（選填）"></textarea>
+                </div>
+            </div>
+            <!-- 再次確認取消 -->
+
+                <button type="button" id="confirmCancelBtn" class="btn btn-danger btn-sm d-none mx-1">
+                    確認送出取消
+                </button>
+
             <!-- Modal 底部按鈕 (包含取消訂單按鈕) -->
             <div class="modal-footer bg-light">
-                    <a id="goToCancelBtn" href="#" class="btn btn-sm btn-outline-danger">
-                        <i class="bi bi-x-circle me-1"></i> 取消訂單</a>                   
+                    <button type="button" id="goToCancelBtn" class="btn btn-outline-danger btn-sm px-3">
+                        <i class="bi bi-x-circle me-1"></i> 取消訂單               
                 
                 <button type="button" class="btn btn-secondary btn-sm px-4" data-bs-dismiss="modal">關閉</button>
+                
             </div>
 
         </div>
@@ -238,9 +258,16 @@
         document.addEventListener("DOMContentLoaded", function() {
             const searchForm = document.getElementById("searchForm");
             const keyword = document.getElementById("keyword");
+            
+            const goToCancelBtn = document.getElementById('goToCancelBtn');
+            const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+            const cancelReasonSection = document.getElementById('cancelReasonSection');
+
+            const cancelReasonSelect = document.getElementById('cancelReasonSelect');
+            const cancelMemo = document.getElementById('cancelMemo');
             //modal帶入資料
             const bookingDetailModal =document.getElementById("bookingDetailModal");
-           
+            // 表單開啟時
             bookingDetailModal.addEventListener("show.bs.modal",function(event){
                 const button = event.relatedTarget;
 
@@ -264,26 +291,32 @@
                 document.getElementById('modalCreateTime').textContent = createTime;
                 document.getElementById('modalPrice').textContent = price;
 
-                
 
-                const goToCancelBtn = document.getElementById('goToCancelBtn');
-                console.log(bookingStatus);
                 if(bookingStatus=="已取消"){                    
                     goToCancelBtn.classList.add("btn-outline-secondary");
                     goToCancelBtn.classList.remove("btn-outline-danger");
-                    goToCancelBtn.href="";
                     goToCancelBtn.disabled=true;
                 }
                 else{                    
                     goToCancelBtn.classList.add("btn-outline-danger");
                     goToCancelBtn.classList.remove("btn-outline-secondary");
                     goToCancelBtn.disabled=false;
-                    goToCancelBtn.href = `/BranchBooking/BookingResult?bookingNum=${bookingNum}`;
-                }
+                }                
             });
+            // 表單關閉時
+            bookingDetailModal.addEventListener('hidden.bs.modal', function () {
+                // 隱藏取消原因區塊
+                cancelReasonSection.classList.add('d-none');
     
-
-
+                // 恢復按鈕原本的顯示狀態
+                goToCancelBtn.classList.remove('d-none');
+                confirmCancelBtn.classList.add('d-none');
+    
+                // 清空輸入框
+                cancelReasonSelect.value = "";
+                cancelMemo.value = "";
+                });
+            // 驗證合法輸入
             searchForm.addEventListener("submit", function(e) {
                 if (keyword.value.trim() == "") {
                     e.preventDefault();
@@ -296,8 +329,41 @@
                     this.classList.remove("is-invalid");
                 }
             })
+
+            goToCancelBtn.addEventListener("click",function(){
+                confirmCancelBtn.classList.remove("d-none");
+                cancelReasonSection.classList.remove("d-none");
+
+                
+            })
+
+
+            confirmCancelBtn.addEventListener('click',function(){
+                if(cancelMemo.value==="" ||cancelReasonSelect.value==="請選擇..."){
+                    alert("請填//");
+                    return;
+                }                
+                if(confirm("確定要執行取消此訂單嗎？此動作無法復原。")){                    
+                   alert("訂單已成功取消");
+                   const cancelCause = cancelReasonSelect.value;
+                   const cancelReason = cancelMemo.value ;
+                   const cancelTime = new Date().toLocaleString();
+                   // 操作人員
+                   const cancelOperator ='';
+                   
+                   bootstrap.Modal.getInstance(document.getElementById('bookingDetailModal')).hide();
+                   // 此區送資料邏輯尚未實作
+
+
+                   location.reload();
+                }                    
+            })
         })
         
+
+
+
+
 
         // 日期顯示區
         let maxRangeDate = new Date();
@@ -329,4 +395,6 @@
             }
         });
     </script>
+
+
 }

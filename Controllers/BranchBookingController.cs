@@ -249,20 +249,6 @@ namespace HotelManagementSystem.Controllers
 
             return View(result);
         }
-        public IActionResult BookingResult(string bookingNum)
-        {
-            var allData = GetMockData();
-            var query = allData.AsQueryable();
-
-            if (string.IsNullOrEmpty(bookingNum))
-            {
-                return View();
-            }
-
-            query = query.Where(x => x.BookingNum == bookingNum);
-
-
-            return View(query.ToList());
-        }
+        
     }
 }
