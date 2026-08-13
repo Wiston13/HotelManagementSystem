@@ -8,8 +8,9 @@
     string BookingStatus(string s)
     {
         string r = "";
-        if (s == "已成立") r = "bg-success-subtle text-success";
-        else if (s == "已入住") r = "bg-info-subtle text-info";
+        if (s == "已完成") r = "bg-success-subtle text-success";
+        else if (s == "入住中") r = "bg-primary-subtle text-primary";
+        else if (s == "已付款") r = "bg-info-subtle text-info";
         else if (s == "已取消") r = "bg-danger-subtle text-danger";
         else r = "bg-secondary-subtle text-secondary";
         return r;
@@ -66,14 +67,13 @@
                     </label>
                     <select class="form-select" id="orderStatus" name="bookingStatus">
                         <option value="" selected="@(string.IsNullOrEmpty(ViewBag.BookingStatus))">全部狀態</option>
-                        <option value="已成立" selected="@(ViewBag.BookingStatus=="已成立")">已成立</option>
-                        <option value="已入住" selected="@(ViewBag.BookingStatus=="已入住")">已入住</option>
-                        <option value="已退房" selected="@(ViewBag.BookingStatus=="已退房")">已退房</option>
+                        <option value="已付款" selected="@(ViewBag.BookingStatus=="已付款")">已付款</option>
+                        <option value="入住中" selected="@(ViewBag.BookingStatus=="入住中")">入住中</option>
+                        <option value="已完成" selected="@(ViewBag.BookingStatus=="已完成")">已完成</option>
                         <option value="已取消" selected="@(ViewBag.BookingStatus=="已取消")">已取消</option>
                         <option value="逾期未入住" selected="@(ViewBag.BookingStatus=="逾期未入住")">逾期未入住</option>
                     </select>
                 </div>
-
                 <!-- 4. 查詢按鈕 -->
                 <div class="col-md-2">
                     <button id="searchBtn" type="submit" class="btn btn-primary w-100 fw-semibold">
@@ -110,10 +110,10 @@
                         {
                             <tr>
                                 <td class="ps-4 fw-semibold text-primary">@item.BookingNum</td>
-                                <td>@item.BookingDate</td>
+                                <td>@item.StartDate.ToString("yyyy/MM/dd") - @item.EndDate.ToString("yyyy/MM/dd")</td>
                                 <td>@item.Name</td>
                                 <td>@item.Roomtype</td>
-                                <td>0987654321</td>
+                                <td>@item.Phone.Insert(4,"-")</td>
                                 <td><span class="badge @BookingStatus(item.BookingStatus) px-2 py-1">@item.BookingStatus</span></td>
                                 <td class="text-end pe-4">
 
@@ -313,16 +313,16 @@
                     document.getElementById('modalCreateTime').textContent = createTime;
                     document.getElementById('modalPrice').textContent = price;
 
-
-                    if (bookingStatus == "已取消") {
-                        goToCancelBtn.classList.add("btn-outline-secondary");
-                        goToCancelBtn.classList.remove("btn-outline-danger");
-                        goToCancelBtn.disabled = true;
-                    }
-                    else {
+                    
+                    if ( bookingStatus==="已付款") {
                         goToCancelBtn.classList.add("btn-outline-danger");
                         goToCancelBtn.classList.remove("btn-outline-secondary");
                         goToCancelBtn.disabled = false;
+                    }
+                    else {
+                        goToCancelBtn.classList.add("btn-outline-secondary");
+                        goToCancelBtn.classList.remove("btn-outline-danger");
+                        goToCancelBtn.disabled = true;
                     }
                 });
                 // 表單關閉時

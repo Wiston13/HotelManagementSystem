@@ -106,6 +106,13 @@
 					</div>
 				</div>
 				<div class="col-12">
+					<div class="row border-bottom pb-2">
+						<div class="col-md-4 text-secondary">電話</div>
+						<!-- 顯示 訂房人姓名 區塊 -->
+						<div class="col-md-8 fw-semibold text-md-end" id="resultPhone"></div>
+					</div>
+				</div>
+				<div class="col-12">
 					<div class="row">
 						<div class="col-md-4 text-secondary">總金額</div>
 						<!-- 顯示 房價總額 區塊 -->
@@ -170,7 +177,7 @@
 		const orderData = [
 			{
 				orderNo: "BK20260810018",
-				phone: "0912-345-678",
+				phone: "0912-345678",
 				branch: "台北館",
 				roomType: "標準雙人房",
 				checkIn: "2026/08/10",
@@ -181,7 +188,7 @@
 			},
 			{
 				orderNo: "BK20260810019",
-				phone: "0987-654-321",
+				phone: "0987-654321",
 				branch: "台中館",
 				roomType: "豪華雙人房",
 				checkIn: "2026/08/15",
@@ -193,7 +200,7 @@
 		];
 
 		const orderNoPattern = /^[A-Za-z0-9]+$/;  // 訂單編號格式驗證（僅允許英數字）
-		const phonePattern = /^[0-9+\-()\s]+$/;  // 聯絡電話格式驗證（允許數字、+、-、()、空格）
+		const phonePattern = /^[0-9\-\s]+$/;  // 聯絡電話格式驗證（允許數字、+、-、()、空格）
 
 
 		// 將聯絡電話中的非數字字元移除，僅保留數字
@@ -285,6 +292,7 @@
 			document.getElementById("resultRoom").textContent = "";
 			document.getElementById("resultDate").textContent = "";
 			document.getElementById("resultCustomer").textContent = "";
+			document.getElementById("resultPhone").textContent = "";
 			document.getElementById("resultTotal").textContent = "";
 		}
 
@@ -318,8 +326,9 @@
 			
 			// 將訂單資料顯示到畫面
 			document.getElementById("resultRoom").textContent = order.branch + "・" + order.roomType;
-			document.getElementById("resultDate").textContent = order.checkIn + " ～ " + order.checkOut;
+			document.getElementById("resultDate").textContent = order.checkIn + " - " + order.checkOut;
 			document.getElementById("resultCustomer").textContent = order.customer;
+			document.getElementById("resultPhone").textContent = order.phone;
 			document.getElementById("resultTotal").textContent = "NT$ " + order.total.toLocaleString();
 
 			// 顯示查詢結果區塊

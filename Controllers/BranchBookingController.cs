@@ -16,8 +16,11 @@ public class BookingData
 
 namespace HotelManagementSystem.Controllers
 {
+    /*
     
-   
+    */
+
+
     public class BranchBookingController : Controller
     {
         private List<BookingData> GetMockData()
@@ -29,9 +32,9 @@ namespace HotelManagementSystem.Controllers
             BookingNum = "BK20260808001",
             BookingDate = new DateTime(2026, 7, 25, 14, 30, 0),
             Name = "王小明",
-            Phone = "0912-345-678",
+            Phone = "0912345678",
             Roomtype = "標準雙人房",
-            BookingStatus = "已退房",
+            BookingStatus = "已完成",
             StartDate = new DateTime(2026, 8, 8),
             EndDate = new DateTime(2026, 8, 10),
             Price = "NT$ 4,800"
@@ -41,9 +44,9 @@ namespace HotelManagementSystem.Controllers
             BookingNum = "BK20260808002",
             BookingDate = new DateTime(2026, 7, 26, 10, 15, 0),
             Name = "林雅雯",
-            Phone = "0922-123-456",
+            Phone = "0922123456",
             Roomtype = "精緻雙床房",
-            BookingStatus = "已退房",
+            BookingStatus = "已完成",
             StartDate = new DateTime(2026, 8, 8),
             EndDate = new DateTime(2026, 8, 9),
             Price = "NT$ 5,600"
@@ -53,9 +56,9 @@ namespace HotelManagementSystem.Controllers
             BookingNum = "BK20260809003",
             BookingDate = new DateTime(2026, 7, 27, 16, 40, 0),
             Name = "張家豪",
-            Phone = "0933-555-888",
+            Phone = "0933555888",
             Roomtype = "豪華雙人房",
-            BookingStatus = "已入住",
+            BookingStatus = "入住中",
             StartDate = new DateTime(2026, 8, 9),
             EndDate = new DateTime(2026, 8, 11),
             Price = "NT$ 6,800"
@@ -65,9 +68,9 @@ namespace HotelManagementSystem.Controllers
             BookingNum = "BK20260809004",
             BookingDate = new DateTime(2026, 7, 28, 11, 00, 0),
             Name = "陳美玲",
-            Phone = "0944-777-999",
+            Phone = "0944777999",
             Roomtype = "標準單人房",
-            BookingStatus = "已入住",
+            BookingStatus = "入住中",
             StartDate = new DateTime(2026, 8, 9),
             EndDate = new DateTime(2026, 8, 10),
             Price = "NT$ 3,200"
@@ -77,9 +80,9 @@ namespace HotelManagementSystem.Controllers
             BookingNum = "BK20260810018",
             BookingDate = new DateTime(2026, 7, 29, 19, 10, 0),
             Name = "李志豪",
-            Phone = "0955-111-222",
+            Phone = "0955111222",
             Roomtype = "標準雙人房",
-            BookingStatus = "已成立",
+            BookingStatus = "已付款",
             StartDate = new DateTime(2026, 8, 10),
             EndDate = new DateTime(2026, 8, 12),
             Price = "NT$ 4,800"
@@ -89,9 +92,9 @@ namespace HotelManagementSystem.Controllers
             BookingNum = "BK20260810019",
             BookingDate = new DateTime(2026, 7, 29, 20, 30, 0),
             Name = "黃淑芬",
-            Phone = "0966-333-444",
+            Phone = "0966333444",
             Roomtype = "家庭四人房",
-            BookingStatus = "已成立",
+            BookingStatus = "已付款",
             StartDate = new DateTime(2026, 8, 10),
             EndDate = new DateTime(2026, 8, 13),
             Price = "NT$ 8,800"
@@ -101,7 +104,7 @@ namespace HotelManagementSystem.Controllers
             BookingNum = "BK20260810020",
             BookingDate = new DateTime(2026, 7, 30, 09, 20, 0),
             Name = "趙建國",
-            Phone = "0977-888-777",
+            Phone = "0977888777",
             Roomtype = "精緻雙床房",
             BookingStatus = "已取消",
             StartDate = new DateTime(2026, 8, 10),
@@ -113,9 +116,9 @@ namespace HotelManagementSystem.Controllers
             BookingNum = "BK20260811021",
             BookingDate = new DateTime(2026, 7, 30, 14, 00, 0),
             Name = "周怡君",
-            Phone = "0988-222-333",
+            Phone = "0988222333",
             Roomtype = "標準雙人房",
-            BookingStatus = "已成立",
+            BookingStatus = "已付款",
             StartDate = new DateTime(2026, 8, 11),
             EndDate = new DateTime(2026, 8, 13),
             Price = "NT$ 4,800"
@@ -125,7 +128,7 @@ namespace HotelManagementSystem.Controllers
             BookingNum = "BK20260811022",
             BookingDate = new DateTime(2026, 7, 31, 15, 45, 0),
             Name = "吳冠宇",
-            Phone = "0999-666-555",
+            Phone = "0999666555",
             Roomtype = "豪華雙人房",
             BookingStatus = "逾期未入住",
             StartDate = new DateTime(2026, 8, 11),
@@ -137,9 +140,9 @@ namespace HotelManagementSystem.Controllers
             BookingNum = "BK20260812023",
             BookingDate = new DateTime(2026, 8, 1, 11, 10, 0),
             Name = "蔡依婷",
-            Phone = "0911-223-344",
+            Phone = "0911223344",
             Roomtype = "標準單人房",
-            BookingStatus = "已成立",
+            BookingStatus = "已付款",
             StartDate = new DateTime(2026, 8, 12),
             EndDate = new DateTime(2026, 8, 14),
             Price = "NT$ 6,400"
@@ -149,9 +152,9 @@ namespace HotelManagementSystem.Controllers
             BookingNum = "BK20260812024",
             BookingDate = new DateTime(2026, 8, 1, 13, 20, 0),
             Name = "楊宗翰",
-            Phone = "0922-334-455",
+            Phone = "0922334455",
             Roomtype = "標準雙人房",
-            BookingStatus = "已成立",
+            BookingStatus = "已付款",
             StartDate = new DateTime(2026, 8, 12),
             EndDate = new DateTime(2026, 8, 15),
             Price = "NT$ 7,200"
@@ -161,9 +164,9 @@ namespace HotelManagementSystem.Controllers
             BookingNum = "BK20260813025",
             BookingDate = new DateTime(2026, 8, 2, 10, 05, 0),
             Name = "許雅婷",
-            Phone = "0933-445-566",
+            Phone = "0933445566",
             Roomtype = "家庭四人房",
-            BookingStatus = "已成立",
+            BookingStatus = "已付款",
             StartDate = new DateTime(2026, 8, 13),
             EndDate = new DateTime(2026, 8, 16),
             Price = "NT$ 11,200"
@@ -173,7 +176,7 @@ namespace HotelManagementSystem.Controllers
             BookingNum = "BK20260813026",
             BookingDate = new DateTime(2026, 8, 2, 17, 50, 0),
             Name = "鄭文傑",
-            Phone = "0944-556-677",
+            Phone = "0944556677",
             Roomtype = "精緻雙床房",
             BookingStatus = "已取消",
             StartDate = new DateTime(2026, 8, 13),
@@ -185,9 +188,9 @@ namespace HotelManagementSystem.Controllers
             BookingNum = "BK20260814027",
             BookingDate = new DateTime(2026, 8, 3, 12, 30, 0),
             Name = "謝佩如",
-            Phone = "0955-667-788",
+            Phone = "0955667788",
             Roomtype = "標準雙人房",
-            BookingStatus = "已成立",
+            BookingStatus = "已付款",
             StartDate = new DateTime(2026, 8, 14),
             EndDate = new DateTime(2026, 8, 16),
             Price = "NT$ 4,800"
@@ -197,9 +200,9 @@ namespace HotelManagementSystem.Controllers
             BookingNum = "BK20260815028",
             BookingDate = new DateTime(2026, 8, 4, 15, 00, 0),
             Name = "郭家宏",
-            Phone = "0966-778-899",
+            Phone = "0966778899",
             Roomtype = "豪華雙人房",
-            BookingStatus = "已成立",
+            BookingStatus = "已付款",
             StartDate = new DateTime(2026, 8, 15),
             EndDate = new DateTime(2026, 8, 18),
             Price = "NT$ 15,800"
@@ -220,7 +223,7 @@ namespace HotelManagementSystem.Controllers
 
             if (!string.IsNullOrEmpty(keyword))
             {
-                query = query.Where(x => x.BookingNum!.Contains(keyword) || x.Name!.Contains(keyword));
+                query = query.Where(x => x.BookingNum!.Contains(keyword) || x.Name!.Contains(keyword) || x.Phone!.Contains(keyword));
             }
 
             if (!string.IsNullOrEmpty(dateRange))
@@ -230,7 +233,7 @@ namespace HotelManagementSystem.Controllers
                 {
                     if (DateTime.TryParse(dates[0], out DateTime startDate) && DateTime.TryParse(dates[1], out DateTime endDate))
                     {
-                        query = query.Where(x => x.BookingDate >= startDate && x.BookingDate <= endDate);
+                        query = query.Where(x => x.StartDate >= startDate && x.StartDate <= endDate);
                     }
                 }
             }
