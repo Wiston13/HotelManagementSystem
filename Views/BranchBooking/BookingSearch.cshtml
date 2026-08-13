@@ -218,23 +218,20 @@
                     </button>
                 </div>
 
-            </div>
-
-            
+            </div>            
 
                 
             <!-- Modal 底部按鈕 (包含取消訂單按鈕) -->
             <div class="modal-footer bg-light">
                 <button type="button" id="goToCancelBtn" class="btn btn-outline-danger btn-sm px-3">
-                    <i class="bi bi-x-circle me-1"></i> 取消訂單
-
-                    <button type="button" class="btn btn-secondary btn-sm px-4" data-bs-dismiss="modal">關閉</button>
-
-                </div>
-
+                    <i class="bi bi-x-circle me-1"></i> 取消訂單               
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm px-4" data-bs-dismiss="modal">關閉</button>
             </div>
         </div>
     </div>
+</div>
+
     <!-- 再次確認取消modal -->
     <div class="modal fade" id="confirmActionModal" tabindex="-1" aria-labelledby="confirmActionModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-sm">
@@ -368,12 +365,21 @@
                 })
 
                 confirmCancelBtn.addEventListener('click', function() {
-                    if (cancelMemo.value === "" || cancelReasonSelect.value.trim() === "請選擇...") {
-                        cancelReasonSelect.classList.add('is-invalid');
+                    let isValid = true;
+                    if (cancelMemo.value.trim() === "") {
                         cancelMemo.classList.add('is-invalid');
-                        return;
+                        isValid=false;
                     }
-                    else confirmActionModal.show();
+                    if( cancelReasonSelect.value === "請選擇..."){
+                        cancelReasonSelect.classList.add('is-invalid');
+                        isValid=false;
+                    }      
+                    if(!isValid){
+                        return;
+                    }                  
+                    
+                    confirmActionModal.show();
+                })
 
                     finalSubmitCancelBtn.addEventListener('click', function() {
                         //傳送資料
@@ -392,7 +398,7 @@
                         location.reload();
                     })
                 })
-            })
+            
 
 
 
