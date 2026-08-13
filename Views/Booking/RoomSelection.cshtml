@@ -1,9 +1,46 @@
 ﻿@*
     For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 *@
-@model HotelManagementSystem.Models.RoomSelectionViewModel
+
 @{
     ViewData["Title"] = "房型結果及訂房確認";
+
+    // 靜態頁面展示用假資料
+    var BranchName = "台北館";
+    var CheckInDate = new DateTime(2026, 8, 14);
+    var CheckOutDate = new DateTime(2026, 8, 15);
+
+    var Nights = (CheckOutDate - CheckInDate).Days;
+
+    var roomList = new[]
+    {
+        new
+        {
+            RoomTypeId = 1,
+            RoomName = "標準雙人房",
+            Description = "舒適雙人房",
+            Price = 2400m,
+            Stock = 3
+        },
+        new
+        {
+            RoomTypeId = 2,
+            RoomName = "豪華雙人房",
+            Description = "寬敞豪華雙人房",
+            Price = 3000m,
+            Stock = 2
+        },
+        new
+        {
+            RoomTypeId = 3,
+            RoomName = "家庭房",
+            Description = "適合家庭入住",
+            Price = 3600m,
+            Stock = 0
+        }
+    };
+}
+
 }
 
 
@@ -19,26 +56,19 @@
 
 
     <!-- 上方標題與查詢條件摘要 --> 
-    <h1 class="fw-bold">@Model.BranchName | 可售房型</h1>
+    <h1 class="fw-bold">@BranchName | 可售房型</h1>
 
-    
-    <!-- 假資料（靜態頁面展示用） -->
-    <p class="text-secondary small mb-4">
-        2026/08/14－2026/08/15
+    <p class="text-muted">
+        @CheckInDate.ToString("yyyy/MM/dd") － @CheckOutDate.ToString("yyyy/MM/dd")
     </p>
 
-
-
-    @* <p class="text-muted">
-        @Model.CheckInDate.ToString("yyyy/MM/dd") － @Model.CheckOutDate.ToString("yyyy/MM/dd") ・ @Model.Guests 位入住
-    </p> *@
 
     <div class="row mt-4">
         <!-- ================= 左側：房型列表區 ================= -->
         <div class="col-lg-8 mb-4">
-            @if (Model.RoomList != null && Model.RoomList.Any())
+            @if (roomList.Any())
             {
-                foreach (var room in Model.RoomList)
+                foreach (var room in roomList)
                 {
                     <div class="card mb-3 shadow-sm border-0">
                         <div class="card-body d-flex justify-content-between align-items-center">
@@ -114,10 +144,7 @@
 
                 <div class="d-flex justify-content-between py-2 border-bottom">
                     <span class="text-muted">分館</span>
-                    @* <strong class="text-dark">@Model.BranchName</strong> *@
-
-                    <!-- 假資料 -->
-                    <strong class="text-dark">台北館</strong>
+                    <strong class="text-dark">@BranchName</strong>
 
 
                 </div>
@@ -127,7 +154,7 @@
                 </div>
                 <div class="d-flex justify-content-between py-2 border-bottom">
                     <span class="text-muted">住宿</span>
-                    <strong class="text-dark">@Model.Nights 晚</strong>
+                    <strong class="text-dark">@Nights 晚</strong>
                 </div>
                 <div class="d-flex justify-content-between py-3">
                     <span class="text-muted h5 mb-0">總金額</span>
@@ -137,9 +164,9 @@
 
                 <!-- 送出表單至第三頁 (Payment) -->
                 <form asp-controller="Booking" asp-action="Payment" method="post">
-                    <input type="hidden" name="branchName" value="@Model.BranchName" />
-                    <input type="hidden" name="checkIn" value="@Model.CheckInDate.ToString("yyyy-MM-dd")" />
-                    <input type="hidden" name="checkOut" value="@Model.CheckOutDate.ToString("yyyy-MM-dd")" />
+                    <input type="hidden" name="branchName" value="@BranchName" />
+                    <input type="hidden" name="checkIn" value="@CheckInDate.ToString("yyyy-MM-dd")" />
+                    <input type="hidden" name="checkOut" value="@CheckOutDate.ToString("yyyy-MM-dd")" />
                     <input type="hidden" id="inputRoomTypeId" name="roomTypeId" value="" />
                     <input type="hidden" id="inputTotalPrice" name="totalPrice" value="0" />
 
@@ -155,7 +182,7 @@
 @section Scripts {
     <script>
         function selectRoom(id, name, pricePerNight) {
-            var nights = @Model.Nights;
+            var nights = @Nights;
             var total = pricePerNight * nights;
 
             document.getElementById('displayRoomName').innerText = name;
