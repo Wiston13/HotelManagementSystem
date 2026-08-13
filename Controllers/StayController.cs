@@ -19,6 +19,7 @@ namespace HotelManagementSystem.Controllers
             return View();
         }
 
+        [HttpGet]
         public IActionResult CheckIn(string? bookingNumber)
         {
             var model = new CheckInViewModel
@@ -101,6 +102,12 @@ namespace HotelManagementSystem.Controllers
 
 
             return View(model);
+        }
+
+        [HttpPost]
+        public IActionResult CheckIn(CheckInViewModel model)
+        {
+            return View();
         }
     }
 }

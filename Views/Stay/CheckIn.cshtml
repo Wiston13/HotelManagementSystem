@@ -80,28 +80,41 @@
 				<div class="card-body p-4 p-md-5 d-flex flex-column">
 					<h2 id="room-assignment-title" class="h4 fw-bold mb-3">指派實體房間</h2>
 
-					<label for="roomAssignment" class="form-label text-secondary mb-2">可入住房間</label>
-					<select asp-for="SelectedRoomId" id="roomAssignment" class="form-select form-select-lg" >
-						<option value="">請選擇房間</option>
-						@foreach (var room in Model.AvailableRooms)
-						{
-							<option value="@room.RoomId">
-								@room.RoomNumber
-							</option>
-						}
-					</select>
+					<form id="checkInForm"
+						  asp-controller="Stay"
+						  asp-action="CheckIn"
+						  method="post">
 
-					<label for="actualGuestCount" class="form-label text-secondary mb-2">實際入住人數</label>
-					<input asp-for="ActualGuestCount"
-						   class="form-control form-control-lg mb-4"
-						   type="number"
-						   min="1"
-						   max="@Model.MaxOccupancy"
-						   value="1"
-						   step="1" 
-						   aria-label="實際入住人數" />
+						<input asp-for="BookingNumber" type="hidden" />
 
-					<button type="button" class="btn btn-primary btn-lg fw-semibold w-100 mt-auto">確認入住</button>
+						<select asp-for="SelectedRoomId"
+								id="roomAssignment"
+								class="form-select form-select-lg">
+							<option value="">請選擇房間</option>
+
+							@foreach (var room in Model.AvailableRooms)
+							{
+								<option value="@room.RoomId">
+									@room.RoomNumber
+								</option>
+							}
+						</select>
+
+						<input asp-for="ActualGuestCount"
+							   class="form-control form-control-lg mb-4"
+							   type="number"
+							   min="1"
+							   max="@Model.MaxOccupancy"
+							   step="1" />
+
+						<button type="button"
+								class="btn btn-primary btn-lg fw-semibold w-100 mt-auto"
+								data-bs-toggle="modal"
+								data-bs-target="#checkInConfirmationModal">
+							確認入住
+						</button>
+					</form>
+
 				</div>
 			</section>
 		</div>
@@ -119,19 +132,20 @@
 					<p class="mb-0 text-secondary">是否確認指派此房間給旅客辦理入住？</p>
 				</div>
 				<div class="modal-footer">
-					<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
-					<button type="button" class="btn btn-primary" id="confirmCheckInButton" data-bs-dismiss="modal">確定</button>
+					<button type="button"
+							class="btn btn-outline-secondary"
+							data-bs-dismiss="modal">
+						取消
+					</button>
+
+					<button type="submit"
+							form="checkInForm"
+							class="btn btn-primary">
+						確定
+					</button>
 				</div>
 			</div>
 		</div>
 	</div>
 }
 
-
-@section Scripts {
-	<script>
-		document.querySelector('.check-in-panel .btn-primary')?.addEventListener('click', function() {
-			bootstrap.Modal.getOrCreateInstance(document.getElementById('checkInConfirmationModal')).show();
-		});
-	</script>
-}
