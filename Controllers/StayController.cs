@@ -41,8 +41,7 @@ namespace HotelManagementSystem.Controllers
 
             if (booking.BookingStatus != "Paid")
             {
-                model.CanCheckIn = false;
-                model.CheckInBlockedReason = "此訂單目前無法辦理入住";
+                model.ErrorMessage = "此訂單目前無法辦理入住";
                 return View(model);
             }
 
@@ -52,21 +51,13 @@ namespace HotelManagementSystem.Controllers
 
             if (now < checkInStart)
             {
-                model.CheckInBlockedReason = "尚未到可辦理入住時間";
+                model.ErrorMessage = "尚未到可辦理入住時間";
                 return View(model);
             }
 
             if (now >= checkOutDeadline)
             {
-                model.CheckInBlockedReason = "此訂單已超過可辦理入住時間";
-                return View(model);
-            }
-
-            var hasStayRecord = _context.StayRecords.Any(s => s.BookingNumber == booking.BookingNumber);
-
-            if (hasStayRecord)
-            {
-                model.CheckInBlockedReason = "此訂單已建立住房紀錄";
+                model.ErrorMessage = "此訂單已超過可辦理入住時間";
                 return View(model);
             }
 
