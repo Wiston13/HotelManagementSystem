@@ -61,8 +61,13 @@ namespace HotelManagementSystem.Controllers
                 return View(model);
             }
 
-            model.CanCheckIn = true;
+            var hasStayRecord = _context.StayRecords.Any(s => s.BookingNumber == booking.BookingNumber);
 
+            if (hasStayRecord)
+            {
+                model.ErrorMessage = "此訂單已建立住房紀錄";
+                return View(model);
+            }
 
             model.HasResult = true;
             model.BookerName = booking.BookerName;
@@ -86,6 +91,14 @@ namespace HotelManagementSystem.Controllers
                     RoomNumber = r.RoomNumber
                 })
                 .ToList();
+
+            if (model.AvailableRooms.Count == 0)
+            {
+                model.ErrorMessage = "目前沒有可指派的房間";
+            }
+
+            model.CanCheckIn = true;
+
 
             return View(model);
         }
