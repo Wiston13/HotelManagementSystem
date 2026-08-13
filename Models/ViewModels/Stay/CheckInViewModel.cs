@@ -11,6 +11,14 @@
         public string? BookingStatus { get; set; }
         public bool HasResult { get; set; }
         public string? ErrorMessage { get; set; }
+        public bool CanCheckIn { get; set; }
+        public string? CheckInBlockedReason { get; set; }
+        public List<RoomOption> AvailableRooms { get; set; } = new List<RoomOption>();
+    }
 
+    public class RoomOption
+    {
+        public int RoomId { get; set; }
+        public string RoomNumber { get; set; } = null!;
     }
 }
