@@ -1,6 +1,6 @@
 ﻿@{
     ViewData["Title"] = "本館訂單查詢";
-    Layout = "_BranchLayout";    
+    Layout = "_BranchLayout";
 }
 @model List<BookingData>
 
@@ -19,10 +19,10 @@
 
 
 <div class="container-fluid px-4">
+
     
 
 
-  
     <!-- 搜尋篩選區塊 (帶有卡片外觀與陰影) -->
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body p-4">
@@ -116,24 +116,25 @@
                                 <td>0987654321</td>
                                 <td><span class="badge @BookingStatus(item.BookingStatus) px-2 py-1">@item.BookingStatus</span></td>
                                 <td class="text-end pe-4">
-                                    
-                                        @* <button type="button" class="btn btn-sm btn-outline-secondary px-3 btn-detail" disabled></button> *@
-                                    
-                                <button type="button" class="btn btn-sm btn-outline-primary px-3 btn-detail"                                    
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#bookingDetailModal"
-                                    data-bookingnum="@item.BookingNum"
-                                    data-name="@item.Name"
-                                    data-roomtype="@item.Roomtype"
-                                    data-createtime="@item.BookingDate"
-                                    data-bookingstatus="@item.BookingStatus"
-                                    data-startdate="@item.StartDate.ToString("yyyy/MM/dd")"
-                                    data-enddate="@item.EndDate.ToString("yyyy/MM/dd")"
-                                    data-phone="@item.Phone"
-                                    data-price="@item.Price"> 查看
-                                </button>    
+
+                                    @* <button type="button" class="btn btn-sm btn-outline-secondary px-3 btn-detail" disabled></button> *@
+
+                                    <button type="button" class="btn btn-sm btn-outline-primary px-3 btn-detail"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#bookingDetailModal"
+                                            data-bookingnum="@item.BookingNum"
+                                            data-name="@item.Name"
+                                            data-roomtype="@item.Roomtype"
+                                            data-createtime="@item.BookingDate"
+                                            data-bookingstatus="@item.BookingStatus"
+                                            data-startdate="@item.StartDate.ToString("yyyy/MM/dd")"
+                                            data-enddate="@item.EndDate.ToString("yyyy/MM/dd")"
+                                            data-phone="@item.Phone"
+                                            data-price="@item.Price">
+                                        查看
+                                    </button>
+
                                                                       
-                                               
                                 </td>
                             </tr>
                         }
@@ -148,13 +149,13 @@
 <div class="modal fade" id="bookingDetailModal" tabindex="-1" aria-labelledby="bookingDetailModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow">
-            
+
             <!-- Modal 標題 -->
             <div class="modal-header bg-light">
                 <h5 class="modal-title fw-bold text-dark" id="bookingDetailModalLabel">訂單詳細資訊</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            
+
             <!-- Modal 內容 (對應附圖的排版) -->
             <div class="modal-body p-4">
                 <div class="row g-3">
@@ -166,7 +167,7 @@
                         <span class="text-secondary small">訂房人</span>
                         <p id="modalName" class="fw-bold fs-6 mb-0">-</p>
                     </div>
-                    
+
                     <div class="col-sm-6">
                         <span class="text-secondary small">聯絡電話</span>
                         <p id="modalPhone" class="mb-0">-</p>
@@ -200,7 +201,7 @@
             <div id="cancelReasonSection" class="d-none mt-4 mx-1 p-3 bg-light border rounded">
                 <h6 class="fw-bold text-danger mb-3">請填寫取消原因</h6>
                 <div class="mb-3">
-                    <label class="form-label">選擇取消原因</label>
+                    <label class="form-label">選擇取消原因<span class="text-danger">*必填</span></label>
                     <select class="form-select" id="cancelReasonSelect">
                         <option value="請選擇..." disabled selected>請選擇...</option>
                         <option value="顧客因素">顧客因素</option>
@@ -208,28 +209,50 @@
                     </select>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">備註說明</label>
-                    <textarea class="form-control" id="cancelMemo" rows="2" placeholder="請輸入詳細原因（選填）"></textarea>
+                    <label class="form-label">備註說明<span class="text-danger">*必填</span></label>
+                    <textarea class="form-control" id="cancelMemo" rows="2" placeholder="請輸入詳細原因"></textarea>
                 </div>
+                <div class="d-flex justify-content-end">
+                    <button type="button" id="confirmCancelBtn" class="btn btn-danger btn-sm d-none px-3">
+                        確認取消訂單
+                    </button>
+                </div>
+
             </div>
-            <!-- 再次確認取消 -->
 
-                <button type="button" id="confirmCancelBtn" class="btn btn-danger btn-sm d-none mx-1">
-                    確認送出取消
-                </button>
+            
 
+                
             <!-- Modal 底部按鈕 (包含取消訂單按鈕) -->
             <div class="modal-footer bg-light">
-                    <button type="button" id="goToCancelBtn" class="btn btn-outline-danger btn-sm px-3">
-                        <i class="bi bi-x-circle me-1"></i> 取消訂單               
-                
-                <button type="button" class="btn btn-secondary btn-sm px-4" data-bs-dismiss="modal">關閉</button>
-                
-            </div>
+                <button type="button" id="goToCancelBtn" class="btn btn-outline-danger btn-sm px-3">
+                    <i class="bi bi-x-circle me-1"></i> 取消訂單
 
+                    <button type="button" class="btn btn-secondary btn-sm px-4" data-bs-dismiss="modal">關閉</button>
+
+                </div>
+
+            </div>
         </div>
     </div>
-</div>
+    <!-- 再次確認取消modal -->
+    <div class="modal fade" id="confirmActionModal" tabindex="-1" aria-labelledby="confirmActionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-danger text-white py-2">
+                    <h6 class="modal-title fw-bold" id="confirmActionModalLabel">系統提示</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center py-4">
+                    <p class="mb-0 fw-semibold">確定要執行取消此訂單嗎？<br><span class="text-muted small">此動作無法復原。</span></p>
+                </div>
+                <div class="modal-footer bg-light justify-content-center py-2">
+                    <button type="button" id="finalSubmitCancelBtn" class="btn btn-danger btn-sm px-3">確定取消</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm px-3" data-bs-dismiss="modal">返回</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
 
 
@@ -238,163 +261,169 @@
 
 
 
-
-<style>
-    .sticky-top {
-        position: sticky;
-        top: 0;
-        z-index: 10;
-    }
-</style>
-
-
-@section Scripts {
-    @*插件*@
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/zh.js"></script>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const searchForm = document.getElementById("searchForm");
-            const keyword = document.getElementById("keyword");
-            
-            const goToCancelBtn = document.getElementById('goToCancelBtn');
-            const confirmCancelBtn = document.getElementById('confirmCancelBtn');
-            const cancelReasonSection = document.getElementById('cancelReasonSection');
-
-            const cancelReasonSelect = document.getElementById('cancelReasonSelect');
-            const cancelMemo = document.getElementById('cancelMemo');
-            //modal帶入資料
-            const bookingDetailModal =document.getElementById("bookingDetailModal");
-            // 表單開啟時
-            bookingDetailModal.addEventListener("show.bs.modal",function(event){
-                const button = event.relatedTarget;
-
-                const bookingNum = button.getAttribute('data-bookingnum');
-                const name = button.getAttribute('data-name');
-                const roomtype = button.getAttribute('data-roomtype');
-                const bookingStatus = button.getAttribute('data-bookingstatus');
-                const createTime = button.getAttribute('data-createtime');
-                const phone = button.getAttribute('data-phone');
-                const bookingDate = button.getAttribute('data-bookingdate');
-                const startDate = button.getAttribute('data-startdate');
-                const endDate = button.getAttribute('data-enddate');
-                const price = button.getAttribute('data-price');
-
-                document.getElementById('modalBookingNum').textContent = bookingNum;
-                document.getElementById('modalName').textContent = name;
-                document.getElementById('modalRoomtype').textContent = roomtype;
-                document.getElementById('modalStatus').textContent = bookingStatus;
-                document.getElementById('modalBookingDate').textContent = startDate + " - " +endDate;
-                document.getElementById('modalPhone').textContent = phone;
-                document.getElementById('modalCreateTime').textContent = createTime;
-                document.getElementById('modalPrice').textContent = price;
+    <style>
+        .sticky-top {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+    </style>
 
 
-                if(bookingStatus=="已取消"){                    
-                    goToCancelBtn.classList.add("btn-outline-secondary");
-                    goToCancelBtn.classList.remove("btn-outline-danger");
-                    goToCancelBtn.disabled=true;
-                }
-                else{                    
-                    goToCancelBtn.classList.add("btn-outline-danger");
-                    goToCancelBtn.classList.remove("btn-outline-secondary");
-                    goToCancelBtn.disabled=false;
-                }                
-            });
-            // 表單關閉時
-            bookingDetailModal.addEventListener('hidden.bs.modal', function () {
-                // 隱藏取消原因區塊
-                cancelReasonSection.classList.add('d-none');
-    
-                // 恢復按鈕原本的顯示狀態
-                goToCancelBtn.classList.remove('d-none');
-                confirmCancelBtn.classList.add('d-none');
-    
-                // 清空輸入框
-                cancelReasonSelect.value = "";
-                cancelMemo.value = "";
+    @section Scripts {
+        @*插件*@
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+        <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+        <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/zh.js"></script>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                const searchForm = document.getElementById("searchForm");
+                const keyword = document.getElementById("keyword");
+
+                const goToCancelBtn = document.getElementById('goToCancelBtn');
+                const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+                const cancelReasonSection = document.getElementById('cancelReasonSection');
+                const finalSubmitCancelBtn = document.getElementById('finalSubmitCancelBtn');
+
+                const confirmActionModal = new bootstrap.Modal(document.getElementById('confirmActionModal'));
+
+                const cancelReasonSelect = document.getElementById('cancelReasonSelect');
+                const cancelMemo = document.getElementById('cancelMemo');
+                //modal帶入資料
+                const bookingDetailModal = document.getElementById("bookingDetailModal");
+                // 表單開啟時
+                bookingDetailModal.addEventListener("show.bs.modal", function(event) {
+                    const button = event.relatedTarget;
+
+                    const bookingNum = button.getAttribute('data-bookingnum');
+                    const name = button.getAttribute('data-name');
+                    const roomtype = button.getAttribute('data-roomtype');
+                    const bookingStatus = button.getAttribute('data-bookingstatus');
+                    const createTime = button.getAttribute('data-createtime');
+                    const phone = button.getAttribute('data-phone');
+                    const bookingDate = button.getAttribute('data-bookingdate');
+                    const startDate = button.getAttribute('data-startdate');
+                    const endDate = button.getAttribute('data-enddate');
+                    const price = button.getAttribute('data-price');
+
+                    document.getElementById('modalBookingNum').textContent = bookingNum;
+                    document.getElementById('modalName').textContent = name;
+                    document.getElementById('modalRoomtype').textContent = roomtype;
+                    document.getElementById('modalStatus').textContent = bookingStatus;
+                    document.getElementById('modalBookingDate').textContent = startDate + " - " + endDate;
+                    document.getElementById('modalPhone').textContent = phone;
+                    document.getElementById('modalCreateTime').textContent = createTime;
+                    document.getElementById('modalPrice').textContent = price;
+
+
+                    if (bookingStatus == "已取消") {
+                        goToCancelBtn.classList.add("btn-outline-secondary");
+                        goToCancelBtn.classList.remove("btn-outline-danger");
+                        goToCancelBtn.disabled = true;
+                    }
+                    else {
+                        goToCancelBtn.classList.add("btn-outline-danger");
+                        goToCancelBtn.classList.remove("btn-outline-secondary");
+                        goToCancelBtn.disabled = false;
+                    }
                 });
-            // 驗證合法輸入
-            searchForm.addEventListener("submit", function(e) {
-                if (keyword.value.trim() == "") {
-                    e.preventDefault();
-                    keyword.classList.add("is-invalid");
-                }
+                // 表單關閉時
+                bookingDetailModal.addEventListener('hidden.bs.modal', function() {
+                    // 隱藏取消原因區塊
+                    cancelReasonSection.classList.add('d-none');
+
+                    // 恢復按鈕原本的顯示狀態
+                    goToCancelBtn.classList.remove('d-none');
+                    confirmCancelBtn.classList.add('d-none');
+
+                    // 清空輸入框
+                    cancelReasonSelect.value = "";
+                    cancelMemo.value = "";
+                });
+                // 驗證合法輸入
+                searchForm.addEventListener("submit", function(e) {
+                    if (keyword.value.trim() == "") {
+                        e.preventDefault();
+                        keyword.classList.add("is-invalid");
+                    }
+                })
+
+                keyword.addEventListener("input", function() {
+                    if (keyword.value.trim() != "") {
+                        this.classList.remove("is-invalid");
+                    }
+                })
+
+                goToCancelBtn.addEventListener("click", function() {
+                    confirmCancelBtn.classList.remove("d-none");
+                    cancelReasonSection.classList.remove("d-none");
+                })
+
+                cancelReasonSelect.addEventListener('change', function() {
+                    cancelReasonSelect.classList.remove('is-invalid');
+                })
+                cancelMemo.addEventListener('input', function() {
+                    cancelMemo.classList.remove('is-invalid');
+                })
+
+                confirmCancelBtn.addEventListener('click', function() {
+                    if (cancelMemo.value === "" || cancelReasonSelect.value.trim() === "請選擇...") {
+                        cancelReasonSelect.classList.add('is-invalid');
+                        cancelMemo.classList.add('is-invalid');
+                        return;
+                    }
+                    else confirmActionModal.show();
+
+                    finalSubmitCancelBtn.addEventListener('click', function() {
+                        //傳送資料
+                        const cancelCause = cancelReasonSelect.value;
+                        const cancelReason = cancelMemo.value;
+                        const cancelTime = new Date().toLocaleString();
+                        // 操作人員
+                        const cancelOperator = '';
+
+
+                        confirmActionModal.hide();
+                        bootstrap.Modal.getInstance(document.getElementById('bookingDetailModal')).hide();
+
+                        // 此區送資料邏輯尚未實作
+
+                        location.reload();
+                    })
+                })
             })
 
-            keyword.addEventListener("input", function() {
-                if (keyword.value.trim() != "") {
-                    this.classList.remove("is-invalid");
-                }
-            })
-
-            goToCancelBtn.addEventListener("click",function(){
-                confirmCancelBtn.classList.remove("d-none");
-                cancelReasonSection.classList.remove("d-none");
-
-                
-            })
 
 
-            confirmCancelBtn.addEventListener('click',function(){
-                if(cancelMemo.value==="" ||cancelReasonSelect.value==="請選擇..."){
-                    alert("請填//");
-                    return;
-                }                
-                if(confirm("確定要執行取消此訂單嗎？此動作無法復原。")){                    
-                   alert("訂單已成功取消");
-                   const cancelCause = cancelReasonSelect.value;
-                   const cancelReason = cancelMemo.value ;
-                   const cancelTime = new Date().toLocaleString();
-                   // 操作人員
-                   const cancelOperator ='';
-                   
-                   bootstrap.Modal.getInstance(document.getElementById('bookingDetailModal')).hide();
-                   // 此區送資料邏輯尚未實作
-
-
-                   location.reload();
-                }                    
-            })
-        })
-        
-
-
-
-
-
-        // 日期顯示區
-        let maxRangeDate = new Date();
-        maxRangeDate.setDate(maxRangeDate.getDate() + 60);
-        flatpickr("#dateTime", {
-            mode: "range",
-            maxDate: maxRangeDate,
-            dateFormat: "Y-m-d",
-            altInput: true,
-            altFormat: "Y.m.d",
-            showMonths: 1,
-            locale: {
-                weekdays: {
-                    shorthand: ["日", "一", "二", "三", "四", "五", "六"],
-                    longhand: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"]
-                }, months: {
-                    shorthand: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],
-                    longhand: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"]
+            // 日期顯示區
+            let maxRangeDate = new Date();
+            maxRangeDate.setDate(maxRangeDate.getDate() + 60);
+            flatpickr("#dateTime", {
+                mode: "range",
+                maxDate: maxRangeDate,
+                dateFormat: "Y-m-d",
+                altInput: true,
+                altFormat: "Y.m.d",
+                showMonths: 1,
+                locale: {
+                    weekdays: {
+                        shorthand: ["日", "一", "二", "三", "四", "五", "六"],
+                        longhand: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"]
+                    }, months: {
+                        shorthand: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],
+                        longhand: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"]
+                    },
+                    rangeSeparator: " - ",
                 },
-                rangeSeparator: " - ",
-            },
-            onClose: function(selectedDates, dateStr, instance) {
-                // 如果選了兩個日期，且起訖是同一天
-                if (selectedDates.length === 2 && selectedDates[0].getTime() === selectedDates[1].getTime()) {
-                    let nextDay = new Date(selectedDates[0]);
-                    nextDay.setDate(nextDay.getDate() + 1); // 自動加一天
-                    instance.setDate([selectedDates[0], nextDay], true);
+                onClose: function(selectedDates, dateStr, instance) {
+                    // 如果選了兩個日期，且起訖是同一天
+                    if (selectedDates.length === 2 && selectedDates[0].getTime() === selectedDates[1].getTime()) {
+                        let nextDay = new Date(selectedDates[0]);
+                        nextDay.setDate(nextDay.getDate() + 1); // 自動加一天
+                        instance.setDate([selectedDates[0], nextDay], true);
+                    }
                 }
-            }
-        });
-    </script>
-
-
-}
+            });
+        </script>
+    }
