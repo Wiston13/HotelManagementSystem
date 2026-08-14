@@ -1,61 +1,116 @@
 ﻿@*
     For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 *@
-@model HotelManagementSystem.Models.RoomSelectionViewModel
+
 @{
     ViewData["Title"] = "房型結果及訂房確認";
+
+    // 靜態頁面展示用假資料
+    var BranchName = "台北館";
+    var CheckInDate = new DateTime(2026, 8, 14);
+    var CheckOutDate = new DateTime(2026, 8, 16);
+
+    var Nights = (CheckOutDate - CheckInDate).Days;
+
+    var roomList = new[]
+    {
+        new
+        {
+            RoomTypeId = 1,
+            RoomName = "標準雙人房",
+            BedType = "一大床",
+            MaxOccupancy = 2,
+            Description = "基本雙人房型。",
+            Price = 2400m,
+            Stock = 3
+        },
+        new
+        {
+            RoomTypeId = 2,
+            RoomName = "精緻雙床房",
+            BedType = "兩小床",
+            MaxOccupancy = 2,
+            Description = "舒適雙人房型。",
+            Price = 3000m,
+            Stock = 2
+        }
+    };
 }
 
 
 <div class="container my-4">
+
+    <!-- 返回首頁 (後續記得處理返回後資料傳遞等部分) -->
+    <a asp-controller="Home"
+       asp-action="Index"
+       class="btn btn-link px-0 text-decoration-none mb-2">
+        ← 修改查詢條件
+    </a>
+
+
+
     <!-- 上方標題與查詢條件摘要 --> 
-    <h2 class="fw-bold">@Model.BranchName | 可售房型</h2>
+    <h1 class="fw-bold">@BranchName | 可售房型</h1>
+
     <p class="text-muted">
-        @Model.CheckInDate.ToString("yyyy/MM/dd") － @Model.CheckOutDate.ToString("yyyy/MM/dd") ・ @Model.Guests 位入住
+        @CheckInDate.ToString("yyyy/MM/dd") － @CheckOutDate.ToString("yyyy/MM/dd")
     </p>
+
 
     <div class="row mt-4">
         <!-- ================= 左側：房型列表區 ================= -->
         <div class="col-lg-8 mb-4">
-            @if (Model.RoomList != null && Model.RoomList.Any())
+            @if (roomList.Any())
             {
-                foreach (var room in Model.RoomList)
+                foreach (var room in roomList)
                 {
                     <div class="card mb-3 shadow-sm border-0">
                         <div class="card-body d-flex justify-content-between align-items-center">
                             <div class="d-flex align-items-center">
-                                <div class="bg-light text-center border rounded p-3 me-3 d-flex align-items-center justify-content-center" style="width: 110px; height: 80px;">
+                                @* <div class="bg-light text-center border rounded p-3 me-3 d-flex align-items-center justify-content-center" style="width: 110px; height: 80px;">
                                     <small class="text-muted">房型照片</small>
-                                </div>
+                                </div> *@
+                                @* 假資料（靜態頁面展示用） *@
+                                <img src="https://images.unsplash.com/photo-1631049307264-da0ec9d70304?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+                                     alt="@room.RoomName"
+                                     class="rounded me-3"
+                                     style="width: 160px; height: 120px; object-fit: cover;">
+
                                 <div>
-                                    <h5 class="card-title fw-bold mb-1">@room.RoomName</h5>
+                                    @* 房型名稱 + 剩餘數量 *@
+                                    <div class="d-flex align-items-baseline mb-1">
+                                        <h5 class="card-title fw-bold mb-0">@room.RoomName</h5>
+                                        <small class="text-secondary ms-2" style="position: relative; top: -1px;">
+                                            ・剩餘 @room.Stock 間
+                                        </small>
+                                    </div>
+                                    @* 床型 *@
+                                    <div class="text-secondary mb-2">
+                                        @room.BedType
+                                    </div>
+                                    @* 最多入住人數 *@
+                                    <div class="mb-2">
+                                        <span class="badge bg-light text-secondary border fw-normal" style="font-size: 0.75rem;">
+                                            最多 @room.MaxOccupancy 人
+                                        </span>
+                                    </div>
+                                    @* 房型描述 *@
                                     <p class="card-text text-muted mb-0">
                                         @room.Description
-                                        @if (room.Stock > 0)
-                                        {
-                                            <span class="text-secondary ms-2">・ 剩餘 @room.Stock 間</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-danger ms-2">・ 無庫存</span>
-                                        }
                                     </p>
                                 </div>
+
                             </div>
 
-                            <div class="text-end">
-                                <h4 class="text-primary fw-bold mb-2">NT$ @room.Price.ToString("N0")</h4>
-                                @if (room.Stock > 0)
-                                {
-                                    <button type="button" class="btn btn-outline-primary px-4"
-                                            onclick="selectRoom(@room.RoomTypeId, '@room.RoomName', @room.Price)">
+                            <div class="text-end align-self-end">
+                                <h4 class="text-primary fw-bold mb-2">
+                                    NT$ @room.Price.ToString("N0")
+                                    <small class="fs-6 fw-normal">／晚</small>
+                                </h4>
+                                <button type="button" class="btn btn-outline-primary px-4"
+                                        onclick="selectRoom(@room.RoomTypeId, '@room.RoomName', @room.Price)">
                                         選擇
-                                    </button>
-                                }
-                                else
-                                {
-                                    <button class="btn btn-secondary px-4" disabled>已售完</button>
-                                }
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -64,7 +119,7 @@
             else
             {
                 <div class="alert alert-warning p-4 text-center">
-                    目前選擇的日期無剩餘庫存，請重新選擇其他日期或分館。
+                    目前沒有符合條件的可訂房型，請重新選擇日期、分館或房型人數。
                 </div>
             }
         </div>
@@ -72,11 +127,22 @@
         <!-- ================= 右側：訂房確認摘要卡片 ================= -->
         <div class="col-lg-4">
             <div class="card p-4 shadow-sm border-0 bg-light">
-                <h4 class="fw-bold mb-3">訂房確認</h4>
+                
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="fw-bold mb-0">房型選擇</h4>
+
+                    <span class="small text-secondary">
+                        *選擇房型不代表房間已保留
+                    </span>
+                </div>
+
 
                 <div class="d-flex justify-content-between py-2 border-bottom">
                     <span class="text-muted">分館</span>
-                    <strong class="text-dark">@Model.BranchName</strong>
+                    <strong class="text-dark">@BranchName</strong>
+
+
                 </div>
                 <div class="d-flex justify-content-between py-2 border-bottom">
                     <span class="text-muted">房型</span>
@@ -84,18 +150,19 @@
                 </div>
                 <div class="d-flex justify-content-between py-2 border-bottom">
                     <span class="text-muted">住宿</span>
-                    <strong class="text-dark">@Model.Nights 晚</strong>
+                    <strong class="text-dark">@Nights 晚</strong>
                 </div>
                 <div class="d-flex justify-content-between py-3">
                     <span class="text-muted h5 mb-0">總金額</span>
                     <h4 class="text-danger fw-bold mb-0" id="displayTotalPrice">NT$ 0</h4>
                 </div>
 
+
                 <!-- 送出表單至第三頁 (Payment) -->
                 <form asp-controller="Booking" asp-action="Payment" method="post">
-                    <input type="hidden" name="branchName" value="@Model.BranchName" />
-                    <input type="hidden" name="checkIn" value="@Model.CheckInDate.ToString("yyyy-MM-dd")" />
-                    <input type="hidden" name="checkOut" value="@Model.CheckOutDate.ToString("yyyy-MM-dd")" />
+                    <input type="hidden" name="branchName" value="@BranchName" />
+                    <input type="hidden" name="checkIn" value="@CheckInDate.ToString("yyyy-MM-dd")" />
+                    <input type="hidden" name="checkOut" value="@CheckOutDate.ToString("yyyy-MM-dd")" />
                     <input type="hidden" id="inputRoomTypeId" name="roomTypeId" value="" />
                     <input type="hidden" id="inputTotalPrice" name="totalPrice" value="0" />
 
@@ -111,7 +178,7 @@
 @section Scripts {
     <script>
         function selectRoom(id, name, pricePerNight) {
-            var nights = @Model.Nights;
+            var nights = @Nights;
             var total = pricePerNight * nights;
 
             document.getElementById('displayRoomName').innerText = name;
