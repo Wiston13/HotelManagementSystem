@@ -22,16 +22,20 @@
                 <div class="card-body p-4">
 
                     <!-- 登入表單：串接標準 C# POST 路由（名稱依你們 Controller 為準） -->
-                    <form id="loginForm" method="post" action="/Account/Login" onsubmit="return validateForm()">
+                    <form id="loginForm" onsubmit="return false;">
 
                         <!-- 六、表單：帳號欄位 -->
                         <div class="mb-3">
                             <label class="form-label">
                                 員工帳號 <span class="text-danger">*</span>
                             </label>
-                            <!-- 加上了 maxlength="10" 限制最大長度，以及 inputmode 讓手機預設跳出數字鍵盤 -->
-                            <input type="text" id="username" name="Username" class="form-control"
-                                   placeholder="請輸入 10 碼員工編號" autocomplete="username" maxlength="10" inputmode="numeric">
+                          <!-- 表單：帳號輸入欄位 -->
+                            <input type="text"
+       id="username"
+       name="Username"
+       class="form-control"
+       placeholder="請輸入人員工編號"
+       autocomplete="username">
                             <!-- 錯誤訊息統一規範 -->
                             <div id="usernameFeedback" class="invalid-feedback">
                                 請輸入員工帳號。
@@ -129,6 +133,6 @@
 
     // 帳號即時過濾：讓使用者在輸入時就「無法輸入」非數字的字元
     document.getElementById('username').addEventListener('input', function(e) {
-        this.value = this.value.replace(/[^0-9]/g, '');
+    
     });
 </script>

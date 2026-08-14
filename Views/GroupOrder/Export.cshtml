@@ -15,12 +15,12 @@
                 <div class="row g-3 align-items-end">
                     <div class="col-12 col-md-4">
                         <label class="form-label fw-semibold">選擇分館</label>
-                        <select class="form-select" id="branchSelect">
-                            <option value="全部分館" selected>全部分館</option>
-                            <option value="台北館">台北館</option>
-                            <option value="台中館">台中館</option>
-                            <option value="高雄館">高雄館</option>
-                        </select>
+                       <select class="form-select" id="branchSelect" required>
+    <option value="" selected disabled>請選擇分館</option>
+    <option value="台北商旅">台北商旅</option>
+    <option value="台中商旅">台中商旅</option>
+    <option value="高雄商旅">高雄商旅</option>
+</select>
                     </div>
                     <div class="col-12 col-md-5">
                         <label class="form-label fw-semibold">日期區間</label>
@@ -93,13 +93,14 @@
         const branchSelect = document.getElementById("branchSelect");
         const btnExport = document.getElementById("btnExport");
 
-        const orderMockData = [
-            { booking_no: "BK20260815001", branch_id: 1, branch_name: "台北館", room_type_id: 101, guest_name: "陳小明", phone: "0912345678", email: "ming@example.com", check_in: "2026-08-15", check_out: "2026-08-18", room_type_snapshot: "豪華雙人房", price_snapshot: 3500.00, total_amount: 10500.00, status: "Completed", created_at: "2026-08-01 12:00:00", cancel_reason: "" },
-            { booking_no: "BK20260820002", branch_id: 1, branch_name: "台北館", room_type_id: 102, guest_name: "張美麗", phone: "0922334455", email: "mary@example.com", check_in: "2026-08-20", check_out: "2026-08-22", room_type_snapshot: "尊爵套房", price_snapshot: 6000.00, total_amount: 12000.00, status: "Paid", created_at: "2026-08-05 14:25:10", cancel_reason: "" },
-            { booking_no: "BK20260825003", branch_id: 2, branch_name: "台中館", room_type_id: 201, guest_name: "王大同", phone: "0933445566", email: "datong@example.com", check_in: "2026-08-25", check_out: "2026-08-26", room_type_snapshot: "經典單人房", price_snapshot: 2000.00, total_amount: 2000.00, status: "CheckedIn", created_at: "2026-08-10 09:15:00", cancel_reason: "" },
-            { booking_no: "BK20260901004", branch_id: 3, branch_name: "高雄館", room_type_id: 301, guest_name: "李四端", phone: "0955667788", email: "shiduan@example.com", check_in: "2026-09-01", check_out: "2026-09-03", room_type_snapshot: "海景雙人房", price_snapshot: 4000.00, total_amount: 8000.00, status: "Cancelled", created_at: "2026-08-12 18:30:22", cancel_reason: "GuestRequest" },
-            { booking_no: "BK20260910005", branch_id: 2, branch_name: "台中館", room_type_id: 202, guest_name: "趙精靈", phone: "0988776655", email: "elf@example.com", check_in: "2026-09-10", check_out: "2026-09-12", room_type_snapshot: "溫馨家庭房", price_snapshot: 5500.00, total_amount: 11000.00, status: "NoShow", created_at: "2026-08-20 11:05:43", cancel_reason: "HotelUnableToFulfill" }
-        ];
+      const orderMockData = [
+    { booking_no: "BK20260815001", branch_id: 1, branch_name: "台北館", room_type_id: 101, guest_name: "陳小明", phone: "0912345678", email: "ming@example.com", check_in: "2026-08-15", check_out: "2026-08-18", room_type_snapshot: "豪華雙人房", price_snapshot: 3500.00, total_amount: 10500.00, status: "Completed", created_at: "2026-08-01 12:00:00", cancel_reason: "" },
+    { booking_no: "BK20260820002", branch_id: 1, branch_name: "台北館", room_type_id: 102, guest_name: "張美麗", phone: "0922334455", email: "mary@example.com", check_in: "2026-08-20", check_out: "2026-08-22", room_type_snapshot: "尊爵套房", price_snapshot: 6000.00, total_amount: 12000.00, status: "Paid", created_at: "2026-08-05 14:25:10", cancel_reason: "" },
+    { booking_no: "BK20260825003", branch_id: 2, branch_name: "台中館", room_type_id: 201, guest_name: "王大同", phone: "0933445566", email: "datong@example.com", check_in: "2026-08-25", check_out: "2026-08-26", room_type_snapshot: "經典單人房", price_snapshot: 2000.00, total_amount: 2000.00, status: "CheckedIn", created_at: "2026-08-10 09:15:00", cancel_reason: "" },
+    { booking_no: "BK20260901004", branch_id: 3, branch_name: "高雄館", room_type_id: 301, guest_name: "李四端", phone: "0955667788", email: "shiduan@example.com", check_in: "2026-09-01", check_out: "2026-09-03", room_type_snapshot: "海景雙人房", price_snapshot: 4000.00, total_amount: 8000.00, status: "Cancelled", created_at: "2026-08-12 18:30:22", cancel_reason: "GuestRequest" },
+    { booking_no: "BK20260910005", branch_id: 2, branch_name: "台中館", room_type_id: 202, guest_name: "趙精靈", phone: "0988776655", email: "elf@example.com", check_in: "2026-09-10", check_out: "2026-09-12", room_type_snapshot: "溫馨家庭房", price_snapshot: 5500.00, total_amount: 11000.00, status: "NoShow", created_at: "2026-08-12 11:05:43", cancel_reason: "" }
+];
+
 
         let currentFilteredData = [];
 
