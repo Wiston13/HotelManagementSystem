@@ -1,0 +1,211 @@
+﻿@{
+    ViewData["Title"] = "分館管理";
+    Layout = "~/Views/Shared/_ManagerLayout.cshtml";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h3 class="fw-bold mb-1">分館管理</h3>
+        <p class="text-muted small mb-0">管理員可查詢、新增及修改分館必要資料（設定接受或停止新訂房）</p>
+    </div>
+    <!-- 新增分館按鈕 -->
+    <button class="btn btn-primary px-4" data-bs-toggle="modal" data-bs-target="#branchModal" onclick="openBranchModal('add')">
+        <i class="bi bi-plus-lg me-1"></i>新增分館
+    </button>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-4">分館名稱</th>
+                    <th>區域 (縣市)</th>
+                    <th>地址</th>
+                    <th>聯絡電話</th>
+                    <th>接受新訂房</th>
+                    <th class="text-end pe-4">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- 示範資料列 1 -->
+                <tr>
+                    <td class="fw-bold ps-4">台北館</td>
+                    <td><span class="badge bg-light text-dark border">台北市</span></td>
+                    <td>台北市中正區...</td>
+                    <td>0223456789</td>
+                    <td><span class="badge bg-success">接受</span></td>
+                    <td class="text-end pe-4">
+                        <button class="btn btn-link text-primary p-0 text-decoration-none"
+                                data-bs-toggle="modal"
+                                data-bs-target="#branchModal"
+                                data-id="1"
+                                data-name="台北館"
+                                data-region="台北市"
+                                data-phone="0223456789"
+                                data-address="台北市中正區..."
+                                data-accepts="true"
+                                data-imageurl=""
+                                data-description="近台北車站，交通便利"
+                                onclick="openBranchModal('edit', this)">
+                            編輯
+                        </button>
+                    </td>
+                </tr>
+                <!-- 示範資料列 2 -->
+                <tr>
+                    <td class="fw-bold ps-4">高雄館</td>
+                    <td><span class="badge bg-light text-dark border">高雄市</span></td>
+                    <td>高雄市前金區...</td>
+                    <td>0721234567</td>
+                    <td><span class="badge bg-secondary">停止</span></td>
+                    <td class="text-end pe-4">
+                        <button class="btn btn-link text-primary p-0 text-decoration-none"
+                                data-bs-toggle="modal"
+                                data-bs-target="#branchModal"
+                                data-id="2"
+                                data-name="高雄館"
+                                data-region="高雄市"
+                                data-phone="0721234567"
+                                data-address="高雄市前金區..."
+                                data-accepts="false"
+                                data-imageurl=""
+                                data-description="靠近市中心與捷運站"
+                                onclick="openBranchModal('edit', this)">
+                            編輯
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal：分館編輯 / 新增 -->
+<div class="modal fade" id="branchModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="branchModalTitle">分館資料維護</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="branchForm" asp-controller="Branch" asp-action="Save" method="post">
+                    <!-- 隱藏欄位：儲存 PK (BranchId) -->
+                    <input type="hidden" id="branchId" name="BranchId" value="0">
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">分館名稱 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="branchName" name="BranchName" required placeholder="例如：台北館">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">區域 (縣市)</label>
+                            <!-- 僅提醒輸入縣市 -->
+                            <input type="text" class="form-control" id="region" name="Region" placeholder="例如：台北市、台中市（僅填縣市）">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">聯絡電話 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="phone" name="Phone" required placeholder="僅需輸入數字，如 0223456789">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">新訂房設定 <span class="text-danger">*</span></label>
+                            <select class="form-select" id="acceptsNewBookings" name="AcceptsNewBookings">
+                                <option value="true">接受新訂房</option>
+                                <option value="false">停止新訂房</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">分館地址 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="address" name="Address" required placeholder="完整通訊地址">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">圖片網址 (ImageUrl)</label>
+                            <input type="url" class="form-control" id="imageUrl" name="ImageUrl" placeholder="https://example.com/image.jpg">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">分館簡介</label>
+                            <textarea class="form-control" id="description" name="Description" rows="3" placeholder="請輸入分館相關簡介說明..."></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer justify-content-center border-0 pb-4">
+                <button type="button" class="btn btn-outline-secondary px-4 me-2" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary px-4" id="btnSaveBranch" onclick="confirmAndSubmit()">儲存變更</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let currentMode = 'add';
+
+        function openBranchModal(mode, btnElement = null) {
+            currentMode = mode;
+            const modalTitle = document.getElementById('branchModalTitle');
+            const saveBtn = document.getElementById('btnSaveBranch');
+            const form = document.getElementById('branchForm');
+
+            if (mode === 'add') {
+                modalTitle.textContent = '新增分館';
+                saveBtn.textContent = '新增分館';
+                form.reset();
+                document.getElementById('branchId').value = '0';
+                document.getElementById('acceptsNewBookings').value = 'true';
+            } else if (mode === 'edit' && btnElement) {
+                modalTitle.textContent = '編輯分館資料';
+                saveBtn.textContent = '儲存變更';
+
+                document.getElementById('branchId').value = btnElement.getAttribute('data-id') || '0';
+                document.getElementById('branchName').value = btnElement.getAttribute('data-name') || '';
+                document.getElementById('region').value = btnElement.getAttribute('data-region') || '';
+                document.getElementById('phone').value = btnElement.getAttribute('data-phone') || '';
+                document.getElementById('address').value = btnElement.getAttribute('data-address') || '';
+                document.getElementById('acceptsNewBookings').value = btnElement.getAttribute('data-accepts') || 'true';
+                document.getElementById('imageUrl').value = btnElement.getAttribute('data-imageurl') || '';
+                document.getElementById('description').value = btnElement.getAttribute('data-description') || '';
+            }
+        }
+
+        function confirmAndSubmit() {
+            const form = document.getElementById('branchForm');
+
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const name = document.getElementById('branchName').value;
+            const region = document.getElementById('region').value || '未填寫';
+            const phone = document.getElementById('phone').value;
+            const address = document.getElementById('address').value;
+            const accepts = document.getElementById('acceptsNewBookings').value === 'true' ? '接受新訂房' : '停止新訂房';
+
+            let message = '';
+
+            if (currentMode === 'add') {
+                message = `【確認新增分館】\n\n` +
+                    `確定要新增以下資料嗎？\n` +
+                    `• 分館名稱：${name}\n` +
+                    `• 區域：${region}\n` +
+                    `• 聯絡電話：${phone}\n` +
+                    `• 分館地址：${address}\n` +
+                    `• 訂房設定：${accepts}`;
+            } else {
+                message = `【確認修改分館】\n\n` +
+                    `確定要儲存【${name}】的變更嗎？\n` +
+                    `• 分館名稱：${name}\n` +
+                    `• 區域：${region}\n` +
+                    `• 聯絡電話：${phone}\n` +
+                    `• 分館地址：${address}\n` +
+                    `• 訂房設定：${accepts}`;
+            }
+
+            if (confirm(message)) {
+                form.submit();
+            }
+        }
+    </script>
+}
