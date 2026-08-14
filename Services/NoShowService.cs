@@ -1,7 +1,5 @@
 ﻿using HotelManagementSystem.Models;
-using HotelManagementSystem.Models.Entities;
 using Microsoft.EntityFrameworkCore;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace HotelManagementSystem.Services
 {
