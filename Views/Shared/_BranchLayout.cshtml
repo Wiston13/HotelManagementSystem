@@ -14,6 +14,7 @@
     var isCheckIn = currentController == "Stay" && currentAction == "CheckIn";
     var isCheckOut = currentController == "Stay" && currentAction == "CheckOut";
     var isRoomStatus = currentController == "RoomStatus" && currentAction == "Index";
+    var isLookup = currentController == "BranchBooking" && currentAction == "BookingSearch";
 
     string Check(bool isActive)
     {
@@ -67,6 +68,12 @@
                             <a class="nav-link rounded @(Check(isEmployeeHome))"
                                asp-controller="EmployeeHome" asp-action="Index">
                                 <i class="bi bi-house-door me-2"></i>工作首頁
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link rounded @(Check(isLookup))"
+                               asp-controller="BranchBooking" asp-action="BookingSearch">
+                                <i class="bi bi-search me-2"></i>訂單查詢
                             </a>
                         </li>
                         <li class="nav-item">
