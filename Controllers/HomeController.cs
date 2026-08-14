@@ -6,9 +6,16 @@ namespace HotelManagementSystem.Controllers
 {
     public class HomeController : Controller
     {
+        private readonly HotelManagementContext _context;
+        public HomeController(HotelManagementContext context) {
+            _context = context;                    
+        }
+
+
         public IActionResult Index()
         {
-            return View();
+            var branches = _context.Branches.ToList();
+            return View(branches);
         }
 
         public IActionResult Privacy()
