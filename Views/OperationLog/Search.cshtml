@@ -32,9 +32,10 @@
                             分館 <span class="text-danger">*</span>
                         </label>
                         <select class="form-select" id="branchSelect">
-                            <option value="台北館" selected>台北館</option>
-                            <option value="台中館">台中館</option>
-                            <option value="高雄館">高雄館</option>
+                          <option value="">全部分館</option>
+<option value="台北商旅">台北商旅</option>
+<option value="台中商旅">台中商旅</option>
+<option value="高雄商旅">高雄商旅</option>
                         </select>
                     </div>
 
@@ -85,6 +86,8 @@
                         <th style="width: 20%;">操作者</th>
                         <th style="width: 20%;">操作類型</th>
                         <th style="width: 20%;">操作對象</th>
+                        <th style="width: 20%;">識別編號</th>
+                        <th style="width: 20%;">說明</th>
                     </tr>
                 </thead>
                 <tbody id="resultTableBody">
@@ -120,10 +123,22 @@
 
             // 1. 原始模擬資料集
             const mockData = [
-                { date: "2026-08-10", displayTime: "08/10 16:05", branch: "台北館", operator: "林怡君", type: "解除保留", target: "房間 304" },
-                { date: "2026-08-10", displayTime: "08/10 16:05", branch: "台北館", operator: "林怡君", type: "Check-in", target: "BK...018" },
-                { date: "2026-08-11", displayTime: "08/11 11:38", branch: "台北館", operator: "張雅婷", type: "Check-out", target: "BK...024" },
-                { date: "2026-08-11", displayTime: "08/11 12:10", branch: "高雄館", operator: "系統管理員", type: "停用帳號", target: "kaohsiung03" }
+               {
+    date: "2026-08-10",
+    displayTime: "08/10 16:05",
+    branch: "台北商旅",
+    operator: "林怡君",
+    type: "解除保留",
+    targetType: "房間",
+    targetIdentifier: "304",
+    description: "房間 304 已解除保留並恢復開放販售"
+}
+                { date: "2026-08-10", displayTime: "08/10 16:05", branch: "台北館", operator: "林怡君", type: "Check-in", target: "訂單" ,targetIdentifier: "BK...0184",
+    description: "訂單BK...018 已辦理入住"},
+                { date: "2026-08-11", displayTime: "08/11 11:38", branch: "台北館", operator: "張雅婷", type: "Check-out", target: "訂單", targetIdentifier: "BK...024",
+    description: "訂單BK...024 已辦理退房"},
+                { date: "2026-08-11", displayTime: "08/11 12:10", branch: "高雄館", operator: "系統管理員", type: "停用帳號", target: "員工帳號" ,targetIdentifier: "kaohsiung03",
+    description: "員工帳號kaohsiung03，已停用"},
             ];
 
             // 2. 鎖定日期上限為今天（2026-08-11）
