@@ -1,7 +1,8 @@
 ﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+    飯店後台：純登入表單原型頁面 (遵照 PR 意見：移除不存在的帳密限制)
 *@
 @{
+    // 第一輪保留結構，方便未來與後端錯誤訊息對接
 }
 <div class="container py-4">
     <div class="row justify-content-center">
@@ -14,51 +15,59 @@
                 <p class="text-secondary mb-0">智慧後台管理系統 (HMS)</p>
             </div>
 
-            <!-- 四、內容區塊：優先使用 Bootstrap Card -->
+            <!-- 四、內容區塊：使用 Bootstrap Card -->
             <div class="card shadow-sm">
                 <div class="card-header fw-semibold text-center bg-transparent py-3">
                     員工權限登入入口
                 </div>
                 <div class="card-body p-4">
 
-                    <!-- 登入表單：串接標準 C# POST 路由（名稱依你們 Controller 為準） -->
+                    <!--
+                      【符合 PR 規範】
+                      純原型不實質送出：onsubmit="return false;"
+                    -->
                     <form id="loginForm" onsubmit="return false;">
 
                         <!-- 六、表單：帳號欄位 -->
                         <div class="mb-3">
-                            <label class="form-label">
+                            <label class="form-label" for="username">
                                 員工帳號 <span class="text-danger">*</span>
                             </label>
-                          <!-- 表單：帳號輸入欄位 -->
+                            <!--
+                              【符合 PR 規範】
+                              1. 已移除 inputmode="numeric"
+                              2. 已移除 maxlength 限制
+                              3. 僅保留 required (帳號不可空白)
+                            -->
                             <input type="text"
-       id="username"
-       name="Username"
-       class="form-control"
-       placeholder="請輸入人員工編號"
-       autocomplete="username">
-                            <!-- 錯誤訊息統一規範 -->
-                            <div id="usernameFeedback" class="invalid-feedback">
-                                請輸入員工帳號。
-                            </div>
+                                   id="username"
+                                   name="Username"
+                                   class="form-control"
+                                   placeholder="請輸入人員工編號"
+                                   autocomplete="username"
+                                   required>
                         </div>
 
                         <!-- 六、表單：密碼欄位 -->
                         <div class="mb-4">
-                            <label class="form-label">
+                            <label class="form-label" for="password">
                                 登入密碼 <span class="text-danger">*</span>
                             </label>
-                            <!-- 加上 maxlength="25" 限制使用者在網頁上最多只能輸入 25 個字 -->
-                            <input type="password" id="password" name="Password" class="form-control"
-                                   placeholder="請輸入密碼（8-25碼英數組合）" autocomplete="current-password" maxlength="25">
-                            <!-- 補上密碼的錯誤訊息提示標籤 -->
-                            <div id="passwordFeedback" class="invalid-feedback">
-                                請輸入密碼。
-                            </div>
-                            
-                            
+                            <!--
+                              【符合 PR 規範】
+                              1. 已移除長度限制、複雜英數組合的正則表達式限制
+                              2. 僅保留 type="password" 與 required (密碼不可空白)
+                            -->
+                            <input type="password"
+                                   id="password"
+                                   name="Password"
+                                   class="form-control"
+                                   placeholder="請輸入密碼"
+                                   autocomplete="current-password"
+                                   required>
                         </div>
 
-                        <!-- 後端回傳錯誤提示（動態判斷，第一輪先保留結構） -->
+                        <!-- 後端回傳錯誤提示（保留公版結構） -->
                         @if (ViewBag.ErrorMessage != null)
                         {
                             <div class="alert alert-danger p-2 text-center text-sm mb-3" role="alert">
@@ -67,7 +76,7 @@
                         }
 
                         <!-- 五、按鈕：主要操作 -->
-                        <button type="submit" class="btn btn-primary w-full w-100 py-2 fw-semibold">
+                        <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
                             安全登入
                         </button>
                     </form>
@@ -84,55 +93,3 @@
     </div>
 </div>
 
-@* 十、JavaScript 限制：只處理目前頁面需要的原型互動（基本欄位驗證） *@
-<script>
-    function validateForm() {
-        var usernameInput = document.getElementById('username');
-        var passwordInput = document.getElementById('password');
-        var usernameFeedback = document.getElementById('usernameFeedback');
-        var passwordFeedback = document.getElementById('passwordFeedback');
-        var isValid = true;
-
-        // 重置所有驗證狀態
-        usernameInput.classList.remove('is-invalid');
-        passwordInput.classList.remove('is-invalid');
-
-        // 帳號正則：剛好 10 碼純數字
-        var numRegex = /^\d{10}$/;
-        var usernameValue = usernameInput.value.trim();
-
-        // 驗證帳號
-        if (!usernameValue) {
-            usernameFeedback.innerText = "請輸入員工帳號。";
-            usernameInput.classList.add('is-invalid');
-            isValid = false;
-        } else if (!numRegex.test(usernameValue)) {
-            usernameFeedback.innerText = "帳號格式錯誤，必須剛好為 10 碼數字！";
-            usernameInput.classList.add('is-invalid');
-            isValid = false;
-        }
-
-        // 密碼正則：必須同時包含英文與數字，且長度在 8 至 25 碼之間
-        var pwdRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,25}$/;
-        var passwordValue = passwordInput.value.trim();
-
-        // 驗證密碼
-        if (!passwordValue) {
-            passwordFeedback.innerText = "請輸入密碼。";
-            passwordInput.classList.add('is-invalid');
-            isValid = false;
-        } else if (!pwdRegex.test(passwordValue)) {
-            // 當長度不足/過長，或者少輸入了英文或數字時觸發
-            passwordFeedback.innerText = "密碼格式錯誤，必須包含英文與數字，且長度為 8-25 碼！";
-            passwordInput.classList.add('is-invalid');
-            isValid = false;
-        }
-
-        return isValid;
-    }
-
-    // 帳號即時過濾：讓使用者在輸入時就「無法輸入」非數字的字元
-    document.getElementById('username').addEventListener('input', function(e) {
-    
-    });
-</script>
