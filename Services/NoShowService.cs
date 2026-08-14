@@ -1,38 +1,61 @@
-﻿using HotelManagementSystem.Models.Entities;
+﻿using HotelManagementSystem.Models;
+using HotelManagementSystem.Models.Entities;
+using Microsoft.EntityFrameworkCore;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace HotelManagementSystem.Services
 {
     public class NoShowService
     {
-        public readonly TaipeiClock _Clock;
-        public NoShowService(TaipeiClock clock)
+        private readonly TaipeiClock _clock;
+        private readonly HotelManagementContext _context;
+
+        public NoShowService(TaipeiClock clock, HotelManagementContext context)
         {
-            _Clock = clock;
+            _clock = clock;
+            _context = context;
+
         }
 
         private static readonly TimeOnly NoShowCutoffTime = new(12, 0);
 
-
-        public bool IsNoShow(Booking booking)
+        public async Task UpdateNoShowsAsync()
         {
-            if (booking.BookingStatus != "Paid")
+            // 1. 取得 now
+            var now = _clock.Now;
+            // 2. 取得 today
+            var today = _clock.Today;
+            // 3. 判斷現在有沒有到今天 12:00
+            bool isTodayOverNoShowCutoffTime = TimeOnly.FromDateTime(now) >= NoShowCutoffTime;
+            // 4. 從 _context.Bookings 篩出候選訂單
+            var query = _context.Bookings.Where(b => b.BookingStatus == "Paid" && b.StayRecord == null);
+            //現在 >= 今日 12:00？
+            //    │
+            //    ├─ 是
+            //    │   → CheckOutDate <= Today
+            //    │
+            //    └─ 否
+            //        → CheckOutDate < Today
+            if (isTodayOverNoShowCutoffTime)
             {
-                return false;
+                //已經超過 12:00，CheckOutDate <= Today 的 Paid + 無 StayRecord 訂單都該 NoShow
+                query = query.Where(b => b.CheckOutDate <= today);
             }
-
-            if (booking.StayRecord != null)
+            else
             {
-                return false;
+                //只有CheckOutDate < 2026 / 08 / 14 的才該 NoShow
+                query = query.Where(b => b.CheckOutDate < today);
             }
-
-            if (_Clock.Now >= booking.CheckOutDate.ToDateTime(NoShowCutoffTime))
+            // 5. ToListAsync()
+            var bookingsToNoShow = await query.ToListAsync();
+            // 6. foreach 改 BookingStatus
+            foreach (var booking in bookingsToNoShow)
             {
-                return true;
+                booking.BookingStatus = "NoShow";
             }
-
-            return false;
+            // 7. SaveChangesAsync()
+            await _context.SaveChangesAsync();
         }
-
 
     }
 }
