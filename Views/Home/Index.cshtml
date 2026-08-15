@@ -13,11 +13,11 @@
 
 
 @model List<HotelManagementSystem.Models.Entities.Branch>
-<h2>測試：取得Branches資料表資料</h2>
+@* <h2>測試：取得Branches資料表資料</h2>
 @foreach (var branch in Model)
 {
     <p>@branch.BranchName</p>
-}
+} *@
 
 
 
@@ -459,15 +459,27 @@
         <!-- 按鈕滾動區塊 -->
         <div class="region-scroll" id="regionContainer">
             <!-- 假設每個按鈕設定固定寬度或 flex-shrink-0 確保一次看得見約 4 個 -->
-            @for (int i = 0; i < HotelNameList.Count; i++)
+            
+            
+            @{
+                var regions = Model
+                    .Where(b => !string.IsNullOrEmpty(b.Region))
+                    .Select(b => b.Region)
+                    .Distinct()
+                    .ToList();
+            }
+            @for (int i = 0; i < regions.Count; i++)
             {
                 string? act = i == 0 ? "active" : null;
+
                 <button class="btn btn-outline-primary px-4 py-2 flex-shrink-0 region-btn @act"
                         style="min-width: 140px;"
-                        data-region="@HotelNameList[i]">
-                    @HotelNameList[i]
+                        data-region="@regions[i]">
+                    @regions[i]
                 </button>
             }
+
+
         </div>
 
         <!-- 右箭頭 -->
@@ -512,61 +524,40 @@
 
     <!-- 3. 分館列表 (響應式：大螢幕3排、平板2排、手機1排) -->
     @*因資料存取為了方便閱讀 用匿名資料存'a[] 但執行程式再載入後立刻執行 因此將全部資料都讀取再隱藏*@
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 region-cards-group" id="group-高雄_Kaohsiung" style="display: flex">
-        @*動態顯示所有分館資料*@
-        @*data-Intro 預載介紹資料 若有新增多個資料 可再增加data-... 同時修改JS*@
-        @foreach (var hotel in KaohsiungHotelList)
-        {
-            <div class="col branch-card">
-                <div class="card border-0"
-                     data-Intro="@hotel.Intro">
+    
 
-                    <img src="@hotel.ImageUrl" class="card-img-top rounded-0 branch-img-trigger" alt="館別圖片">
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+
+        @foreach (var branch in Model)
+        {
+            <div class="col branch-card" data-region="@branch.Region">
+                <div class="card border-0">
+
+                    <img src="@branch.ImageUrl"
+                         class="card-img-top rounded-0 branch-img-trigger"
+                         alt="@branch.BranchName">
+
                     <div class="card-body px-0">
-                        <h5 class="card-title text-primary fw-bold branch-title"> @hotel.Name </h5>
-                        <p class="card-text text-muted small mb-1 branch-address"> @hotel.Address </p>
-                        <p class="card-text text-muted small branch-phone"> @hotel.Phone </p>
+                        <h5 class="card-title text-primary fw-bold branch-title">
+                            @branch.BranchName
+                        </h5>
+                        <p class="card-text text-muted small mb-1 branch-address">
+                            @branch.Address
+                        </p>
+                        <p class="card-text text-muted small branch-phone">
+                            @branch.Phone
+                        </p>
                     </div>
+
                 </div>
             </div>
         }
-    </div>
-    <!--  台北區  -->
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 region-cards-group" id="group-台北_Taipei" style="display: none">
-        @foreach (var hotel in TaipeiHotelList)
-        {
-            <div class="col branch-card">
-                <div class="card border-0"
-                     data-Intro="@hotel.Intro">
 
-                    <img src="@hotel.ImageUrl" class="card-img-top rounded-0 branch-img-trigger" alt="館別圖片">
-                    <div class="card-body px-0">
-                        <h5 class="card-title text-primary fw-bold branch-title"> @hotel.Name </h5>
-                        <p class="card-text text-muted small mb-1 branch-address"> @hotel.Address </p>
-                        <p class="card-text text-muted small branch-phone"> @hotel.Phone </p>
-                    </div>
-                </div>
-            </div>
-        }
     </div>
-    <!--  台中區  -->
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 region-cards-group" id="group-台中_Taichung" style="display: none">
-        @foreach (var hotel in TaichungHotelList)
-        {
-            <div class="col branch-card">
-                <div class="card border-0"
-                     data-Intro="@hotel.Intro">
 
-                    <img src="@hotel.ImageUrl" class="card-img-top rounded-0 branch-img-trigger" alt="館別圖片">
-                    <div class="card-body px-0">
-                        <h5 class="card-title text-primary fw-bold branch-title"> @hotel.Name </h5>
-                        <p class="card-text text-muted small mb-1 branch-address"> @hotel.Address </p>
-                        <p class="card-text text-muted small branch-phone"> @hotel.Phone </p>
-                    </div>
-                </div>
-            </div>
-        }
-    </div>
+
+
 </div>
 
 <!--     Javascript     -->
@@ -599,23 +590,33 @@
     
     
     function switchCardGroup(regionName) {
-        // A. 先把所有的卡片群組通通隱藏
-        let allGroups = document.querySelectorAll('.region-cards-group');
-        allGroups.forEach(function(group) {
-            group.style.display = 'none';
+        
+
+
+        // 找到所有分館卡片
+        let allCards = document.querySelectorAll('.branch-card');
+
+        // 根據地區決定顯示或隱藏
+        allCards.forEach(function(card) {
+            let cardRegion = card.getAttribute('data-region');
+            if (cardRegion === regionName) {
+                card.style.display = '';    // 讓 Bootstrap 自己恢復原本的 .col 顯示方式。
+            } else {
+                card.style.display = 'none';
+            }
+
         });
-        // B. 根據傳進來的地區名稱，決定要顯示哪一個群組
-        let targetGroup = document.getElementById('group-' + regionName);
-        if (targetGroup) {
-            targetGroup.style.display = 'flex';
-        }
-        // C. 如果使用者切換地區時，剛好有展開詳細介紹，把它關閉並還原
+
+        // 如果使用者切換地區時，剛好有展開詳細介紹，把它關閉並還原
         let detailView = document.getElementById('detailView');
         detailView.style.display = 'none';
         if (currentExpandedCard !== null) {
-            currentExpandedCard.style.display = 'block';
+            currentExpandedCard.style.display = '';    // 讓 Bootstrap 自己恢復原本的 .col 顯示方式。
             currentExpandedCard = null;
         }
+
+
+
     }
 
     
