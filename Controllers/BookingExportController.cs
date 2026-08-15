@@ -2,7 +2,7 @@
 
 namespace HotelManagementSystem.Controllers
 {
-    public class GroupOrderController : Controller
+    public class BookingExportController : Controller
     {
         public IActionResult Export()
         {

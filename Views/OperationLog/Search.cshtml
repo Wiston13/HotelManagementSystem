@@ -1,4 +1,4 @@
-﻿@* 飯店後台：基本操作紀錄查詢頁 (23種操作類型完全體) *@
+﻿@* 飯店後台：基本操作紀錄查詢頁 *@
 @{
     Layout = "~/Views/Shared/_ManagerLayout.cshtml";
     ViewData["Title"] = "操作紀錄";
@@ -42,7 +42,7 @@
                         <label class="form-label">
                             操作類型 <span class="text-danger">*</span>
                         </label>
-                        <!-- 【核心修正】這裡已百分之百補齊 23 種正式中文操作類型 -->
+                        
                         <select class="form-select" id="typeSelect">
                             <option value="全部類型" selected>全部類型</option>
 
@@ -152,7 +152,7 @@
             const operatorInput = document.getElementById("operatorInput");
             const targetInput = document.getElementById("targetInput");
 
-            // 1. 原始模擬資料集 (已補齊欄位)
+            // 1. 原始模擬資料集
             const mockData = [
                 {
                     date: "2026-08-10",
@@ -169,7 +169,7 @@
                 { date: "2026-08-11", displayTime: "08/11 12:10", branch: "高雄商旅", operator: "系統管理員", type: "停用帳號", target: "員工帳號", targetIdentifier: "kaohsiung03", description: "員工帳號kaohsiung03 已停用" }
             ];
 
-            // 2. 鎖定日期上限為今天（2026-08-11）
+            // 2. 鎖定日期上限為今天
             const today = new Date();
             const year = today.getFullYear();
             const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -233,13 +233,12 @@
                     // 日期篩選
                     if (item.date < sDate || item.date > eDate) return false;
 
-                    // 【修正】防止全部分館比對失敗
+                  
                     if (branch !== "全部分館" && branch !== "" && item.branch !== branch) return false;
 
                     // 操作類型篩選
                     if (type !== "全部類型" && item.type !== type) return false;
 
-                    // 操作者與受影響對象模糊搜尋
                     if (operator && !item.operator.toLowerCase().includes(operator)) return false;
                     if (target && !item.target.toLowerCase().includes(target) && !item.targetIdentifier.toLowerCase().includes(target)) return false;
 
@@ -251,7 +250,7 @@
                 if (filtered.length > 0) {
                     filtered.forEach(item => {
                         const tr = document.createElement("tr");
-                        // 【修正】補齊為符合 HTML 標題要求的 7 個 <td> 儲存格，徹底解決歪斜
+                      
                         tr.innerHTML = `
                                     <td class="text-secondary">${item.displayTime}</td>
                                     <td>${item.branch}</td>

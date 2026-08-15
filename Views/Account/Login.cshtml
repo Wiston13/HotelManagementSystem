@@ -1,51 +1,44 @@
 ﻿@*
-    飯店後台：純登入表單原型頁面 (遵照 PR 意見：移除不存在的帳密限制)
+    飯店後台：純登入表單原型頁面 
 *@
 @{
-    // 第一輪保留結構，方便未來與後端錯誤訊息對接
+    
 }
 <div class="container py-4">
     <div class="row justify-content-center">
-        <!-- 桌面版佔 5 欄（居中），窄畫面自動滿版 -->
+     
         <div class="col-12 col-md-8 col-lg-5">
 
             <!-- 三、頁面標題與品牌識別 -->
             <div class="text-center mb-4">
-                <h1 class="h3 fw-bold mb-2">康康連鎖飯店</h1>
-                <p class="text-secondary mb-0">智慧後台管理系統 (HMS)</p>
+                <h1 class="h3 fw-bold mb-2">連鎖商旅</h1>
+                <p class="text-secondary mb-0">內部管理系統</p>
             </div>
 
             <!-- 四、內容區塊：使用 Bootstrap Card -->
             <div class="card shadow-sm">
                 <div class="card-header fw-semibold text-center bg-transparent py-3">
-                    員工權限登入入口
+                    內部人員登入
                 </div>
                 <div class="card-body p-4">
 
-                    <!--
-                      【符合 PR 規範】
-                      純原型不實質送出：onsubmit="return false;"
-                    -->
-                    <form id="loginForm" onsubmit="return false;">
+                   
+                    <form id="loginForm" class="needs-validation" novalidate>
 
                         <!-- 六、表單：帳號欄位 -->
                         <div class="mb-3">
                             <label class="form-label" for="username">
                                 員工帳號 <span class="text-danger">*</span>
                             </label>
-                            <!--
-                              【符合 PR 規範】
-                              1. 已移除 inputmode="numeric"
-                              2. 已移除 maxlength 限制
-                              3. 僅保留 required (帳號不可空白)
-                            -->
+                            
                             <input type="text"
                                    id="username"
                                    name="Username"
                                    class="form-control"
-                                   placeholder="請輸入人員工編號"
+                                   placeholder="請輸入員工編號"
                                    autocomplete="username"
                                    required>
+                            <div class="invalid-feedback">請輸入員工編號</div>
                         </div>
 
                         <!-- 六、表單：密碼欄位 -->
@@ -53,11 +46,7 @@
                             <label class="form-label" for="password">
                                 登入密碼 <span class="text-danger">*</span>
                             </label>
-                            <!--
-                              【符合 PR 規範】
-                              1. 已移除長度限制、複雜英數組合的正則表達式限制
-                              2. 僅保留 type="password" 與 required (密碼不可空白)
-                            -->
+                           
                             <input type="password"
                                    id="password"
                                    name="Password"
@@ -65,9 +54,10 @@
                                    placeholder="請輸入密碼"
                                    autocomplete="current-password"
                                    required>
+                            <div class="invalid-feedback">請輸入登入密碼</div>
                         </div>
 
-                        <!-- 後端回傳錯誤提示（保留公版結構） -->
+                       
                         @if (ViewBag.ErrorMessage != null)
                         {
                             <div class="alert alert-danger p-2 text-center text-sm mb-3" role="alert">
@@ -86,10 +76,28 @@
 
             <!-- 頁尾宣告 -->
             <div class="text-center mt-4 text-secondary" style="font-size: 0.75rem;">
-                &copy; @DateTime.Now.Year 康康飯店集團資訊部. All rights reserved.
+                &copy; @DateTime.Now.Year 內部管理系統. All rights reserved.
             </div>
 
         </div>
     </div>
 </div>
 
+@section Scripts {
+    <script>
+            document.getElementById("loginForm").addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            // 啟用 Bootstrap 的驗證樣式顯示
+            this.classList.add("was-validated");
+
+            // 檢查表單 HTML5 原生驗證狀態（如 required）
+            if (!this.checkValidity()) {
+                return;
+            }
+
+            // 驗證通過，跳轉至靜態展示首頁
+            window.location.href = "/EmployeeHome/Index";
+        });
+    </script>
+}
