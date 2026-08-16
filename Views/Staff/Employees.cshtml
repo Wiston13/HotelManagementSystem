@@ -1,18 +1,13 @@
-﻿@*
-    
-*@
-
-@{
+﻿@{
     Layout = "~/Views/Shared/_ManagerLayout.cshtml";
     ViewData["Title"] = "帳號管理";
 }
-
 
 <div class="container py-4">
 
     <!-- 三、頁面標題 -->
     <h1 class="h3 fw-bold mb-2">帳號管理</h1>
-    <p class="text-secondary mb-4">管理系統員工帳號、權限設定與啟用狀態。</p>
+    <p class="text-secondary mb-4">管理分館員工帳號、所屬分館與啟用狀態。</p>
 
     <!-- 八、頁面寬度與響應式 -->
     <div class="row g-4">
@@ -39,36 +34,56 @@
                             </tr>
                         </thead>
                         <tbody>
+                            <!-- 第一筆：林雅婷 -->
                             <tr>
-                                <td>張小明</td>
-                                <td>E20260807003</td>
-                                <td>台中商旅</td>
+                                <td>林雅婷</td>
+                                <td>E20260807002</td>
+                                <td>台北商旅</td>
                                 <td><span class="badge text-bg-success">啟用</span></td>
                                 <td class="text-end">
                                     <button class="btn btn-outline-primary btn-sm btn-edit"
                                             data-bs-toggle="modal"
                                             data-bs-target="#employeeModal"
-                                            data-name="張小明"
-                                            data-account="E20260807003"
-                                            data-branch="2"
+                                            data-name="林雅婷"
+                                            data-account="E20260807002"
+                                            data-branch="1"
                                             data-status="1">
                                         編輯
                                     </button>
                                 </td>
                             </tr>
+                            <!-- 第二筆：陳柏宇 -->
                             <tr>
-                                <td>王大同</td>
-                                <td>E20260807002</td>
+                                <td>陳柏宇</td>
+                                <td>E20260807003</td>
                                 <td>台北商旅</td>
                                 <td><span class="badge text-bg-danger">停用</span></td>
                                 <td class="text-end">
                                     <button class="btn btn-outline-primary btn-sm btn-edit"
                                             data-bs-toggle="modal"
                                             data-bs-target="#employeeModal"
-                                            data-name="王大同"
-                                            data-account="E20260807002"
+                                            data-name="陳柏宇"
+                                            data-account="E20260807003"
                                             data-branch="1"
                                             data-status="0">
+                                        編輯
+                                    </button>
+                                </td>
+                            </tr>
+                            <!-- 第三筆：張路得 -->
+                            <tr>
+                                <td>張路得</td>
+                                <td>E20260807001</td>
+                                <td>台中商旅</td>
+                                <td><span class="badge text-bg-success">啟用</span></td>
+                                <td class="text-end">
+                                    <button class="btn btn-outline-primary btn-sm btn-edit"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#employeeModal"
+                                            data-name="張路得"
+                                            data-account="E20260807001"
+                                            data-branch="2"
+                                            data-status="1">
                                         編輯
                                     </button>
                                 </td>
@@ -92,7 +107,7 @@
             <div class="modal-body">
                <form id="employeeForm" novalidate>
 
-                    <!-- 六、表單：員工姓名 -->
+                    <!-- 員工姓名 -->
                     <div class="mb-3">
                         <label class="form-label" for="employeeName">
                             員工姓名 <span class="text-danger">*</span>
@@ -101,7 +116,7 @@
                         <div class="invalid-feedback">請輸入員工姓名。</div>
                     </div>
 
-                    <!-- 六、表單：員工帳號 -->
+                    <!-- 員工帳號 -->
                     <div class="mb-3">
                         <label class="form-label" for="employeeAccount">
                             員工帳號 <span class="text-danger">*</span>
@@ -109,22 +124,24 @@
                         <input class="form-control" id="employeeAccount" type="text" placeholder="建立後由系統自動產生" readonly>
                         <div class="invalid-feedback">員工帳號不可為空。</div>
                     </div>
-
                     <!-- 密碼區塊 -->
                     <div class="mb-3" id="passwordFieldContainer">
-                        <label class="form-label" for="employeePassword">
+                        <label class="form-label" for="employeePassword" id="employeePasswordLabel">
                             初始密碼 <span class="text-danger">*</span>
                         </label>
                         <input class="form-control"
                                type="password"
                                id="employeePassword"
                                placeholder="請輸入初始密碼">
-                        <div class="invalid-feedback">
+                       
+                        <div class="form-text d-none" id="passwordEditHint">留空表示不修改密碼</div>
+                       
+                        <div class="invalid-feedback" id="passwordInvalidFeedback">
                             請輸入初始密碼。
                         </div>
                     </div>
 
-                    <!-- 六、表單：所屬分館 -->
+                    <!-- 所屬分館 -->
                     <div class="mb-3">
                         <label class="form-label" for="branchId">
                             所屬分館 <span class="text-danger">*</span>
@@ -138,7 +155,7 @@
                         <div class="invalid-feedback">請選擇所屬分館。</div>
                     </div>
 
-                    <!-- 六、表單：啟用狀態 -->
+                    <!-- 啟用狀態 -->
                     <div class="mb-4" id="statusFieldContainer">
                         <label class="form-label" for="accountStatus">
                             啟用狀態 <span class="text-danger">*</span>
@@ -162,74 +179,83 @@
 
 @section Scripts {
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
+        document.addEventListener("DOMContentLoaded", function() {
             const btnCreateNew = document.getElementById("btnCreateNew");
             const modalTitle = document.getElementById("employeeModalLabel");
             const employeeForm = document.getElementById("employeeForm");
-            
+
             const employeeNameInput = document.getElementById("employeeName");
             const employeeAccountInput = document.getElementById("employeeAccount");
             const branchSelect = document.getElementById("branchId");
             const statusFieldContainer = document.getElementById("statusFieldContainer");
             const accountStatusSelect = document.getElementById("accountStatus");
 
-            
+   
             const passwordFieldContainer = document.getElementById("passwordFieldContainer");
+            const employeePasswordLabel = document.getElementById("employeePasswordLabel");
             const employeePassword = document.getElementById("employeePassword");
+            const passwordEditHint = document.getElementById("passwordEditHint");
+            const passwordInvalidFeedback = document.getElementById("passwordInvalidFeedback");
 
-            // 1. 按「新增員工」時
+            //  按「新增員工」時
             if (btnCreateNew) {
-                btnCreateNew.addEventListener("click", function () {
+                btnCreateNew.addEventListener("click", function() {
                     modalTitle.innerText = "新增員工資料";
                     employeeForm.reset();
                     employeeForm.classList.remove("was-validated");
-                    
-                  
-                    passwordFieldContainer.classList.remove("d-none");
+
+           
+                    employeePasswordLabel.innerHTML = '初始密碼 <span class="text-danger">*</span>';
+                    employeePassword.placeholder = '請輸入初始密碼';
                     employeePassword.value = "";
                     employeePassword.required = true;
+                    passwordInvalidFeedback.innerText = "請輸入初始密碼。";
 
-                  
+                    if (passwordEditHint) passwordEditHint.classList.add("d-none");
+                   
+                    if (passwordFieldContainer) passwordFieldContainer.classList.remove("d-none");
+
+                   
                     if (statusFieldContainer) statusFieldContainer.style.display = "none";
                     if (accountStatusSelect) accountStatusSelect.value = "1";
                 });
             }
 
-            // 2. 按「編輯」時
+            // 按「編輯」時
             document.querySelectorAll(".btn-edit").forEach(button => {
-                button.addEventListener("click", function () {
+                button.addEventListener("click", function() {
                     modalTitle.innerText = "修改員工資料";
                     employeeForm.classList.remove("was-validated");
 
-                
                     employeeNameInput.value = this.getAttribute("data-name") || "";
                     employeeAccountInput.value = this.getAttribute("data-account") || "";
                     branchSelect.value = this.getAttribute("data-branch") || "";
                     accountStatusSelect.value = this.getAttribute("data-status") || "1";
 
-                    
-                    passwordFieldContainer.classList.add("d-none");
+                   
+                    employeePasswordLabel.innerHTML = '新密碼 (選填)';
+                    employeePassword.placeholder = '若想修改密碼請輸入新密碼';
                     employeePassword.value = "";
                     employeePassword.required = false;
+                    passwordInvalidFeedback.innerText = "若想修改密碼請輸入新密碼。";
+
+                    if (passwordEditHint) passwordEditHint.classList.remove("d-none");
 
                     if (statusFieldContainer) statusFieldContainer.style.display = "block";
                 });
             });
 
-            // 3. 儲存表單
+         
             const btnSaveEmployee = document.getElementById("btnSaveEmployee");
             if (btnSaveEmployee) {
-                btnSaveEmployee.addEventListener("click", function () {
-                    
+                btnSaveEmployee.addEventListener("click", function() {
                     if (!employeeForm.checkValidity()) {
                         employeeForm.classList.add("was-validated");
                         return;
                     }
 
-               
                     const modalElement = document.getElementById("employeeModal");
                     const modal = bootstrap.Modal.getInstance(modalElement);
-                    
                     if (modal) {
                         modal.hide();
                     }
