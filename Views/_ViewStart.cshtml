@@ -1,7 +1,7 @@
 ﻿@{
     var controller = ViewContext.RouteData.Values["controller"]?.ToString();
 
-    Layout = controller is "EmployeeHome" or "Stay" or "RoomStatus"
+    Layout = controller is "EmployeeHome" or "Stay" or "RoomStatus" or "BranchBooking"
         ? "_BranchLayout"
         : "_CustomerLayout";
 }
