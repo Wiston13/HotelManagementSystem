@@ -1,6 +1,7 @@
 using HotelManagementSystem.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
+using HotelManagementSystem.Models.ViewModels.Home;
 
 namespace HotelManagementSystem.Controllers
 {
@@ -14,8 +15,25 @@ namespace HotelManagementSystem.Controllers
 
         public IActionResult Index()
         {
-            var branches = _context.Branches.ToList();
-            return View(branches);
+            var branches = _context.Branches
+                .Select(b => new BranchViewModel
+                {
+                    BranchId = b.BranchId,
+                    BranchName = b.BranchName,
+                    Phone = b.Phone,
+                    Address = b.Address,
+                    Description = b.Description,
+                    Region = b.Region,
+                    ImageUrl = b.ImageUrl
+                })
+                .ToList();
+
+            var model = new HomeViewModel
+            {
+                Branches = branches
+            };
+
+            return View(model);
         }
 
         public IActionResult Privacy()

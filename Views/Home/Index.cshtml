@@ -11,12 +11,15 @@
 }
 
 
-
-@model List<HotelManagementSystem.Models.Entities.Branch>
-@* <h2>測試：取得Branches資料表資料</h2>
-@foreach (var branch in Model)
+@model HotelManagementSystem.Models.ViewModels.Home.HomeViewModel
+@* <h3>分館數量：@Model.Branches.Count</h3>
+@foreach (var branch in Model.Branches)
 {
-    <p>@branch.BranchName</p>
+    <p>
+        @branch.BranchId -
+        @branch.BranchName -
+        @branch.Region
+    </p>
 } *@
 
 @* 筆記：
@@ -223,7 +226,7 @@
                                     選擇分館
                                 </option>
 
-                                @foreach (var branch in Model)
+                                @foreach (var branch in Model.Branches)
                                 {
                                     <option value="@branch.BranchId">
                                         @branch.BranchName
@@ -478,7 +481,7 @@
             </button>
             
             @{
-                var regions = Model
+                var regions = Model.Branches
                     .Where(b => !string.IsNullOrEmpty(b.Region))
                     .Select(b => b.Region)
                     .Distinct()
@@ -543,7 +546,7 @@
 
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
 
-        @foreach (var branch in Model)
+        @foreach (var branch in Model.Branches)
         {
             <div class="col branch-card" data-region="@branch.Region">
                 <div class="card border-0" data-Intro="@branch.Description">
@@ -603,8 +606,7 @@
 
     
     
-    function switchCardGroup(regionName) {
-        
+    function switchCardGroup(regionName) {        
 
         // 1. 如果有展開詳細介紹，先關閉
         let detailView = document.getElementById('detailView');
@@ -619,15 +621,21 @@
         let allCards = document.querySelectorAll('.branch-card');
 
         allCards.forEach(function(card) {
-            let cardRegion = card.getAttribute('data-region');
-            if (regionName === 'all' || cardRegion === regionName) {
-                card.style.display = '';    // 讓 Bootstrap 自己恢復原本的 .col 顯示方式。
-            } else {
+
+            // 「所有分館」
+            if (regionName === 'all') {
+                card.style.display = '';
+            }
+            // 指定地區
+            else if (card.dataset.region === regionName) {
+                card.style.display = '';
+            }
+            // 其他地區
+            else {
                 card.style.display = 'none';
             }
+
         });
-
-
 
     }
 
