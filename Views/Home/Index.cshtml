@@ -19,6 +19,13 @@
     <p>@branch.BranchName</p>
 } *@
 
+@* 筆記：
+    1. 記得處理 Description, Region, ImageUrl 可能為null的情況！ 
+    2. 之後再建ViewModel。電話格式化放到ViewModel處理
+    3. JavaScript 從 .cshtml 搬到 .js 
+    4. 後端傳遞與資料關聯使用 BranchId，各頁面如果要顯示分館名稱 ->在該頁的ViewModel中提供BranchName
+*@
+
 
 
 
@@ -200,58 +207,56 @@
         <!-- 查詢區塊 Card -->
         <div class="card shadow-sm border-0 bg-light mb-0">
             <div class="card-body">
-                <!-- 使用 Bootstrap Grid 排版 -->
-                <div class="row g-3 align-items-end">
 
-                    <!-- 分館 (佔 3 份) -->
-                    <div class="col-md-3">
-                        <label class="form-label text-muted small">分館</label>
-                        <!-- 這裡之後會換成 ASP.NET 的 Helper -->
-                        <!-- 此處判斷資料異常時顯示預設文字-->
-                        <select class="form-select" id="HotelSelect">
-                            <option value="" disabled selected hidden>選擇分館</option>
-                            @if (hotelList == null || hotelList.All(group => !group.Any()))
-                            {
-                                <option value="" disabled selected hidden>系統維護中，目前無法載入分館</option>
-                            }
-                            else
-                            {
-                                @foreach (var hotel in hotelList)
+                <form asp-controller="Booking"
+                      asp-action="RoomSelection"
+                      method="get">
+                    <div class="row g-3 align-items-end">
+                        <!-- 分館 (佔 3 份) -->
+                        <div class="col-md-3">
+                            <label class="form-label text-muted small">分館</label>
+                            <!-- 這裡之後會換成 ASP.NET 的 Helper -->
+                            <!-- 此處判斷資料異常時顯示預設文字-->
+                            <select class="form-select" id="HotelSelect" name="branchId">
+
+                                <option value="" disabled selected hidden>
+                                    選擇分館
+                                </option>
+
+                                @foreach (var branch in Model)
                                 {
-                                    @foreach (var h in hotel)
-                                    {
-                                        <option>@h.Name</option>
-                                    }
+                                    <option value="@branch.BranchId">
+                                        @branch.BranchName
+                                    </option>
                                 }
-                            }
+                            </select>
+                        </div>
 
-                        </select>
-                    </div>
+                        <!-- 選擇日期 (佔 4 份) -->
+                        <div class="col-md-4">
+                            <label class="form-label text-muted small">入住日期－退房日期</label>
+                            <input type="text" id="dateTime" class="form-control" value="" placeholder="選擇入住與退房日期"
+                                   style="">
+                        </div>
 
-                    <!-- 選擇日期 (佔 4 份) -->
-                    <div class="col-md-4">
-                        <label class="form-label text-muted small">入住日期－退房日期</label>
-                        <input type="text" id="dateTime" class="form-control" value="" placeholder="選擇入住與退房日期"
-                               style="">
-                    </div>
+                        <!-- 人數 (佔 2 份) -->
+                        <div class="col-md-2">
+                            <label class="form-label text-muted small">房型人數</label>
+                            <select class="form-select" id="RoomSelect">
+                                <option value="" disabled selected hidden>選擇房型人數</option>
+                                <option value="" disabled >請先選擇分館</option>                            
+                            </select>
+                        </div>
 
-                    
-                    
-                    <!-- 人數 (佔 2 份) -->
-                    <div class="col-md-2">
-                        <label class="form-label text-muted small">房型人數</label>
-                        <select class="form-select" id="RoomSelect">
-                            <option value="" disabled selected hidden>選擇房型人數</option>
-                            <option value="" disabled >請先選擇分館</option>
-                            
-                        </select>
-                    </div>
+                        <!-- 查詢按鈕 (佔 2 份) -->
+                        <div class="col-md-3">
+                            <button type="submit" id="submitBtn" class="btn btn-primary w-100">查詢可售房型</button>
+                        </div>
 
-                    <!-- 查詢按鈕 (佔 2 份) -->
-                    <div class="col-md-3">
-                        <button type="submit" id="submitBtn" class="btn btn-primary w-100">查詢可售房型</button>
                     </div>
-                </div>
+                </form>
+
+                
             </div>
         </div>
     </div>
@@ -371,8 +376,13 @@
     }
 
     // 將HotelSelect.value dateTime.value RoomSelect.value 以url傳去 /Booking/RoomSelection
+    console.log("Hotel:", HotelSelect.value);
+    console.log("startDate:", startDate);
+    console.log("endDate:", endDate);
+    console.log("Room:", RoomSelect.value);
+    console.log("targetUrl:", targetUrl);
 
-    let targetUrl = `/Booking/RoomSelection?hotel=${encodeURIComponent(HotelSelect.value)}&startDate=${startDate}&endDate=${endDate}&people=${encodeURIComponent(RoomSelect.value)}`;
+    let targetUrl = `/Booking/RoomSelection?branchId=${encodeURIComponent(HotelSelect.value)}&checkIn=${startDate}&checkOut=${endDate}&guests=${encodeURIComponent(RoomSelect.value)}`;
 
     window.location.href = targetUrl;
 
@@ -460,6 +470,12 @@
         <div class="region-scroll" id="regionContainer">
             <!-- 假設每個按鈕設定固定寬度或 flex-shrink-0 確保一次看得見約 4 個 -->
             
+            <!-- 全部分館 -->
+            <button class="btn btn-outline-primary px-4 py-2 flex-shrink-0 region-btn active"
+                    style="min-width: 140px;"
+                    data-region="all">
+                    所有分館
+            </button>
             
             @{
                 var regions = Model
@@ -470,9 +486,7 @@
             }
             @for (int i = 0; i < regions.Count; i++)
             {
-                string? act = i == 0 ? "active" : null;
-
-                <button class="btn btn-outline-primary px-4 py-2 flex-shrink-0 region-btn @act"
+                <button class="btn btn-outline-primary px-4 py-2 flex-shrink-0 region-btn"
                         style="min-width: 140px;"
                         data-region="@regions[i]">
                     @regions[i]
@@ -532,7 +546,7 @@
         @foreach (var branch in Model)
         {
             <div class="col branch-card" data-region="@branch.Region">
-                <div class="card border-0">
+                <div class="card border-0" data-Intro="@branch.Description">
 
                     <img src="@branch.ImageUrl"
                          class="card-img-top rounded-0 branch-img-trigger"
@@ -592,28 +606,26 @@
     function switchCardGroup(regionName) {
         
 
-
-        // 找到所有分館卡片
-        let allCards = document.querySelectorAll('.branch-card');
-
-        // 根據地區決定顯示或隱藏
-        allCards.forEach(function(card) {
-            let cardRegion = card.getAttribute('data-region');
-            if (cardRegion === regionName) {
-                card.style.display = '';    // 讓 Bootstrap 自己恢復原本的 .col 顯示方式。
-            } else {
-                card.style.display = 'none';
-            }
-
-        });
-
-        // 如果使用者切換地區時，剛好有展開詳細介紹，把它關閉並還原
+        // 1. 如果有展開詳細介紹，先關閉
         let detailView = document.getElementById('detailView');
         detailView.style.display = 'none';
+
         if (currentExpandedCard !== null) {
             currentExpandedCard.style.display = '';    // 讓 Bootstrap 自己恢復原本的 .col 顯示方式。
             currentExpandedCard = null;
         }
+
+        // 2. 找到所有分館卡片，根據地區決定顯示或隱藏
+        let allCards = document.querySelectorAll('.branch-card');
+
+        allCards.forEach(function(card) {
+            let cardRegion = card.getAttribute('data-region');
+            if (regionName === 'all' || cardRegion === regionName) {
+                card.style.display = '';    // 讓 Bootstrap 自己恢復原本的 .col 顯示方式。
+            } else {
+                card.style.display = 'none';
+            }
+        });
 
 
 
