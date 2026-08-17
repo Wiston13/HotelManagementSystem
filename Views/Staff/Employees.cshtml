@@ -34,9 +34,9 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- 第一筆：林雅婷 -->
+                            
                             <tr>
-                                <td>林雅婷</td>
+                                <td>林怡君</td>
                                 <td>E20260807002</td>
                                 <td>台北商旅</td>
                                 <td><span class="badge text-bg-success">啟用</span></td>
@@ -44,7 +44,7 @@
                                     <button class="btn btn-outline-primary btn-sm btn-edit"
                                             data-bs-toggle="modal"
                                             data-bs-target="#employeeModal"
-                                            data-name="林雅婷"
+                                            data-name="林怡君"
                                             data-account="E20260807002"
                                             data-branch="1"
                                             data-status="1">
@@ -52,7 +52,7 @@
                                     </button>
                                 </td>
                             </tr>
-                            <!-- 第二筆：陳柏宇 -->
+
                             <tr>
                                 <td>陳柏宇</td>
                                 <td>E20260807003</td>
@@ -70,18 +70,19 @@
                                     </button>
                                 </td>
                             </tr>
-                            <!-- 第三筆：張路得 -->
+
+                 
                             <tr>
-                                <td>張路得</td>
-                                <td>E20260807001</td>
+                                <td>張雅婷</td>
+                                <td>E20260807004</td>
                                 <td>台中商旅</td>
                                 <td><span class="badge text-bg-success">啟用</span></td>
                                 <td class="text-end">
                                     <button class="btn btn-outline-primary btn-sm btn-edit"
                                             data-bs-toggle="modal"
                                             data-bs-target="#employeeModal"
-                                            data-name="張路得"
-                                            data-account="E20260807001"
+                                            data-name="張雅婷"
+                                            data-account="E20260807004"
                                             data-branch="2"
                                             data-status="1">
                                         編輯
@@ -96,7 +97,7 @@
     </div>
 </div>
 
-
+<!-- Modal 彈出視窗 -->
 <div class="modal fade" id="employeeModal" tabindex="-1" aria-labelledby="employeeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -105,7 +106,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-               <form id="employeeForm" novalidate>
+                <form id="employeeForm" novalidate>
 
                     <!-- 員工姓名 -->
                     <div class="mb-3">
@@ -133,9 +134,9 @@
                                type="password"
                                id="employeePassword"
                                placeholder="請輸入初始密碼">
-                       
+
                         <div class="form-text d-none" id="passwordEditHint">留空表示不修改密碼</div>
-                       
+
                         <div class="invalid-feedback" id="passwordInvalidFeedback">
                             請輸入初始密碼。
                         </div>
@@ -166,16 +167,17 @@
                         </select>
                         <div class="invalid-feedback">請選擇啟用狀態。</div>
                     </div>
-                    
+
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-primary" id="btnSaveEmployee">儲存</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="btnSaveEmployee">儲0</button>
             </div>
         </div>
     </div>
 </div>
+
 
 @section Scripts {
     <script>
