@@ -87,9 +87,10 @@
 
 						<input asp-for="BookingNumber" type="hidden" />
 
+						<label class="form-label text-secondary mb-2">可入住房間</label>
 						<select asp-for="SelectedRoomId"
-								id="roomAssignment"
-								class="form-select form-select-lg">
+								class="form-select form-select-lg"
+								required>
 							<option value="">請選擇房間</option>
 
 							@foreach (var room in Model.AvailableRooms)
@@ -100,12 +101,14 @@
 							}
 						</select>
 
+						<label class="form-label text-secondary mb-2">實際入住人數</label>
 						<input asp-for="ActualGuestCount"
 							   class="form-control form-control-lg mb-4"
 							   type="number"
 							   min="1"
 							   max="@Model.MaxOccupancy"
-							   step="1" />
+							   step="1" 
+							   required/>
 
 						<button type="button"
 								class="btn btn-primary btn-lg fw-semibold w-100 mt-auto"
@@ -149,3 +152,16 @@
 	</div>
 }
 
+<script>
+const form = document.getElementById('checkInForm');
+const modal = document.getElementById('checkInConfirmationModal');
+
+if (form && modal) {
+    modal.addEventListener('show.bs.modal', function (event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            form.reportValidity();
+        }
+    });
+}
+</script>

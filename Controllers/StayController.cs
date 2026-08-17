@@ -1,7 +1,6 @@
 ﻿using HotelManagementSystem.Models;
 using HotelManagementSystem.Models.ViewModels.Stay;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace HotelManagementSystem.Controllers
 {
@@ -96,6 +95,7 @@ namespace HotelManagementSystem.Controllers
             if (model.AvailableRooms.Count == 0)
             {
                 model.ErrorMessage = "目前沒有可指派的房間";
+                return View(model);
             }
 
             model.CanCheckIn = true;
