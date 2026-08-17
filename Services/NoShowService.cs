@@ -21,8 +21,8 @@ namespace HotelManagementSystem.Services
         {
             // 1. 取得 now
             var now = _clock.Now;
-            // 2. 取得 today
-            var today = _clock.Today;
+            // 2. 取得 today，這邊不使用TaipeiClock做轉換，使整段都建立在同一個 now 快照
+            var today = DateOnly.FromDateTime(now);
             // 3. 判斷現在有沒有到今天 12:00
             bool isTodayOverNoShowCutoffTime = TimeOnly.FromDateTime(now) >= NoShowCutoffTime;
             // 4. 從 _context.Bookings 篩出候選訂單
