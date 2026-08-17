@@ -12,6 +12,8 @@ builder.Services.AddSingleton<TaipeiClock>();
 builder.Services.AddDbContext<HotelManagementContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("HMSDBConnection")));
 
+builder.Services.AddScoped<NoShowService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
