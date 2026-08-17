@@ -16,6 +16,13 @@ namespace HotelManagementSystem.Controllers
             return View();
         }
 
+
+        public IActionResult GuestGuide()
+        {
+            return View();
+        }
+
+
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
