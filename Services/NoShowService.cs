@@ -41,7 +41,7 @@ namespace HotelManagementSystem.Services
             }
             else
             {
-                //只有CheckOutDate < 2026 / 08 / 14 的才該 NoShow
+                //今天尚未到截止時間，只有退房日在今天以前的訂單才該 NoShow
                 query = query.Where(b => b.CheckOutDate < today);
             }
             // 5. ToListAsync()
