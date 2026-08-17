@@ -19,6 +19,7 @@ namespace HotelManagementSystem.Controllers
             return View();
         }
 
+        [HttpGet]
         public IActionResult CheckIn(string? bookingNumber)
         {
             var model = new CheckInViewModel
@@ -39,6 +40,36 @@ namespace HotelManagementSystem.Controllers
                 return View(model);
             }
 
+            if (booking.BookingStatus != "Paid")
+            {
+                model.ErrorMessage = "此訂單目前無法辦理入住";
+                return View(model);
+            }
+
+            var checkInStart = booking.CheckInDate.ToDateTime(new TimeOnly(16, 0));
+            var checkOutDeadline = booking.CheckOutDate.ToDateTime(new TimeOnly(12, 0));
+            var now = DateTime.Now;
+
+            if (now < checkInStart)
+            {
+                model.ErrorMessage = "尚未到可辦理入住時間";
+                return View(model);
+            }
+
+            if (now >= checkOutDeadline)
+            {
+                model.ErrorMessage = "此訂單已超過可辦理入住時間";
+                return View(model);
+            }
+
+            var hasStayRecord = _context.StayRecords.Any(s => s.BookingNumber == booking.BookingNumber);
+
+            if (hasStayRecord)
+            {
+                model.ErrorMessage = "此訂單已建立住房紀錄";
+                return View(model);
+            }
+
             model.HasResult = true;
             model.BookerName = booking.BookerName;
             model.ContactPhone = booking.ContactPhone;
@@ -46,8 +77,37 @@ namespace HotelManagementSystem.Controllers
             model.CheckInDate = booking.CheckInDate;
             model.CheckOutDate = booking.CheckOutDate;
             model.BookingStatus = booking.BookingStatus;
+            model.MaxOccupancy = booking.MaxOccupancySnapshot;
+
+            model.AvailableRooms = _context.Rooms
+                .Where(r =>
+                    r.BranchId == booking.BranchId &&
+                    r.RoomTypeId == booking.RoomTypeId &&
+                    r.SupplyStatus == "Open" &&
+                    r.CleaningStatus == "Clean" &&
+                    !r.StayRecords.Any(s => s.ActualCheckOutAt == null))
+                .Select(r => new RoomOption
+                {
+                    RoomId = r.RoomId,
+                    RoomNumber = r.RoomNumber
+                })
+                .ToList();
+
+            if (model.AvailableRooms.Count == 0)
+            {
+                model.ErrorMessage = "目前沒有可指派的房間";
+            }
+
+            model.CanCheckIn = true;
+
 
             return View(model);
+        }
+
+        [HttpPost]
+        public IActionResult CheckIn(CheckInViewModel model)
+        {
+            return View();
         }
     }
 }
