@@ -1,0 +1,268 @@
+﻿@{
+    Layout = "~/Views/Shared/_ManagerLayout.cshtml";
+    ViewData["Title"] = "帳號管理";
+}
+
+<div class="container py-4">
+
+    <!-- 三、頁面標題 -->
+    <h1 class="h3 fw-bold mb-2">帳號管理</h1>
+    <p class="text-secondary mb-4">管理分館員工帳號、所屬分館與啟用狀態。</p>
+
+    <!-- 八、頁面寬度與響應式 -->
+    <div class="row g-4">
+        <div class="col-12">
+            <!-- 四、內容區塊 -->
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center fw-semibold">
+                    <span>員工名單</span>
+                    <!-- 五、按鈕：主要操作 -->
+                    <button type="button" id="btnCreateNew" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#employeeModal">
+                        + 新增員工
+                    </button>
+                </div>
+                <div class="card-body">
+                    <!-- 九、表格與狀態-->
+                    <table class="table table-hover align-middle" id="employeeTable">
+                        <thead>
+                            <tr>
+                                <th>員工姓名</th>
+                                <th>員工帳號</th>
+                                <th>所屬分館</th>
+                                <th>啟用狀態</th>
+                                <th class="text-end">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+                            <tr>
+                                <td>林怡君</td>
+                                <td>E20260807002</td>
+                                <td>台北商旅</td>
+                                <td><span class="badge text-bg-success">啟用</span></td>
+                                <td class="text-end">
+                                    <button class="btn btn-outline-primary btn-sm btn-edit"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#employeeModal"
+                                            data-name="林怡君"
+                                            data-account="E20260807002"
+                                            data-branch="1"
+                                            data-status="1">
+                                        編輯
+                                    </button>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td>陳柏宇</td>
+                                <td>E20260807003</td>
+                                <td>台北商旅</td>
+                                <td><span class="badge text-bg-danger">停用</span></td>
+                                <td class="text-end">
+                                    <button class="btn btn-outline-primary btn-sm btn-edit"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#employeeModal"
+                                            data-name="陳柏宇"
+                                            data-account="E20260807003"
+                                            data-branch="1"
+                                            data-status="0">
+                                        編輯
+                                    </button>
+                                </td>
+                            </tr>
+
+                 
+                            <tr>
+                                <td>張雅婷</td>
+                                <td>E20260807004</td>
+                                <td>台中商旅</td>
+                                <td><span class="badge text-bg-success">啟用</span></td>
+                                <td class="text-end">
+                                    <button class="btn btn-outline-primary btn-sm btn-edit"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#employeeModal"
+                                            data-name="張雅婷"
+                                            data-account="E20260807004"
+                                            data-branch="2"
+                                            data-status="1">
+                                        編輯
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal 彈出視窗 -->
+<div class="modal fade" id="employeeModal" tabindex="-1" aria-labelledby="employeeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-semibold" id="employeeModalLabel">新增員工資料</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="employeeForm" novalidate>
+
+                    <!-- 員工姓名 -->
+                    <div class="mb-3">
+                        <label class="form-label" for="employeeName">
+                            員工姓名 <span class="text-danger">*</span>
+                        </label>
+                        <input class="form-control" type="text" id="employeeName" required placeholder="請輸入姓名">
+                        <div class="invalid-feedback">請輸入員工姓名。</div>
+                    </div>
+
+                    <!-- 員工帳號 -->
+                    <div class="mb-3">
+                        <label class="form-label" for="employeeAccount">
+                            員工帳號 <span class="text-danger">*</span>
+                        </label>
+                        <input class="form-control" id="employeeAccount" type="text" placeholder="建立後由系統自動產生" readonly>
+                        <div class="invalid-feedback">員工帳號不可為空。</div>
+                    </div>
+                    <!-- 密碼區塊 -->
+                    <div class="mb-3" id="passwordFieldContainer">
+                        <label class="form-label" for="employeePassword" id="employeePasswordLabel">
+                            初始密碼 <span class="text-danger">*</span>
+                        </label>
+                        <input class="form-control"
+                               type="password"
+                               id="employeePassword"
+                               placeholder="請輸入初始密碼">
+
+                        <div class="form-text d-none" id="passwordEditHint">留空表示不修改密碼</div>
+
+                        <div class="invalid-feedback" id="passwordInvalidFeedback">
+                            請輸入初始密碼。
+                        </div>
+                    </div>
+
+                    <!-- 所屬分館 -->
+                    <div class="mb-3">
+                        <label class="form-label" for="branchId">
+                            所屬分館 <span class="text-danger">*</span>
+                        </label>
+                        <select class="select form-select" id="branchId" required>
+                            <option value="" disabled selected>請選擇分館</option>
+                            <option value="1">台北商旅</option>
+                            <option value="2">台中商旅</option>
+                            <option value="3">高雄商旅</option>
+                        </select>
+                        <div class="invalid-feedback">請選擇所屬分館。</div>
+                    </div>
+
+                    <!-- 啟用狀態 -->
+                    <div class="mb-4" id="statusFieldContainer">
+                        <label class="form-label" for="accountStatus">
+                            啟用狀態 <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="accountStatus" required>
+                            <option value="1" selected>啟用</option>
+                            <option value="0">停用</option>
+                        </select>
+                        <div class="invalid-feedback">請選擇啟用狀態。</div>
+                    </div>
+
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="btnSaveEmployee">儲存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const btnCreateNew = document.getElementById("btnCreateNew");
+            const modalTitle = document.getElementById("employeeModalLabel");
+            const employeeForm = document.getElementById("employeeForm");
+
+            const employeeNameInput = document.getElementById("employeeName");
+            const employeeAccountInput = document.getElementById("employeeAccount");
+            const branchSelect = document.getElementById("branchId");
+            const statusFieldContainer = document.getElementById("statusFieldContainer");
+            const accountStatusSelect = document.getElementById("accountStatus");
+
+   
+            const passwordFieldContainer = document.getElementById("passwordFieldContainer");
+            const employeePasswordLabel = document.getElementById("employeePasswordLabel");
+            const employeePassword = document.getElementById("employeePassword");
+            const passwordEditHint = document.getElementById("passwordEditHint");
+            const passwordInvalidFeedback = document.getElementById("passwordInvalidFeedback");
+
+            //  按「新增員工」時
+            if (btnCreateNew) {
+                btnCreateNew.addEventListener("click", function() {
+                    modalTitle.innerText = "新增員工資料";
+                    employeeForm.reset();
+                    employeeForm.classList.remove("was-validated");
+
+           
+                    employeePasswordLabel.innerHTML = '初始密碼 <span class="text-danger">*</span>';
+                    employeePassword.placeholder = '請輸入初始密碼';
+                    employeePassword.value = "";
+                    employeePassword.required = true;
+                    passwordInvalidFeedback.innerText = "請輸入初始密碼。";
+
+                    if (passwordEditHint) passwordEditHint.classList.add("d-none");
+                   
+                    if (passwordFieldContainer) passwordFieldContainer.classList.remove("d-none");
+
+                   
+                    if (statusFieldContainer) statusFieldContainer.style.display = "none";
+                    if (accountStatusSelect) accountStatusSelect.value = "1";
+                });
+            }
+
+            // 按「編輯」時
+            document.querySelectorAll(".btn-edit").forEach(button => {
+                button.addEventListener("click", function() {
+                    modalTitle.innerText = "修改員工資料";
+                    employeeForm.classList.remove("was-validated");
+
+                    employeeNameInput.value = this.getAttribute("data-name") || "";
+                    employeeAccountInput.value = this.getAttribute("data-account") || "";
+                    branchSelect.value = this.getAttribute("data-branch") || "";
+                    accountStatusSelect.value = this.getAttribute("data-status") || "1";
+
+                   
+                    employeePasswordLabel.innerHTML = '新密碼 (選填)';
+                    employeePassword.placeholder = '若想修改密碼請輸入新密碼';
+                    employeePassword.value = "";
+                    employeePassword.required = false;
+                    passwordInvalidFeedback.innerText = "若想修改密碼請輸入新密碼。";
+
+                    if (passwordEditHint) passwordEditHint.classList.remove("d-none");
+
+                    if (statusFieldContainer) statusFieldContainer.style.display = "block";
+                });
+            });
+
+         
+            const btnSaveEmployee = document.getElementById("btnSaveEmployee");
+            if (btnSaveEmployee) {
+                btnSaveEmployee.addEventListener("click", function() {
+                    if (!employeeForm.checkValidity()) {
+                        employeeForm.classList.add("was-validated");
+                        return;
+                    }
+
+                    const modalElement = document.getElementById("employeeModal");
+                    const modal = bootstrap.Modal.getInstance(modalElement);
+                    if (modal) {
+                        modal.hide();
+                    }
+                });
+            }
+        });
+    </script>
+}
