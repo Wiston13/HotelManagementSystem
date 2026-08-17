@@ -15,22 +15,32 @@ namespace HotelManagementSystem.Controllers
 
         public IActionResult Index()
         {
-            var branches = _context.Branches
-                .Select(b => new BranchViewModel
-                {
-                    BranchId = b.BranchId,
-                    BranchName = b.BranchName,
-                    Phone = b.Phone,
-                    Address = b.Address,
-                    Description = b.Description,
-                    Region = b.Region,
-                    ImageUrl = b.ImageUrl
-                })
-                .ToList();
-
             var model = new HomeViewModel
             {
-                Branches = branches
+                Branches = _context.Branches
+                    .Select(b => new BranchViewModel
+                    {
+                        BranchId = b.BranchId,
+                        BranchName = b.BranchName,
+                        Phone = b.Phone,
+                        Address = b.Address,
+                        Description = b.Description,
+                        Region = b.Region,
+                        ImageUrl = b.ImageUrl
+                    })
+                    .ToList(),
+
+                RoomTypes = _context.RoomTypes
+                    .Where(r => r.IsActive)
+                    .Select(r => new RoomTypeViewModel
+                    {
+                        RoomTypeId = r.RoomTypeId,
+                        BranchId = r.BranchId,
+                        RoomTypeName = r.RoomTypeName,
+                        MaxOccupancy = r.MaxOccupancy,
+                        IsActive = r.IsActive
+                    })
+                    .ToList()
             };
 
             return View(model);
