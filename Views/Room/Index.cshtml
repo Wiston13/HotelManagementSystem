@@ -1,0 +1,358 @@
+﻿@{
+    ViewData["Title"] = "房間管理";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <p class="text-muted small mb-0">依分館與房型查詢房間列表，維護房號、樓層與銷售供應狀態。</p>
+    </div>
+    <!-- 新增房間按鈕 -->
+    <button class="btn btn-primary px-4" data-bs-toggle="modal" data-bs-target="#roomModal" onclick="openRoomModal('add')">
+        <i class="bi bi-plus-lg me-1"></i>新增房間
+    </button>
+</div>
+
+<!-- 雙重篩選器：分館與房型 -->
+<div class="row mb-3 g-2">
+    <div class="col-md-3">
+        <label class="form-label fw-bold small">選擇分館</label>
+        <select class="form-select" id="branchFilter" onchange="onBranchFilterChange()">
+            <option value="1" selected>台北館</option>
+            <option value="2">高雄館</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label fw-bold small">篩選房型</label>
+        <select class="form-select" id="roomTypeFilter" onchange="filterRooms()">
+            <option value="0" selected>全部房型</option>
+        </select>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-4">房號</th>
+                    <th>所屬房型</th>
+                    <th>樓層</th>
+                    <th>供應狀態</th>
+                    <th class="text-end pe-4">操作</th>
+                </tr>
+            </thead>
+            <tbody id="roomTableBody">
+                <!-- 示範資料列 1 -->
+                <tr data-branch-id="1" data-roomtype-id="1">
+                    <td class="ps-4 fw-bold">301</td>
+                    <td>標準雙人房</td>
+                    <td>3</td>
+                    <td><span class="badge bg-success">開放販售</span></td>
+                    <td class="text-end pe-4">
+                        <button class="btn btn-link text-primary p-0 text-decoration-none"
+                                data-bs-toggle="modal"
+                                data-bs-target="#roomModal"
+                                data-id="1"
+                                data-branch-id="1"
+                                data-roomtype-id="1"
+                                data-number="301"
+                                data-floor="3"
+                                data-supply="Open"
+                                data-disabled-reason=""
+                                onclick="openRoomModal('edit', this)">
+                            編輯
+                        </button>
+                    </td>
+                </tr>
+                <!-- 示範資料列 2 -->
+                <tr data-branch-id="1" data-roomtype-id="2">
+                    <td class="ps-4 fw-bold">502</td>
+                    <td>三床豪華房</td>
+                    <td>5</td>
+                    <td><span class="badge bg-danger">停用</span></td>
+                    <td class="text-end pe-4">
+                        <button class="btn btn-link text-primary p-0 text-decoration-none"
+                                data-bs-toggle="modal"
+                                data-bs-target="#roomModal"
+                                data-id="2"
+                                data-branch-id="1"
+                                data-roomtype-id="2"
+                                data-number="502"
+                                data-floor="5"
+                                data-supply="Disabled"
+                                data-disabled-reason="空調設備故障修繕中"
+                                onclick="openRoomModal('edit', this)">
+                            編輯
+                        </button>
+                    </td>
+                </tr>
+                <!-- 示範資料列 3（現場保留房，列表支援呈現） -->
+                <tr data-branch-id="2" data-roomtype-id="3" style="display: none;">
+                    <td class="ps-4 fw-bold">801</td>
+                    <td>海景雙人房</td>
+                    <td>8</td>
+                    <td><span class="badge bg-warning text-dark">保留</span></td>
+                    <td class="text-end pe-4">
+                        <button class="btn btn-link text-primary p-0 text-decoration-none"
+                                data-bs-toggle="modal"
+                                data-bs-target="#roomModal"
+                                data-id="3"
+                                data-branch-id="2"
+                                data-roomtype-id="3"
+                                data-number="801"
+                                data-floor="8"
+                                data-supply="Reserved"
+                                data-disabled-reason=""
+                                onclick="openRoomModal('edit', this)">
+                            編輯
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal：房間編輯 / 新增 -->
+<div class="modal fade" id="roomModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="roomModalTitle">房間資料與供應維護</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="roomForm" asp-controller="Room" asp-action="Save" method="post">
+                    <input type="hidden" id="roomId" name="RoomId" value="0">
+                    <input type="hidden" id="branchId" name="BranchId" value="1">
+                    <!-- 當 supplyStatus 為 disabled 時，由此 Hidden input 負責 POST 送出 SupplyStatus -->
+                    <input type="hidden" id="supplyStatusHidden" name="SupplyStatus" value="Open" disabled>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">房號 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="roomNumber" name="RoomNumber" maxlength="10" placeholder="例如：301" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">所屬房型 <span class="text-danger">*</span></label>
+                            <select class="form-select" id="roomTypeId" name="RoomTypeId" required>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">樓層 <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="floor" name="Floor" min="1" placeholder="例如：3" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">供應狀態 <span class="text-danger">*</span></label>
+                            <select class="form-select" id="supplyStatus" name="SupplyStatus" onchange="toggleDisabledReason()">
+                                <option value="Open">開放販售</option>
+                                <option value="Disabled">停用</option>
+                            </select>
+                        </div>
+
+                        <!-- 停用原因欄位 -->
+                        <div class="col-12" id="disabledReasonGroup" style="display: none;">
+                            <label class="form-label fw-bold">停用原因 <span class="text-danger">*</span></label>
+                            <textarea id="disabledReason" name="DisabledReason" class="form-control" rows="3" maxlength="200" placeholder="請輸入停用原因（例如：冷氣維修中、水電保養等）"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer justify-content-center border-0 pb-4">
+                <button type="button" class="btn btn-outline-secondary px-4 me-2" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary px-4" id="btnSaveRoom" onclick="confirmAndSubmit()">儲存變更</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let currentMode = 'add';
+
+        const roomTypeData = {
+            "1": [
+                { id: "1", name: "標準雙人房" },
+                { id: "2", name: "三床豪華房" }
+            ],
+            "2": [
+                { id: "3", name: "海景雙人房" }
+            ]
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            onBranchFilterChange();
+        });
+
+        function onBranchFilterChange() {
+            const branchId = document.getElementById('branchFilter').value;
+            const roomTypeFilter = document.getElementById('roomTypeFilter');
+            roomTypeFilter.innerHTML = '<option value="0" selected>全部房型</option>';
+
+            if (roomTypeData[branchId]) {
+                roomTypeData[branchId].forEach(rt => {
+                    roomTypeFilter.innerHTML += `<option value="${rt.id}">${rt.name}</option>`;
+                });
+            }
+            filterRooms();
+        }
+
+        function filterRooms() {
+            const selectedBranchId = document.getElementById('branchFilter').value;
+            const selectedRoomTypeId = document.getElementById('roomTypeFilter').value;
+            const rows = document.querySelectorAll('#roomTableBody tr');
+
+            rows.forEach(row => {
+                const rowBranch = row.getAttribute('data-branch-id');
+                const rowType = row.getAttribute('data-roomtype-id');
+
+                const branchMatch = (rowBranch === selectedBranchId);
+                const typeMatch = (selectedRoomTypeId === "0" || rowType === selectedRoomTypeId);
+
+                if (branchMatch && typeMatch) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        function loadModalRoomTypes(branchId, selectedRoomTypeId = null) {
+            const modalRoomTypeSelect = document.getElementById('roomTypeId');
+            modalRoomTypeSelect.innerHTML = '';
+
+            if (roomTypeData[branchId]) {
+                roomTypeData[branchId].forEach(rt => {
+                    const selected = (selectedRoomTypeId && rt.id === selectedRoomTypeId) ? 'selected' : '';
+                    modalRoomTypeSelect.innerHTML += `<option value="${rt.id}" ${selected}>${rt.name}</option>`;
+                });
+            }
+        }
+
+        function toggleDisabledReason() {
+            const supplyStatus = document.getElementById('supplyStatus').value;
+            const disabledReasonGroup = document.getElementById('disabledReasonGroup');
+            const disabledReasonInput = document.getElementById('disabledReason');
+
+            if (supplyStatus === 'Disabled') {
+                disabledReasonGroup.style.display = 'block';
+                disabledReasonInput.required = true;
+            } else {
+                disabledReasonGroup.style.display = 'none';
+                disabledReasonInput.required = false;
+                disabledReasonInput.value = '';
+            }
+        }
+
+        function openRoomModal(mode, btnElement = null) {
+            currentMode = mode;
+            const modalTitle = document.getElementById('roomModalTitle');
+            const saveBtn = document.getElementById('btnSaveRoom');
+            const form = document.getElementById('roomForm');
+            const supplySelect = document.getElementById('supplyStatus');
+            const supplyHidden = document.getElementById('supplyStatusHidden');
+
+            const currentBranchId = document.getElementById('branchFilter').value;
+
+            // 重置供應狀態選單為預設（只保留 Open / Disabled）
+            supplySelect.innerHTML = `
+                        <option value="Open">開放販售</option>
+                        <option value="Disabled">停用</option>
+                    `;
+            supplySelect.disabled = false;
+            supplySelect.name = "SupplyStatus";
+            supplyHidden.disabled = true;
+
+            if (mode === 'add') {
+                modalTitle.textContent = '新增房間';
+                saveBtn.textContent = '新增房間';
+                form.reset();
+
+                document.getElementById('roomId').value = '0';
+                document.getElementById('branchId').value = currentBranchId;
+                supplySelect.value = 'Open';
+                document.getElementById('disabledReason').value = '';
+
+                loadModalRoomTypes(currentBranchId);
+                toggleDisabledReason();
+            } else if (mode === 'edit' && btnElement) {
+                modalTitle.textContent = '編輯房間資料';
+                saveBtn.textContent = '儲存變更';
+
+                const targetBranchId = btnElement.getAttribute('data-branch-id') || currentBranchId;
+                const targetRoomTypeId = btnElement.getAttribute('data-roomtype-id');
+                const rawSupply = btnElement.getAttribute('data-supply') || 'Open';
+                const disabledReason = btnElement.getAttribute('data-disabled-reason') || '';
+
+                document.getElementById('roomId').value = btnElement.getAttribute('data-id') || '0';
+                document.getElementById('branchId').value = targetBranchId;
+                document.getElementById('roomNumber').value = btnElement.getAttribute('data-number') || '';
+                document.getElementById('floor').value = btnElement.getAttribute('data-floor') || '1';
+                document.getElementById('disabledReason').value = disabledReason;
+
+                if (rawSupply === 'Reserved') {
+                    // 若為保留房，動態加入選項並禁用下拉選單，啟用隱藏欄位傳值
+                    supplySelect.innerHTML += `<option value="Reserved">保留（由分館員工管理）</option>`;
+                    supplySelect.value = 'Reserved';
+                    supplySelect.disabled = true;
+                    supplySelect.removeAttribute("name");
+
+                    supplyHidden.value = 'Reserved';
+                    supplyHidden.disabled = false;
+                } else {
+                    supplySelect.value = (rawSupply === 'Disabled') ? 'Disabled' : 'Open';
+                }
+
+                loadModalRoomTypes(targetBranchId, targetRoomTypeId);
+                toggleDisabledReason();
+            }
+        }
+
+        function confirmAndSubmit() {
+            const form = document.getElementById('roomForm');
+
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const roomNumber = document.getElementById('roomNumber').value;
+            const branchFilter = document.getElementById('branchFilter');
+            const branchText = branchFilter.options[branchFilter.selectedIndex].text;
+
+            const roomTypeSelect = document.getElementById('roomTypeId');
+            const roomTypeText = roomTypeSelect.options[roomTypeSelect.selectedIndex].text;
+
+            const floor = document.getElementById('floor').value;
+
+            const supplySelect = document.getElementById('supplyStatus');
+            const supplyText = supplySelect.options[supplySelect.selectedIndex].text;
+            const disabledReason = document.getElementById('disabledReason').value;
+
+            let message = '';
+
+            if (currentMode === 'add') {
+                message = `【確認新增房間】\n\n` +
+                    `• 所屬分館：${branchText}\n` +
+                    `• 房號：${roomNumber}\n` +
+                    `• 所屬房型：${roomTypeText}\n` +
+                    `• 樓層：${floor} 樓\n` +
+                    `• 供應狀態：${supplyText}` +
+                    (supplySelect.value === 'Disabled' ? `\n• 停用原因：${disabledReason}` : '');
+            } else {
+                message = `【確認修改房間】\n\n` +
+                    `確定要儲存房號【${roomNumber}】的變更嗎？\n` +
+                    `• 所屬分館：${branchText}\n` +
+                    `• 房號：${roomNumber}\n` +
+                    `• 所屬房型：${roomTypeText}\n` +
+                    `• 樓層：${floor} 樓\n` +
+                    `• 供應狀態：${supplyText}` +
+                    (supplySelect.value === 'Disabled' ? `\n• 停用原因：${disabledReason}` : '');
+            }
+
+            if (confirm(message)) {
+                form.submit();
+            }
+        }
+    </script>
+}

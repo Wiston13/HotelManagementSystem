@@ -1,7 +1,18 @@
+using HotelManagementSystem.Models;
+using HotelManagementSystem.Services;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddSingleton<TaipeiClock>();
+
+builder.Services.AddDbContext<HotelManagementContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("HMSDBConnection")));
+
+builder.Services.AddScoped<NoShowService>();
 
 var app = builder.Build();
 

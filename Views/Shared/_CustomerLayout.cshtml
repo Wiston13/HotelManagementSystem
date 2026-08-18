@@ -1,0 +1,136 @@
+﻿@{
+    var pageTitle = ViewData["Title"] as string;
+
+    var currentController =
+        ViewContext.RouteData.Values["controller"]?.ToString();
+
+    var currentAction =
+        ViewContext.RouteData.Values["action"]?.ToString();
+
+    var isRoomSearchPage =
+        currentController == "Home" && currentAction == "Index";
+
+    var isBookingLookupPage =
+        currentController == "Booking" && currentAction == "Lookup";
+
+    var isGuestGuidePage = 
+        currentController == "Home" && currentAction == "GuestGuide";
+}
+
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0" />
+
+    <title>
+        @(string.IsNullOrWhiteSpace(pageTitle)
+            ? "連鎖商旅"
+            : $"{pageTitle}｜連鎖商旅")
+    </title>
+
+    <!-- ASP.NET Core MVC 範本內建的 Bootstrap -->
+    <link rel="stylesheet"
+          href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <!-- 保留既有全站樣式檔，暫時可以不修改 -->
+    <link rel="stylesheet"
+          href="~/css/site.css"
+          asp-append-version="true" />
+
+    <!-- 讓個別頁面未來可以加入自己的樣式 -->
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+
+<body class="d-flex flex-column min-vh-100 bg-light">
+
+    <!-- 顧客端共用導覽列 -->
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm">
+            <div class="container py-2">
+
+                <!-- 品牌名稱／首頁連結 -->
+                <a class="navbar-brand fw-bold text-primary"
+                   asp-controller="Home"
+                   asp-action="Index">
+                    連鎖商旅
+                </a>
+
+                <!-- 小尺寸畫面導覽列切換按鈕 -->
+                <button class="navbar-toggler"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#customerNavbar"
+                        aria-controls="customerNavbar"
+                        aria-expanded="false"
+                        aria-label="切換導覽選單">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- 顧客端主要導覽 -->
+                <div class="collapse navbar-collapse"
+                     id="customerNavbar">
+
+                    <ul class="navbar-nav ms-auto gap-lg-2">
+
+                        <li class="nav-item">
+                            <a class="nav-link @(isRoomSearchPage ? "active fw-semibold" : "")"
+                               asp-controller="Home"
+                               asp-action="Index">
+                                查詢房型
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link @(isBookingLookupPage ? "active fw-semibold" : "")"
+                               asp-controller="Booking"
+                               asp-action="Lookup">
+                                訂單查詢
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link @(isGuestGuidePage ? "active fw-semibold" : "")"
+                                asp-controller="Home"
+                                asp-action="GuestGuide">
+                                房客須知
+                            </a>
+                        </li>
+
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!--
+        不在 Layout 強制加 Bootstrap container，
+        因為首頁未來可能需要全寬 Hero 圖片。
+
+        每個 View 自己決定要使用：
+        container、container-fluid，或完全全寬。
+    -->
+    <main class="flex-grow-1">
+        @RenderBody()
+    </main>
+
+    <!-- 顧客端共用頁尾 -->
+    <footer class="border-top bg-white mt-auto">
+        <div class="container py-3 text-center text-secondary small">
+            &copy; @DateTime.Now.Year 連鎖商旅
+        </div>
+    </footer>
+
+    <!-- ASP.NET Core MVC 範本內建 JavaScript -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="~/js/site.js"
+            asp-append-version="true"></script>
+
+    <!-- 個別頁面自己的 JavaScript -->
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

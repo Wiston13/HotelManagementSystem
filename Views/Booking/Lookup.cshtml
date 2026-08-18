@@ -1,0 +1,408 @@
+﻿@*
+	For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+	ViewData["Title"] = "訂單查詢";
+}
+@* <h1>查詢訂單頁</h1> *@
+
+<div class="container py-4">
+
+	<h1 class="h3 fw-bold mb-2">查詢我的訂單</h1>
+
+	<p class="text-secondary mb-4">請輸入訂單編號與訂房時填寫的聯絡電話。</p>
+
+
+	<!-- 搜尋區塊 -->
+	<div class="card">
+
+		<div class="card-body">
+
+			<form>
+				<!-- 第一列：label+輸入框 & 按鈕 -->
+				<div class="row g-3 align-items-end">
+
+					<div class="col-12 col-lg-5">
+						<label class="form-label">訂單編號<span class="text-danger">*</span></label>
+
+						<small class="text-secondary fw-normal ms-1">請輸入完整訂單編號（英文字母區分大小寫）。</small>
+
+						<input type="text" class="form-control" id="orderNo" placeholder="例如：BK20260810018" />
+
+					</div>
+
+					<div class="col-12 col-lg-5">
+						<label class="form-label">聯絡電話<span class="text-danger">*</span></label>
+						<input type="text" class="form-control" id="phone" placeholder="例如：0912345678" />
+
+					</div>
+
+					<div class="col-12 col-lg-2 d-grid">
+						<button type="button" class="btn btn-primary" id="btnSearch">查詢</button>
+					</div>
+
+				</div>
+
+				<!-- 第二列：錯誤訊息顯示區 -->
+				<div class="row">
+
+					<div class="col-12 col-lg-5">
+						<div class="invalid-feedback" id="orderError">請輸入訂單編號。</div>
+					</div>
+
+					<div class="col-12 col-lg-5">
+						<div class="invalid-feedback" id="phoneError">請輸入聯絡電話。</div>
+					</div>
+
+					<div class="col-lg-2"></div>
+
+				</div>
+
+			</form>
+
+		</div>
+
+	</div>
+	<!-- end 搜尋區塊 -->
+	<!-- "查無資料"顯示區 -->
+	<div id="noResult" class="alert alert-warning mt-4 d-none">查無符合的訂單資料！</div>
+
+
+	<!-- 查詢結果顯示區 -->
+	<div class="card mt-4 d-none" id="orderResult">
+
+		<div class="card-header d-flex justify-content-between align-items-center">
+			<!-- 訂單編號 -->
+			<span class="fw-semibold" id="resultOrderNo"></span>
+			<!-- 訂單狀態 -->
+			<span class="badge" id="resultStatus"></span>
+		</div>
+
+		<div class="card-body">
+
+			<div class="row gy-3">
+
+				<div class="col-12">
+					<div class="row border-bottom pb-2">
+						<div class="col-md-4 text-secondary">分館／房型</div>
+						<!-- 顯示 預訂分館．房型 區塊 -->
+						<div class="col-md-8 fw-semibold text-md-end" id="resultRoom"></div>
+					</div>
+				</div>
+				<div class="col-12">
+					<div class="row border-bottom pb-2">
+						<div class="col-md-4 text-secondary">入住／退房</div>
+						<!-- 顯示 入住日期 ~ 退房日期 區塊 -->
+						<div class="col-md-8 fw-semibold text-md-end" id="resultDate"></div>
+					</div>
+				</div>
+				<div class="col-12">
+					<div class="row border-bottom pb-2">
+						<div class="col-md-4 text-secondary">訂房人</div>
+						<!-- 顯示 訂房人姓名 區塊 -->
+						<div class="col-md-8 fw-semibold text-md-end" id="resultCustomer"></div>
+					</div>
+				</div>
+				<div class="col-12">
+					<div class="row border-bottom pb-2">
+						<div class="col-md-4 text-secondary">電話</div>
+						<!-- 顯示 訂房人姓名 區塊 -->
+						<div class="col-md-8 fw-semibold text-md-end" id="resultPhone"></div>
+					</div>
+				</div>
+				<div class="col-12">
+					<div class="row">
+						<div class="col-md-4 text-secondary">總金額</div>
+						<!-- 顯示 房價總額 區塊 -->
+						<div class="col-md-8 fw-bold text-md-end" id="resultTotal"></div>
+					</div>
+				</div>
+
+			</div>
+
+		</div>
+
+
+		<div class="card-footer bg-white">
+			<div class="d-flex justify-content-end">
+				<a asp-controller="Home" asp-action="Index" class="btn btn-outline-primary">返回</a>
+			</div>
+		</div>
+
+	</div>
+	<!-- end 查詢結果顯示區 -->
+
+
+</div>
+
+
+
+
+
+@section Styles {
+
+	<style>
+		/*
+						筆記：Bootstrap 的 invalid-feedback 預設是 display:none，顯示錯誤訊息時會讓輸入框高度改變（兩個輸入框和查詢按鈕無法對齊），
+						所以改成 -> 預留錯誤訊息空間、隱藏文字，驗證失敗時再顯示文字。
+						*/
+
+
+		/* ps. 錯誤訊息 --> class="invalid-feedback" */
+
+		.invalid-feedback {
+			display: block;
+			min-height: 24px; /* 預留錯誤訊息高度 */
+			visibility: hidden; /* 預設隱藏訊息文字 */
+		}
+
+			/* ps. 驗證失敗時：class="invalid-feedback show" */
+
+			.invalid-feedback.show {
+				visibility: visible;
+			}
+	</style>
+
+}
+
+
+
+@section Scripts {
+
+	<script>
+
+		// 假資料
+		const orderData = [
+			{
+				orderNo: "BK20260810018",
+				phone: "0912-345678",
+				branch: "台北館",
+				roomType: "標準雙人房",
+				checkIn: "2026/08/10",
+				checkOut: "2026/08/12",
+				customer: "王小明",
+				total: 4800,
+				status: "已完成"
+			},
+			{
+				orderNo: "BK20260810019",
+				phone: "0987-654321",
+				branch: "台中館",
+				roomType: "豪華雙人房",
+				checkIn: "2026/08/15",
+				checkOut: "2026/08/17",
+				customer: "陳小華",
+				total: 6000,
+				status: "已付款"
+			}
+		];
+
+		const orderNoPattern = /^[A-Za-z0-9]+$/;  // 訂單編號格式驗證（僅允許英數字）
+		const phonePattern = /^[0-9\-\s]+$/;  // 聯絡電話格式驗證（允許數字、-、空格）
+
+
+		// 將聯絡電話中的非數字字元移除，僅保留數字
+		function normalizePhone(phone) {
+			return phone.replace(/\D/g, "");
+		}
+
+
+		// 訂單編號輸入框驗證
+		function validateOrderNo() {
+			const orderNo = document.getElementById("orderNo");
+			const orderError = document.getElementById("orderError");
+
+			// 取得輸入值，移除前後空白
+			const value = orderNo.value.trim();
+
+			// 驗證是否為空值
+			if (value === "") {
+				orderNo.classList.add("is-invalid");
+				orderError.textContent = "請輸入訂單編號。";
+				orderError.classList.add("show");
+				return false;
+			}
+
+			// 驗證是否符合訂單編號格式
+			if (!orderNoPattern.test(value)) {
+				orderNo.classList.add("is-invalid");
+				orderError.textContent = "輸入的訂單編號格式不正確。";
+				orderError.classList.add("show");
+				return false;
+			}
+
+			// 輸入框驗證通過
+			orderNo.classList.remove("is-invalid");  // 移除錯誤樣式
+			orderError.classList.remove("show");  // 隱藏錯誤訊息
+
+			return true;
+		}
+
+
+
+		// 聯絡電話輸入框驗證
+		function validatePhone() {
+			const phone = document.getElementById("phone");
+			const phoneError = document.getElementById("phoneError");
+
+			// 取得輸入值，移除前後空白
+			const value = phone.value.trim();
+
+			// 驗證是否為空值
+			if (value === "") {
+				phone.classList.add("is-invalid");
+				phoneError.textContent = "請輸入聯絡電話。";
+				phoneError.classList.add("show");
+				return false;
+			}
+
+			// 驗證是否符合聯絡電話格式
+			if (!phonePattern.test(value)) {
+				phone.classList.add("is-invalid");
+				phoneError.textContent = "聯絡電話只能包含數字及電話符號。";
+				phoneError.classList.add("show");
+				return false;
+			}
+
+			// 輸入框驗證通過
+			phone.classList.remove("is-invalid");  // 移除錯誤樣式
+			phoneError.classList.remove("show");  // 隱藏錯誤訊息
+
+			// 回傳驗證成功
+			return true;
+		}
+
+
+
+
+		// 清空並隱藏結果區塊
+		function clearResult() {
+			const result = document.getElementById("orderResult");
+			const noResult = document.getElementById("noResult");
+
+			// 隱藏查詢成功和查無資料區塊
+			result.classList.add("d-none");
+			noResult.classList.add("d-none");
+
+			// 清空上一次查詢結果內容
+			document.getElementById("resultOrderNo").textContent = "";
+			document.getElementById("resultStatus").textContent = "";
+			document.getElementById("resultRoom").textContent = "";
+			document.getElementById("resultDate").textContent = "";
+			document.getElementById("resultCustomer").textContent = "";
+			document.getElementById("resultPhone").textContent = "";
+			document.getElementById("resultTotal").textContent = "";
+		}
+
+
+
+		// 根據訂單狀態設定 Bootstrap Badge 樣式
+		function getStatusBadgeClass(status) {
+			switch (status) {
+				case "已付款":
+					return "text-bg-success";
+				case "已取消":
+					return "text-bg-danger";
+				default:
+					return "text-bg-secondary";
+			}
+		}
+
+
+
+		// 顯示查詢結果
+		function showOrder(order) {
+			document.getElementById("resultOrderNo").textContent = "訂單 " + order.orderNo;
+
+			// 設定訂單狀態顯示
+			const statusBadge = document.getElementById("resultStatus");
+			statusBadge.textContent = order.status;  // 設定文字
+			statusBadge.className = "badge";  // 移除舊顏色
+			statusBadge.classList.add(  // 加入新的顏色
+				getStatusBadgeClass(order.status)
+			);
+
+			// 將訂單資料顯示到畫面
+			document.getElementById("resultRoom").textContent = order.branch + "・" + order.roomType;
+			document.getElementById("resultDate").textContent = order.checkIn + " - " + order.checkOut;
+			document.getElementById("resultCustomer").textContent = order.customer;
+			document.getElementById("resultPhone").textContent = order.phone;
+			document.getElementById("resultTotal").textContent = "NT$ " + order.total.toLocaleString();
+
+			// 顯示查詢結果區塊
+			document.getElementById("orderResult").classList.remove("d-none");
+		}
+
+
+
+		// 顯示查無資料訊息
+		function showNoResult() {
+			const noResult = document.getElementById("noResult");
+			noResult.textContent = "查無符合的資料，請確認訂單編號與聯絡電話是否輸入正確。";
+			noResult.classList.remove("d-none");
+		}
+
+
+
+
+		// 查詢按鈕點擊事件
+		document.getElementById("btnSearch").addEventListener("click", function(e) {
+			e.preventDefault(); // 防止表單送出後重新整理頁面
+
+			let isValid = true;
+
+			// 訂單編號輸入框驗證失敗
+			if (!validateOrderNo()) {
+				isValid = false;
+			}
+
+			// 聯絡電話輸入框驗證失敗
+			if (!validatePhone()) {
+				isValid = false;
+			}
+
+			// 如果任一個欄位驗證失敗
+			if (!isValid) {
+				clearResult();  // 清空並隱藏結果區塊
+				return;
+			}
+
+			// 清除上一次查詢結果
+			clearResult();
+
+			// 將輸入的電話轉為純數字
+			const inputPhone = normalizePhone(phone.value);
+
+			// 比對訂單編號及聯絡電話是否符合（ps.輸入的電話、資料庫取得的電話一律轉成純數字再比對）　
+			const order = orderData.find(x =>
+				x.orderNo === orderNo.value.trim() &&
+				normalizePhone(x.phone) === inputPhone
+			);
+
+			// 查無資料 (order = undefined) --> 視為false
+			if (!order) {
+				showNoResult();  //顯示查無資料
+				return;
+			}
+
+			// 找到相符的訂單，顯示查詢結果
+			showOrder(order);
+
+		});
+		// -- end 查詢按鈕點擊事件
+
+
+
+		// 訂單編號輸入時即時驗證
+		document.getElementById("orderNo").addEventListener("input", function() {
+			validateOrderNo();
+		});
+
+		// 聯絡電話輸入時即時驗證
+		document.getElementById("phone").addEventListener("input", function() {
+			validatePhone();
+		});
+
+	</script>
+
+}

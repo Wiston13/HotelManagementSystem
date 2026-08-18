@@ -1,3 +1,44 @@
 ﻿@{
-    Layout = "_Layout";
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+
+    var branchControllers = new[]
+    {
+        "EmployeeHome",
+        "Stay",
+        "RoomStatus",
+        "BranchBooking"
+    };
+
+    var managerControllers = new[]
+    {
+        "Branch",
+        "RoomType",
+        "Room",
+        "Staff",
+        "BookingExport",
+        "OperationLog"
+    };
+
+    var customerControllers = new[]
+    {
+        "Home",
+        "Booking"
+    };
+
+    if (branchControllers.Contains(controller))
+    {
+        Layout = "_BranchLayout";
+    }
+    else if (managerControllers.Contains(controller))
+    {
+        Layout = "_ManagerLayout";
+    }
+    else if (customerControllers.Contains(controller))
+    {
+        Layout = "_CustomerLayout";
+    }
+    else
+    {
+        Layout = null;
+    }
 }

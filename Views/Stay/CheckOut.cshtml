@@ -1,0 +1,125 @@
+@{
+    ViewData["Title"] = "辦理退房";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/stay/CheckOut.css" asp-append-version="true" />
+}
+
+<div class="check-out-page">
+    <p class="text-secondary mb-4">輸入房號或訂單編號，查詢目前住房資訊。</p>
+
+    <section class="check-out-search card border-0 shadow-sm" aria-labelledby="check-out-search-title">
+        <div class="card-body p-4">
+            <h2 id="check-out-search-title" class="visually-hidden">查詢目前住房</h2>
+            <div class="row g-3 align-items-end">
+                <div class="col-md-8 col-lg-7">
+                    <label for="stayLookup" class="form-label text-secondary">房號／訂單編號</label>
+                    <input id="stayLookup"
+                           class="form-control form-control-lg"
+                           type="text"
+                           value="302"
+                           aria-label="房號或訂單編號"
+                           aria-describedby="stayLookupFeedback" />
+                    <div id="stayLookupFeedback" class="invalid-feedback">
+                        請輸入示範房號 302 或訂單編號 BK…018。
+                    </div>
+                </div>
+                <div class="col-md-4 col-lg-3">
+                    <button type="button"
+                            id="checkOutSearchButton"
+                            class="btn btn-primary btn-lg fw-semibold w-100"
+                            aria-controls="checkOutResult">查詢</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="checkOutResult"
+             class="check-out-panel card border-0 shadow-sm mt-4 mt-md-5"
+             aria-labelledby="current-stay-title"
+             hidden>
+        <div class="card-header bg-white border-bottom p-4 p-md-5">
+            <h2 id="current-stay-title" class="h4 fw-bold mb-0">目前住房</h2>
+        </div>
+
+        <div class="card-body p-4 p-md-5">
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="check-out-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
+                        <p class="detail-label text-secondary mb-0">顧客</p>
+                        <p class="detail-value guest-name fw-semibold text-end mb-0">王小明</p>
+                    </div>
+                    <div class="check-out-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
+                        <p class="detail-label text-secondary mb-0">Check-in</p>
+                        <p class="detail-value check-in-time fw-semibold text-end mb-0">08/10 16:26</p>
+                    </div>
+                    <div class="check-out-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
+                        <p class="detail-label text-secondary mb-0">房型快照</p>
+                        <p class="detail-value room-type fw-semibold text-end mb-0">標準雙人房</p>
+                    </div>
+                    <div class="check-out-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
+                        <p class="detail-label text-secondary mb-0">住房狀態</p>
+                        <p class="detail-value stay-status fw-semibold text-end mb-0">入住中</p>
+                    </div>
+                </div>
+
+                <div class="col-md-6 d-flex flex-column">
+                    <div class="check-out-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
+                        <p class="detail-label text-secondary mb-0">實際房號</p>
+                        <p class="detail-value room-number fw-semibold text-end mb-0">302</p>
+                    </div>
+                    <div class="check-out-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
+                        <p class="detail-label text-secondary mb-0">預定退房</p>
+                        <p class="detail-value scheduled-check-out fw-semibold text-end mb-0">08/12</p>
+                    </div>
+                    <div class="check-out-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
+                        <p class="detail-label text-secondary mb-0">訂單編號</p>
+                        <p class="detail-value booking-number fw-semibold text-end mb-0">BK…018</p>
+                    </div>
+                </div>
+            </div>
+            <div class="check-out-action-wrapper col-md-6 ms-auto mt-4">
+                <button type="button" class="btn btn-primary btn-lg fw-semibold check-out-action mx-auto">確認退房</button>
+            </div>
+        </div>
+    </section>
+</div>
+
+<div class="modal fade" id="checkOutConfirmationModal" tabindex="-1" aria-labelledby="checkOutConfirmationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content check-out-confirm-modal border-0 shadow">
+            <div class="modal-header">
+                <h2 class="modal-title h5 fw-bold" id="checkOutConfirmationModalLabel">確認退房</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2">請確認旅客退房前作業是否已完成。</p>
+                <p class="mb-0 text-secondary">是否確認完成此筆入住的退房作業？</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="confirmCheckOutButton" data-bs-dismiss="modal">確定</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const stayLookup = document.getElementById('stayLookup');
+        const checkOutResult = document.getElementById('checkOutResult');
+
+        document.getElementById('checkOutSearchButton')?.addEventListener('click', function () {
+            const lookupValue = stayLookup.value.trim();
+            const isMockStay = lookupValue === '302' || lookupValue === 'BK…018';
+
+            stayLookup.classList.toggle('is-invalid', !isMockStay);
+            checkOutResult.hidden = !isMockStay;
+        });
+
+        document.querySelector('.check-out-action')?.addEventListener('click', function () {
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('checkOutConfirmationModal')).show();
+        });
+    </script>
+}
