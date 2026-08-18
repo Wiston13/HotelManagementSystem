@@ -2,7 +2,7 @@
     ViewData["Title"] = "本館訂單查詢";
     Layout = "_BranchLayout";
 }
-@model List<BookingData>
+@model List<HotelManagementSystem.Models.BookingSearchModel.BookingData>
 
 @{
     string BookingStatus(string s)
@@ -315,7 +315,7 @@
                 document.getElementById('modalRoomtype').textContent = roomtype;
                 document.getElementById('modalStatus').textContent = bookingStatus;
                 document.getElementById('modalBookingDate').textContent = startDate + " - " + endDate;
-                document.getElementById('modalPhone').textContent = phone;
+                document.getElementById('modalPhone').textContent = phone.slice(0, 4) + "-" + phone.slice(4);
                 document.getElementById('modalCreateTime').textContent = createTime;
                 document.getElementById('modalPrice').textContent = price;
 
