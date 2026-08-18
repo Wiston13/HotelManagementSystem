@@ -1,8 +1,4 @@
 ﻿@{
-    Layout = "_CustomerLayout";
-}
-
-@{
     ViewData["Title"] = "Home Page";
 }
 
@@ -31,7 +27,7 @@
 *@
 @{
     // 搜尋欄位需要的資料
-    List<string> HotelNameList = new List<string>() { "高雄_Kaohsiung", "台北_Taipei", "台中_Taichung", "Test資料", "Test資料2", "Test資料2", "Test資料2", "Test資料2", "Test資料2" };
+    List<string> HotelNameList = new List<string>() { "高雄_Kaohsiung", "台北_Taipei", "台中_Taichung" };
     Dictionary<string, int> HotelRoomForPeopleDic = new Dictionary<string, int>(){
         { "精緻雙人房", 2 },
         { "豪華雙人房", 2 },
@@ -361,7 +357,7 @@
 
     // 將HotelSelect.value dateTime.value RoomSelect.value 以url傳去 /Booking/RoomSelection
 
-    let targetUrl = `/Booking/RoomSelection?hotel=${encodeURIComponent(HotelSelect.value)}&startDate=${startDate}&endDate=${endDate}&people=${encodeURIComponent(RoomSelect.value)}`;
+    let targetUrl = `/Booking/RoomSelection?branchName=${encodeURIComponent(HotelSelect.value)}&checkIn=${startDate}&checkOut=${endDate}&guests=${encodeURIComponent(RoomSelect.value)}`;
 
     window.location.href = targetUrl;
 
