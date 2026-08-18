@@ -1,10 +1,44 @@
 ﻿@{
     var controller = ViewContext.RouteData.Values["controller"]?.ToString();
 
-    Layout = controller switch
+    var branchControllers = new[]
     {
-        "EmployeeHome" or "Stay" or "RoomStatus" or "BranchBooking" => "_BranchLayout",
-        "Branch" or "RoomType" or "Room" or "Staff" or "BookingExport" or "OperationLog" => "_ManagerLayout",
-        _ => "_CustomerLayout"
+        "EmployeeHome",
+        "Stay",
+        "RoomStatus",
+        "BranchBooking"
     };
+
+    var managerControllers = new[]
+    {
+        "Branch",
+        "RoomType",
+        "Room",
+        "Staff",
+        "BookingExport",
+        "OperationLog"
+    };
+
+    var customerControllers = new[]
+    {
+        "Home",
+        "Booking"
+    };
+
+    if (branchControllers.Contains(controller))
+    {
+        Layout = "_BranchLayout";
+    }
+    else if (managerControllers.Contains(controller))
+    {
+        Layout = "_ManagerLayout";
+    }
+    else if (customerControllers.Contains(controller))
+    {
+        Layout = "_CustomerLayout";
+    }
+    else
+    {
+        Layout = null;
+    }
 }
