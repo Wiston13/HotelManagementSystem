@@ -46,12 +46,6 @@ namespace HotelManagementSystem.Controllers
             return View(model);
         }
 
-        public IActionResult Privacy()
-        {
-            return View();
-        }
-
-
         public IActionResult GuestGuide()
         {
             return View();
