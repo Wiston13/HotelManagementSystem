@@ -19,18 +19,26 @@
                            class="form-control form-control-lg"
                            type="text"
                            value="BK20260810018"
-                           aria-label="訂單編號" />
+                           aria-label="訂單編號"
+                           aria-describedby="bookingLookupFeedback" />
+                    <div id="bookingLookupFeedback" class="invalid-feedback">
+                        請輸入示範訂單編號 BK20260810018。
+                    </div>
                 </div>
                 <div class="col-md-4 col-lg-3">
-                    <button type="button" class="btn btn-primary btn-lg fw-semibold w-100">查詢</button>
+                    <button type="button"
+                            id="checkInSearchButton"
+                            class="btn btn-primary btn-lg fw-semibold w-100"
+                            aria-controls="checkInResult">查詢</button>
                 </div>
             </div>
         </div>
     </section>
 
-    <hr class="check-in-divider" />
+    <div id="checkInResult" hidden>
+        <hr class="check-in-divider" />
 
-    <div class="row g-4">
+        <div class="row g-4">
         <div class="col-lg-7">
             <section class="check-in-panel card h-100 border-0 shadow-sm" aria-labelledby="stay-information-title">
                 <div class="card-body p-4 p-md-5">
@@ -54,7 +62,7 @@
                     </div>
                     <div class="check-in-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
                         <p class="detail-label text-secondary mb-0">訂單狀態</p>
-                        <p class="detail-value booking-status fw-semibold text-end mb-0">已成立</p>
+                        <p class="detail-value booking-status fw-semibold text-end mb-0">已付款</p>
                     </div>
                 </div>
             </section>
@@ -86,6 +94,7 @@
                 </div>
             </section>
         </div>
+        </div>
     </div>
 </div>
 
@@ -110,6 +119,16 @@
 
 @section Scripts {
     <script>
+        const bookingLookup = document.getElementById('bookingLookup');
+        const checkInResult = document.getElementById('checkInResult');
+
+        document.getElementById('checkInSearchButton')?.addEventListener('click', function () {
+            const isMockBooking = bookingLookup.value.trim() === 'BK20260810018';
+
+            bookingLookup.classList.toggle('is-invalid', !isMockBooking);
+            checkInResult.hidden = !isMockBooking;
+        });
+
         document.querySelector('.check-in-panel .btn-primary')?.addEventListener('click', function () {
             bootstrap.Modal.getOrCreateInstance(document.getElementById('checkInConfirmationModal')).show();
         });
