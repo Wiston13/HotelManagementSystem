@@ -371,13 +371,7 @@
             `?branchId=${branchId}` +
             `&checkIn=${startDate}` +
             `&checkOut=${endDate}` +
-            `&guests=${RoomSelect.value}`;
-
-        console.log("branchId:", branchId);
-        console.log("startDate:", startDate);
-        console.log("endDate:", endDate);
-        console.log("guests:", RoomSelect.value);
-        console.log("targetUrl:", targetUrl);
+            `&guestCount=${RoomSelect.value}`;
 
         window.location.href = targetUrl;
 
