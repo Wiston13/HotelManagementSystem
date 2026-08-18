@@ -23,173 +23,10 @@
     2. 之後再建ViewModel。電話格式化放到ViewModel處理
     3. JavaScript 從 .cshtml 搬到 .js 
     4. 後端傳遞與資料關聯使用 BranchId，各頁面如果要顯示分館名稱 ->在該頁的ViewModel中提供BranchName
+    5. !! 問題：點上一頁，分館欄位還留有歷史資料，導致必須重新選擇一次分館，才可選房型人數
 *@
 
 
-
-
-@functions {
-    public class HotelItem
-    {
-        public string? Name { get; set; }
-        public string? Phone { get; set; }
-        public string? Address { get; set; }
-        public string? ImageUrl { get; set; }
-        public string? Intro { get; set; }
-
-        public Dictionary<string, int>? RoomList { get; set; }
-    }
-}
-@*note:
-    目前未完成:
-    1.房型動態顯示
-    2.房型白名單驗證
-    3.(考慮)加入分館介紹標題
-*@
-@{
-    // 搜尋欄位需要的資料
-    List<string> HotelNameList = new List<string>() { "高雄_Kaohsiung", "台北_Taipei", "台中_Taichung" };
-    Dictionary<string, int> HotelRoomForPeopleDic = new Dictionary<string, int>(){
-        { "精緻雙人房", 2 },
-        { "豪華雙人房", 2 },
-        { "精緻四人房", 4 },
-        { "頂級四人房", 4 },
-        { "精緻六人房", 6 },
-        { "景觀六人房", 6 }
-    };
-
-
-    //看資料狀況加入 Region = "...",
-    // 分館介紹顯示需要資料
-    var KaohsiungHotelList = new List<HotelItem>
-    {
-        new HotelItem
-        {
-            Name = "高雄站前館 Kaohsiung Main Station",
-            Phone = "TEL. 07-238-6677",
-            Address = "高雄市三民區建國二路295號",
-            ImageUrl = "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80",
-            Intro = "融合城市美學與自然靜謐的設計語彙，為旅人打造一處放鬆身心的理想之所。全館免費 Wi-Fi、24小時點心吧，提供您旅途中最溫暖的依靠。",
-            RoomList = new Dictionary<string, int>
-            {
-                { "精緻雙人房", 2 },
-                { "豪華雙人房", 2 },
-                { "精緻四人房", 4 },
-                { "頂級四人房", 4 },
-                { "精緻六人房", 6 },
-                { "景觀六人房", 6 }
-            }
-        },
-        new HotelItem
-        {
-            Name = "站東九如館 Kaohsiung Jiuru",
-            Phone = "TEL. 07-315-3366",
-            Address = "高雄市三民區九如二路339號",
-            ImageUrl = "https://png.pngtree.com/thumb_back/fw800/background/20260731/pngtree-modern-lobby-interior-with-a-striking-slate-feature-wall-illuminated-by-image_22118052.webp",
-            Intro = "坐落於高雄交通要道，沉穩內斂的石材設計與暖調燈光交織出沉靜舒適的氛圍。館內提供貼心周到的服務與舒適客房，是您探索港都風情、商務出差的最佳避風港。",
-            RoomList = new Dictionary<string, int>
-            {
-                { "精緻雙人房", 2 },
-                { "頂級四人房", 4 }
-            }
-        },
-        new HotelItem
-        {
-            Name = "中山八德館 Zhongshan Bade",
-            Phone = "TEL. 07-288-3399",
-            Address = "高雄市新興區中山一路289號",
-            ImageUrl =  "https://images.unsplash.com/photo-1522798514-97ceb8c4f1c8?auto=format&fit=crop&w=800&q=80",
-            Intro = "緊鄰美麗島捷運站核心地帶，結合現代簡約與便利機能。走出戶外即可感受南台灣的熱情活力，回到館內則能擁抱寧靜優雅的私密休憩空間，滿足每位旅人的漫旅期待。",
-            RoomList = new Dictionary<string, int>
-            {
-                { "精緻雙人房", 2 },
-                { "豪華雙人房", 2 },
-                { "精緻四人房", 4 }
-            }
-        },
-        new HotelItem
-        {
-            Name = "七賢館 Qixian",
-            Phone = "TEL. 07-288-5588",
-            Address = "高雄市新興區同愛街30號",
-            ImageUrl =  "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80",
-            Intro = "隱身於鬧市中的溫馨居所，以木質調與柔和採光營造出如家一般的歸屬感。無論是雙人甜蜜出遊或多人好友同行，都能在此享受自在放鬆的愜意時光。",
-            RoomList = new Dictionary<string, int>
-            {
-                { "精緻雙人房", 2 },
-                { "精緻六人房", 6 }
-            }
-        },
-    };
-    var TaipeiHotelList = new List<HotelItem>
-{
-    new HotelItem
-    {
-        Name = "台北站前館 Taipei Main Station",
-        Phone = "TEL. 02-2311-6677",
-        Address = "台北市中正區館前路123號",
-        ImageUrl = "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=800&q=80",
-        Intro = "坐落於台北核心交通樞紐，緊鄰台北車站與捷運站。提供溫馨舒適的客房與24小時點心吧，是商務出差與城市度假的極佳選擇。",
-        RoomList = new Dictionary<string, int>
-            {
-                { "台北商務雙人房", 2 },
-                { "台北豪華四人房", 4 }
-            }
-    },
-    new HotelItem
-    {
-        Name = "台北中山館 Taipei Zhongshan",
-        Phone = "TEL. 02-2521-3388",
-        Address = "台北市中山區中山北路二段45號",
-        ImageUrl = "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80",
-        Intro = "融合日系優雅與現代簡約美學，位處中山商圈靜巷之中鬧中取靜，給您漫活沉浸的住宿體驗。",
-        RoomList = new Dictionary<string, int>
-            {
-                { "日系單人房", 1 },
-                { "日系雙人房", 2 }
-            }
-    }
-};
-
-    var TaichungHotelList = new List<HotelItem>
-{
-    new HotelItem
-    {
-        Name = "台中逢甲館 Taichung Fengchia",
-        Phone = "TEL. 04-2451-7788",
-        Address = "台中市西屯區福星路420號",
-        ImageUrl = "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80",
-        Intro = "緊鄰知名逢甲商圈，擁有便利的地理位置與時尚洗鍊的空間設計，讓您盡情探索台中的熱情與活力。",
-        RoomList = new Dictionary<string, int>
-            {
-                { "逢甲活力雙人房", 2 },
-                { "逢甲歡樂四人房", 4 }
-            }
-    },
-    new HotelItem
-    {
-        Name = "台中綠園道館 Taichung Green Parkway",
-        Phone = "TEL. 04-2301-5599",
-        Address = "台中市西區公益路68號",
-        ImageUrl = "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80",
-        Intro = "漫步於草悟道與美術館藝文特區旁，享受充滿綠意與人文藝術氣息的悠閒假期。",
-        RoomList = new Dictionary<string, int>
-            {
-                { "綠園道景觀房", 2 },
-                { "藝術家庭房", 4 }
-            }
-    }
-};
-    var hotelList = new[] { KaohsiungHotelList, TaipeiHotelList, TaichungHotelList };
-
-
-    var allHotels = new List<List<HotelItem>>();
-    allHotels.Add(KaohsiungHotelList);
-    allHotels.Add(TaipeiHotelList);
-    allHotels.Add(TaichungHotelList);
-    var hotelJSON = System.Text.Json.JsonSerializer.Serialize(allHotels);
-
-}
 
 <!-- 插件區 -->
 @*flatpickr 用來調整日期選取版型的插件*@
@@ -220,7 +57,7 @@
                                     選擇分館
                                 </option>
 
-                                @foreach (var branch in Model.Branches)
+                                @foreach (var branch in Model.Branches.Where(b => b.AcceptsNewBookings))
                                 {
                                     <option value="@branch.BranchId">
                                         @branch.BranchName

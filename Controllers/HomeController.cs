@@ -22,6 +22,7 @@ namespace HotelManagementSystem.Controllers
                     {
                         BranchId = b.BranchId,
                         BranchName = b.BranchName,
+                        AcceptsNewBookings = b.AcceptsNewBookings,
                         Phone = b.Phone,
                         Address = b.Address,
                         Description = b.Description,

@@ -12,6 +12,8 @@ public class BranchViewModel
 
     public string BranchName { get; set; } = "";
 
+    public bool AcceptsNewBookings { get; set; }
+
     public string? Phone { get; set; }
 
     public string? Address { get; set; }

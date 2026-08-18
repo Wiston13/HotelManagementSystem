@@ -2,6 +2,7 @@
 using HotelManagementSystem.Models.Entities;
 using HotelManagementSystem.Models.ViewModels.Booking;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace HotelManagementSystem.Controllers
 {
@@ -21,10 +22,14 @@ namespace HotelManagementSystem.Controllers
             var branch = _context.Branches
                         .FirstOrDefault(b => b.BranchId == branchId);
 
-            // 查詢該分館的啟用房型
+            // 查詢該分館 符合所選房型人數 且 啟用 的房型
             var roomTypes = _context.RoomTypes
-                            .Where(r => r.BranchId == branchId && r.IsActive)
+                            .Include(r => r.Rooms)
+                            .Where(r => r.BranchId == branchId
+                                    && r.MaxOccupancy == guestCount
+                                    && r.IsActive)
                             .ToList();
+            
 
             // 建立 ViewModel
             var model = new RoomSelectionViewModel
@@ -43,7 +48,8 @@ namespace HotelManagementSystem.Controllers
                     BedType = r.BedType,
                     NightlyPrice = r.NightlyPrice,
                     Description = r.Description,
-                    ImageUrl = r.ImageUrl
+                    ImageUrl = r.ImageUrl,
+                    TotalRooms = r.Rooms.Count
                 }).ToList()
 
             };

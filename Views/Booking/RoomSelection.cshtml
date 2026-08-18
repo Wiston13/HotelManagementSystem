@@ -3,22 +3,40 @@
 *@
 
 @model HotelManagementSystem.Models.ViewModels.Booking.RoomSelectionViewModel
-<h3>RoomSelection 測試</h3>
+@* <h3>RoomSelection 測試</h3>
 <p>分館 ID：@Model.BranchId</p>
 <p>入住日期：@Model.CheckInDate</p>
 <p>退房日期：@Model.CheckOutDate</p>
 <p>入住人數：@Model.GuestCount</p>
 <p>分館名稱：@Model.BranchName</p>
+<hr />
+<h4>房型資料測試</h4>
+@foreach (var roomType in Model.RoomTypes)
+{
+    <p>
+        ID：@roomType.RoomTypeId |
+        房型：@roomType.RoomTypeName |
+        人數：@roomType.MaxOccupancy |
+        床型：@roomType.BedType |
+        價格：@roomType.NightlyPrice
+    </p>
+} *@
+
+
+
 
 @{
     ViewData["Title"] = "房型結果及訂房確認";
+
+    var Nights = (Model.CheckOutDate - Model.CheckInDate).Days;
+
 
     // 靜態頁面展示用假資料
     var BranchName = "台北館";
     var CheckInDate = new DateTime(2026, 8, 14);
     var CheckOutDate = new DateTime(2026, 8, 16);
 
-    var Nights = (CheckOutDate - CheckInDate).Days;
+    // var Nights = (CheckOutDate - CheckInDate).Days;
 
     var roomList = new[]
     {
@@ -58,19 +76,19 @@
 
 
     <!-- 上方標題與查詢條件摘要 --> 
-    <h1 class="fw-bold">@BranchName | 可售房型</h1>
+    <h1 class="fw-bold">@Model.BranchName | 可售房型</h1>
 
     <p class="text-muted">
-        @CheckInDate.ToString("yyyy/MM/dd") － @CheckOutDate.ToString("yyyy/MM/dd")
+        @Model.CheckInDate.ToString("yyyy/MM/dd") － @Model.CheckOutDate.ToString("yyyy/MM/dd")
     </p>
 
 
     <div class="row mt-4">
         <!-- ================= 左側：房型列表區 ================= -->
         <div class="col-lg-8 mb-4">
-            @if (roomList.Any())
+            @if (Model.RoomTypes.Any())
             {
-                foreach (var room in roomList)
+                foreach (var room in Model.RoomTypes)
                 {
                     <div class="card mb-3 shadow-sm border-0">
                         <div class="card-body d-flex justify-content-between align-items-center">
@@ -79,17 +97,17 @@
                                     <small class="text-muted">房型照片</small>
                                 </div> *@
                                 @* 假資料（靜態頁面展示用） *@
-                                <img src="https://images.unsplash.com/photo-1631049307264-da0ec9d70304?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-                                     alt="@room.RoomName"
+                                <img src="@room.ImageUrl"
+                                     alt="@room.RoomTypeName"
                                      class="rounded me-3"
                                      style="width: 160px; height: 120px; object-fit: cover;">
 
                                 <div>
                                     @* 房型名稱 + 剩餘數量 *@
                                     <div class="d-flex align-items-baseline mb-1">
-                                        <h5 class="card-title fw-bold mb-0">@room.RoomName</h5>
+                                        <h5 class="card-title fw-bold mb-0">@room.RoomTypeName</h5>
                                         <small class="text-secondary ms-2" style="position: relative; top: -1px;">
-                                            ・剩餘 @room.Stock 間
+                                            ・剩餘數量計算中(待處理)
                                         </small>
                                     </div>
                                     @* 床型 *@
@@ -111,12 +129,13 @@
                             </div>
 
                             <div class="text-end align-self-end">
+                                @* 價格 *@
                                 <h4 class="text-primary fw-bold mb-2">
-                                    NT$ @room.Price.ToString("N0")
+                                    NT$ @room.NightlyPrice.ToString("N0")
                                     <small class="fs-6 fw-normal">／晚</small>
                                 </h4>
                                 <button type="button" class="btn btn-outline-primary px-4"
-                                        onclick="selectRoom(@room.RoomTypeId, '@room.RoomName', @room.Price)">
+                                        onclick="selectRoom(@room.RoomTypeId, '@room.RoomTypeName', @room.NightlyPrice)">
                                         選擇
                                 </button>
                             </div>
@@ -148,7 +167,7 @@
 
                 <div class="d-flex justify-content-between py-2 border-bottom">
                     <span class="text-muted">分館</span>
-                    <strong class="text-dark">@BranchName</strong>
+                    <strong class="text-dark">@Model.BranchName</strong>
 
 
                 </div>
@@ -168,9 +187,9 @@
 
                 <!-- 送出表單至第三頁 (Payment) -->
                 <form asp-controller="Booking" asp-action="Payment" method="post">
-                    <input type="hidden" name="branchName" value="@BranchName" />
-                    <input type="hidden" name="checkIn" value="@CheckInDate.ToString("yyyy-MM-dd")" />
-                    <input type="hidden" name="checkOut" value="@CheckOutDate.ToString("yyyy-MM-dd")" />
+                    <input type="hidden" name="branchName" value="@Model.BranchName" />
+                    <input type="hidden" name="checkIn" value="@Model.CheckInDate.ToString("yyyy-MM-dd")" />
+                    <input type="hidden" name="checkOut" value="@Model.CheckOutDate.ToString("yyyy-MM-dd")" />
                     <input type="hidden" id="inputRoomTypeId" name="roomTypeId" value="" />
                     <input type="hidden" id="inputTotalPrice" name="totalPrice" value="0" />
 
