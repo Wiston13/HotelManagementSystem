@@ -1,0 +1,40 @@
+body.backoffice-layout {
+    margin-bottom: 0;
+}
+
+@media (min-width: 768px) {
+    body.backoffice-layout {
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    .backoffice-layout__shell,
+    .backoffice-layout__content-row,
+    .backoffice-layout__sidebar,
+    .backoffice-layout__main {
+        min-height: 0;
+    }
+
+    .backoffice-layout__shell,
+    .backoffice-layout__content-row {
+        height: 100%;
+    }
+
+    .backoffice-layout__sidebar,
+    .backoffice-layout__main {
+        height: 100%;
+    }
+
+    .backoffice-layout__main {
+        overflow: hidden;
+    }
+
+    .backoffice-layout__header {
+        flex-shrink: 0;
+    }
+
+    .backoffice-layout__body {
+        min-height: 0;
+        overflow-y: auto;
+    }
+}

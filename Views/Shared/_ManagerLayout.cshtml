@@ -1,33 +1,21 @@
-﻿@{
+@{
     var pageTitle = ViewData["Title"] as string;
+    var managerName = ViewData["ManagerName"] as string;
 
-    var currentAction = ViewContext.RouteData.Values["action"]!.ToString();
-    var BranchController = ViewContext.RouteData.Values["controller"]!.ToString();
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
 
+    var isStaff = currentController == "Staff" && currentAction == "Employees";
+    var isBranch = currentController == "Branch" && currentAction == "Index";
+    var isRoomType = currentController == "RoomType" && currentAction == "Index";
+    var isRoom = currentController == "Room" && currentAction == "Index";
+    var isBookingExport = currentController == "BookingExport" && currentAction == "Export";
+    var isOperationLog = currentController == "OperationLog" && currentAction == "Search";
 
-
-    // var currentController =
-    //     ViewContext.RouteData.Values["controller"]?.ToString();
-
-    // var currentAction =
-    //     ViewContext.RouteData.Values["action"]?.ToString();
-
-    // 判斷目前頁面用來設定側邊欄 active 狀態
-
-    // 到時候主頁面名稱決定再修改下方名詞
-    var isAccount = currentAction == "Account";
-    var isBranch = currentAction == "Branch";
-    var isPrice = currentAction == "Price";
-    var isRooms = currentAction == "Rooms";
-    var isOutput = currentAction == "Output";
-    var isLog = currentAction == "Log";
-    // 自動判斷所在頁面亮起
-    string Check(bool checkAction)
+    string Check(bool isActive)
     {
-        return checkAction ? "active bg-primary-subtle text-dark" : "text-dark";
+        return isActive ? "active bg-primary-subtle text-dark" : "text-dark";
     }
-    
-    // ...可依此類推對應你的 Controller 與 Action
 }
 
 <!DOCTYPE html>
@@ -37,77 +25,95 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@(string.IsNullOrWhiteSpace(pageTitle) ? "旅宿管理系統" : $"{pageTitle}｜旅宿管理系統")</title>
 
-    <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <!-- Bootstrap Icons (支援圖示) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <!-- 全站樣式 -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/backoffice-layout.css" asp-append-version="true" />
 
     @await RenderSectionAsync("Styles", required: false)
 </head>
-<body class="bg-light min-vh-100 d-flex flex-column">
+<body class="backoffice-layout bg-light min-vh-100 d-flex flex-column">
 
-    <!-- 主體容器：使用 CSS Grid 或 Flex 讓側邊欄與右側內容並排 -->
-    <div class="container-fluid flex-grow-1 d-flex flex-column p-0">
-        <div class="row g-0 flex-grow-1">
+    <div class="backoffice-layout__shell container-fluid flex-grow-1 d-flex flex-column p-0">
+        <div class="d-md-none p-3 border-bottom bg-white">
+            <button class="btn btn-outline-primary"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#managerSidebar"
+                    aria-controls="managerSidebar"
+                    aria-expanded="false">
+                <i class="bi bi-list me-1"></i>功能選單
+            </button>
+        </div>
+        <div class="backoffice-layout__content-row row g-0 flex-grow-1">
 
-            <!-- 左側邊欄 (Sidebar) -->
-            <nav class="col-md-3 col-lg-2 d-md-block bg-white border-end collapse p-3" id="adminSidebar">
-                <div class="position-sticky pt-3">
+            <nav class="backoffice-layout__sidebar col-md-3 col-lg-2 d-md-block bg-white border-end collapse p-3" id="managerSidebar">
+                <div class="pt-3">
                     <h5 class="sidebar-heading px-3 mb-3 text-primary fw-bold">
                         旅宿管理系統
                     </h5>
 
                     <ul class="nav flex-column gap-1">
                         <li class="nav-item">
-                            <!--加入頁面後 true要修改為isAccount 看到時候實際主頁是index 還是Account -->
-                            <a class="nav-link rounded @(Check(true))"
-                               asp-controller="@BranchController" asp-action="Account">
+                            <a class="nav-link rounded @(Check(isStaff))"
+                               asp-controller="Staff" asp-action="Employees">
                                 <i class="bi bi-person-circle me-2"></i>帳號管理
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link rounded @(Check(isBranch))"
-                               asp-controller="@BranchController" asp-action="Branch">
+                               asp-controller="Branch" asp-action="Index">
                                 <i class="bi bi-house-door me-2"></i>分館管理
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link rounded @(Check(isPrice))" asp-controller="@BranchController" asp-action="Price">
+                            <a class="nav-link rounded @(Check(isRoomType))"
+                               asp-controller="RoomType" asp-action="Index">
                                 <i class="bi bi-cash-coin me-2"></i>房型與價格
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link rounded @(Check(isRooms))" asp-controller="@BranchController" asp-action="Rooms">
+                            <a class="nav-link rounded @(Check(isRoom))"
+                               asp-controller="Room" asp-action="Index">
                                 <i class="bi bi-house-gear me-2"></i>房間管理
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link rounded @(Check(isOutput))" asp-controller="@BranchController" asp-action="Output">
+                            <a class="nav-link rounded @(Check(isBookingExport))"
+                               asp-controller="BookingExport" asp-action="Export">
                                 <i class="bi bi-file-earmark-arrow-down me-2"></i>資料輸出
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link rounded @(Check(isLog))" asp-controller="@BranchController" asp-action="Log">
+                            <a class="nav-link rounded @(Check(isOperationLog))"
+                               asp-controller="OperationLog" asp-action="Search">
                                 <i class="bi bi-pencil me-2"></i>操作紀錄
                             </a>
                         </li>
                         <hr class="my-2">
                         <li class="nav-item">
-                            <a class="nav-link rounded text-danger" asp-controller="@BranchController" asp-action="">
+                            <span class="nav-link rounded text-danger disabled" aria-disabled="true">
                                 <i class="bi bi-box-arrow-left me-2"></i>登出
-                            </a>
+                                <span class="small">（待登入整合）</span>
+                            </span>
                         </li>
                     </ul>
                 </div>
             </nav>
 
+            <main class="backoffice-layout__main col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4 d-flex flex-column">
 
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4 d-flex flex-column">
+                <div class="backoffice-layout__header d-flex justify-content-between align-items-center pb-3 mb-4 border-bottom">
+                    <h2 class="h4 mb-0 fw-bold">@pageTitle</h2>
+                    <div class="text-secondary small">
+                        <i class="bi bi-person-circle me-1"></i> 總系統管理員 @if (!string.IsNullOrWhiteSpace(managerName))
+                        {
+                            <text>・@managerName</text>
+                        }
+                    </div>
+                </div>
 
-                <!-- 頁面實際內容 -->
-                <div class="flex-grow-1">
+                <div class="backoffice-layout__body flex-grow-1">
                     @RenderBody()
                 </div>
 
@@ -115,7 +121,6 @@
         </div>
     </div>
 
-    <!-- Script -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
