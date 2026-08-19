@@ -30,6 +30,16 @@ namespace HotelManagementSystem.Controllers
         {
             await _NoShowService.UpdateNoShowsAsync();
 
+            var currentEmployeeNumber = "E20260807002"; // TODO 假設是登入的員工編號，實際應從登入資訊取得"
+
+            var staff = _context.Employees
+                .FirstOrDefault(e => e.EmployeeNumber == currentEmployeeNumber);
+
+            if (staff == null)
+            {
+                return Content("目前員工資料不存在");
+            }
+
             var model = new CheckInViewModel
             {
                 BookingNumber = bookingNumber
@@ -40,7 +50,8 @@ namespace HotelManagementSystem.Controllers
                 return View(model);
             }
 
-            var booking = _context.Bookings.FirstOrDefault(b => b.BookingNumber == bookingNumber);
+            var booking = _context.Bookings
+                        .FirstOrDefault(b => b.BookingNumber == bookingNumber && b.BranchId == staff.BranchId);
 
             if (booking == null)
             {
