@@ -13,7 +13,11 @@ builder.Services.AddDbContext<HotelManagementContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("HMSDBConnection")));
 
 builder.Services.AddScoped<NoShowService>();
-
+builder.Services.AddSession(options => {
+    options.IdleTimeout = TimeSpan.FromHours(2); // 登入有效時限 2 小時
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -36,5 +40,5 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
 
-
+app.UseSession();
 app.Run();
