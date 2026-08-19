@@ -185,8 +185,23 @@ namespace HotelManagementSystem.Controllers
                 return View(model);
             }
 
+            var stayRecord = new StayRecord
+            {
+                BookingNumber = booking.BookingNumber,
+                RoomId = room.RoomId,
+                RoomNumberSnapshot = room.RoomNumber,
+                ActualCheckInAt = now,
+                PrimaryGuestName = booking.BookerName,
+                ActualGuestCount = inputModel.ActualGuestCount.Value,
+                CheckedInByEmployeeNumber = "E20260807002" // TODO 假設是登入的員工編號，實際應從登入資訊取得"
+            };
 
-            return Content("POST 驗證通過");
+            _context.StayRecords.Add(stayRecord);
+            booking.BookingStatus = "CheckedIn";
+
+            _context.SaveChanges();
+
+            return Content("入住完成");
         }
     }
 }
