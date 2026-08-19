@@ -3,6 +3,7 @@ using HotelManagementSystem.Models.Entities;
 using HotelManagementSystem.Models.ViewModels.Stay;
 using HotelManagementSystem.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace HotelManagementSystem.Controllers
 {
@@ -196,12 +197,34 @@ namespace HotelManagementSystem.Controllers
                 CheckedInByEmployeeNumber = "E20260807002" // TODO 假設是登入的員工編號，實際應從登入資訊取得"
             };
 
-            _context.StayRecords.Add(stayRecord);
-            booking.BookingStatus = "CheckedIn";
+            var operationLog = new OperationLog
+            {
+                TargetBranchId = booking.BranchId,
+                OperatedAt = now,
+                OperatorEmployeeNumber = "E20260807002", // TODO 登入資訊
+                OperationTypeId = 22,
+                TargetType = "Booking",
+                TargetIdentifier = booking.BookingNumber,
+                Description = $"完成訂單 {booking.BookingNumber} 的 Check-in，指派房間 {room.RoomNumber}。"
+            };
 
-            _context.SaveChanges();
+            try
+            {
+                _context.StayRecords.Add(stayRecord);
+                booking.BookingStatus = "CheckedIn";
+                _context.OperationLogs.Add(operationLog);
 
-            return Content("入住完成");
+                _context.SaveChanges();
+            }
+            catch (DbUpdateException)
+            {
+                model.ErrorMessage = "入住資料寫入失敗，請重新查詢後再試一次";
+                return View(model);
+            }
+
+            TempData["SuccessMessage"] = "入住辦理成功";
+
+            return RedirectToAction(nameof(CheckIn));
         }
     }
 }

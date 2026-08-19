@@ -43,6 +43,13 @@
 	</div>
 }
 
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+	<div class="alert alert-success mt-4">
+		@successMessage
+	</div>
+}
+
 @if (Model.HasResult)
 {
 	<div class="row g-4">
