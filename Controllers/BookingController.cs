@@ -45,49 +45,29 @@ namespace HotelManagementSystem.Controllers
         [HttpGet]
         public async Task<IActionResult> Lookup(string BookingNum,string Phone)
         {
-            var model = new BookingData
-            {
-                BookingNum = BookingNum
-            };
+            var model = new BookingData();
 
             if (string.IsNullOrWhiteSpace(BookingNum))
             {
-                return View(model);
+                return View();
             }
 
-            var booking = _context.Bookings.FirstOrDefault(b => b.BookingNumber == BookingNum);
+            var booking = _context.Bookings.FirstOrDefault(b => b.BookingNumber == BookingNum &&b.ContactPhone==Phone);
 
             if (booking == null)
             {               
                 return View();
             }
-
-            if (booking.BookingStatus != "Paid")
-            {                
-                return View();
-            }
-
-            var checkInStart = booking.CheckInDate.ToDateTime(new TimeOnly(16, 0));
-            var checkOutDeadline = booking.CheckOutDate.ToDateTime(new TimeOnly(12, 0));
-            var now = _Clock.Now;
-
-            if (now < checkInStart)
-            {
-                return View();
-            }
-
-            if (now >= checkOutDeadline)
-            {
-                return View();
-            }
-
-            var hasStayRecord = _context.StayRecords.Any(s => s.BookingNumber == booking.BookingNumber);
-
-            if (hasStayRecord)
-            {
-                return View();
-            }          
-
+            model.BookingNum = booking.BookingNumber;
+            model.Phone = booking.ContactPhone;
+            //分館
+            model.Roomtype = booking.RoomTypeNameSnapshot;
+            model.StartDate = new DateTime(booking.CheckInDate.Year, booking.CheckInDate.Month, booking.CheckInDate.Day);
+            model.EndDate = new DateTime(booking.CheckOutDate.Year, booking.CheckOutDate.Month, booking.CheckOutDate.Day); 
+            model.BookingDate = booking.CreatedAt;
+            model.Name = booking.BookerName;
+            model.Price = booking.NightlyPriceSnapshot.ToString("N0");
+            model.BookingStatus = booking.BookingStatus;
             return View(model);
 
         }
