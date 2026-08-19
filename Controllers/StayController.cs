@@ -130,6 +130,16 @@ namespace HotelManagementSystem.Controllers
         {
             await _NoShowService.UpdateNoShowsAsync();
 
+            var currentEmployeeNumber = "E20260807002"; // TODO 假設是登入的員工編號，實際應從登入資訊取得"
+
+            var staff = _context.Employees
+                .FirstOrDefault(e => e.EmployeeNumber == currentEmployeeNumber);
+
+            if (staff == null)
+            {
+                return Content("目前員工資料不存在");
+            }
+
             var model = new CheckInViewModel
             {
                 BookingNumber = inputModel.BookingNumber
@@ -143,7 +153,7 @@ namespace HotelManagementSystem.Controllers
                 return View(model);
             }
 
-            var booking = _context.Bookings.FirstOrDefault(b => b.BookingNumber == inputModel.BookingNumber);
+            var booking = _context.Bookings.FirstOrDefault(b => b.BookingNumber == inputModel.BookingNumber && b.BranchId == staff.BranchId);
 
             if (booking == null)
             {
@@ -211,14 +221,14 @@ namespace HotelManagementSystem.Controllers
                 ActualCheckInAt = now,
                 PrimaryGuestName = booking.BookerName,
                 ActualGuestCount = inputModel.ActualGuestCount.Value,
-                CheckedInByEmployeeNumber = "E20260807002" // TODO 假設是登入的員工編號，實際應從登入資訊取得"
+                CheckedInByEmployeeNumber = staff.EmployeeNumber // TODO 假設是登入的員工編號，實際應從登入資訊取得"
             };
 
             var operationLog = new OperationLog
             {
                 TargetBranchId = booking.BranchId,
                 OperatedAt = now,
-                OperatorEmployeeNumber = "E20260807002", // TODO 登入資訊
+                OperatorEmployeeNumber = staff.EmployeeNumber, // TODO 登入資訊
                 OperationTypeId = 22,
                 TargetType = "Booking",
                 TargetIdentifier = booking.BookingNumber,
