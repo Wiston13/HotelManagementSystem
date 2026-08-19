@@ -11,11 +11,13 @@ namespace HotelManagementSystem.Controllers
     {
         private readonly HotelManagementContext _context;
         private readonly TaipeiClock _Clock;
+        private readonly NoShowService _NoShowService;
 
-        public StayController(HotelManagementContext context, TaipeiClock clock)
+        public StayController(HotelManagementContext context, TaipeiClock clock, NoShowService noShowService)
         {
             _context = context;
             _Clock = clock;
+            _NoShowService = noShowService;
         }
 
         public IActionResult CheckOut()
@@ -24,8 +26,10 @@ namespace HotelManagementSystem.Controllers
         }
 
         [HttpGet]
-        public IActionResult CheckIn(string? bookingNumber)
+        public async Task<IActionResult> CheckIn(string? bookingNumber)
         {
+            await _NoShowService.UpdateNoShowsAsync();
+
             var model = new CheckInViewModel
             {
                 BookingNumber = bookingNumber
@@ -111,8 +115,10 @@ namespace HotelManagementSystem.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult CheckIn(CheckInViewModel inputModel)
+        public async Task<IActionResult> CheckIn(CheckInViewModel inputModel)
         {
+            await _NoShowService.UpdateNoShowsAsync();
+
             var model = new CheckInViewModel
             {
                 BookingNumber = inputModel.BookingNumber
