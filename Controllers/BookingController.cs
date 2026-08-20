@@ -34,7 +34,32 @@ namespace HotelManagementSystem.Controllers
             return View();
         }
 
-        
+
+
+        private string StatusToChenese(string input)
+        {
+            string output = "";
+            switch (input)
+            {
+                case "Completed":
+                    output = "已完成";
+                    break;
+                case "CheckedIn":
+                    output = "入住中";
+                    break;
+                case "Cancelled":
+                    output = "已取消";
+                    break;
+                case "NoShow":
+                    output = "逾期未入住";
+                    break;
+                case "Paid":
+                    output = "已付款";
+                    break;
+            }
+            return output;
+        }
+
         public IActionResult Lookup()
         {
             List<BookingData> _bookingData = new List<BookingData>();
@@ -47,27 +72,33 @@ namespace HotelManagementSystem.Controllers
         {
             var model = new BookingData();
 
-            if (string.IsNullOrWhiteSpace(BookingNum))
+            if (string.IsNullOrWhiteSpace(BookingNum)||string.IsNullOrWhiteSpace(Phone))
             {
-                return View();
+                return View(model);
             }
 
             var booking = _context.Bookings.FirstOrDefault(b => b.BookingNumber == BookingNum &&b.ContactPhone==Phone);
 
             if (booking == null)
-            {               
-                return View();
+            {
+                model.BookingNum = BookingNum;
+                model.Phone = Phone;
+                ViewBag.NoResult = true;
+                return View(model);
             }
+
+            var branch = _context.Branches.FirstOrDefault(b => b.BranchId == booking!.BranchId);
+
             model.BookingNum = booking.BookingNumber;
             model.Phone = booking.ContactPhone;
-            //分館
+            model.BranchName = branch!.BranchName;
             model.Roomtype = booking.RoomTypeNameSnapshot;
             model.StartDate = new DateTime(booking.CheckInDate.Year, booking.CheckInDate.Month, booking.CheckInDate.Day);
             model.EndDate = new DateTime(booking.CheckOutDate.Year, booking.CheckOutDate.Month, booking.CheckOutDate.Day); 
             model.BookingDate = booking.CreatedAt;
             model.Name = booking.BookerName;
             model.Price = booking.NightlyPriceSnapshot.ToString("N0");
-            model.BookingStatus = booking.BookingStatus;
+            model.BookingStatus = StatusToChenese(booking.BookingStatus);
             return View(model);
 
         }

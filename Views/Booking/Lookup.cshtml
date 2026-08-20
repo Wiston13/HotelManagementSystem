@@ -32,18 +32,18 @@
 				<div class="row g-3 align-items-end">
 
 					<div class="col-12 col-lg-5">
-						<label asp-for="@Model.BookingNum" class="form-label">訂單編號<span class="text-danger">*</span></label>
+						<label asp-for="BookingNum" class="form-label">訂單編號<span class="text-danger">*</span></label>
 						<small class="text-secondary fw-normal ms-1">請輸入完整訂單編號（英文字母區分大小寫）。</small>
 
 						<!-- 改用 asp-for，它會自動生成 id="OrderNo" name="OrderNo" value="..." -->
-						<input asp-for="@Model.BookingNum" class="form-control" placeholder="例如：BK20260810018" />
+						<input asp-for="BookingNum" class="form-control" id="orderNo" placeholder="例如：BK20260810018" />
 					</div>
 
 					<div class="col-12 col-lg-5">
-						<label asp-for="@Model.Phone" class="form-label">聯絡電話<span class="text-danger">*</span></label>
+						<label asp-for="Phone" class="form-label">聯絡電話<span class="text-danger">*</span></label>
 
 						<!-- 改用 asp-for -->
-						<input asp-for="@Model.Phone" class="form-control" placeholder="例如：0912345678" />
+						<input asp-for="Phone" class="form-control" id="phone" placeholder="例如：0912345678" />
 					</div>
 
 					<div class="col-12 col-lg-2 d-grid">
@@ -53,14 +53,14 @@
 
 				</div>
 
-				<!-- 第二列：錯誤訊息顯示區 (如果搭配後端驗證，也可以改用 asp-validation-for) -->
+				<!-- 第二列：錯誤訊息顯示區 -->
 				<div class="row">
 					<div class="col-12 col-lg-5">
-						<span asp-validation-for="@Model.BookingNum" class="text-danger small"></span>
+						<span id="orderError" class="text-danger small"></span>
 					</div>
 
 					<div class="col-12 col-lg-5">
-						<span asp-validation-for="@Model.Phone" class="text-danger small"></span>
+						<span id="phoneError" class="text-danger small"></span>
 					</div>
 
 					<div class="col-lg-2"></div>
@@ -72,75 +72,81 @@
 	</div>
 	<!-- end 搜尋區塊 -->
 	<!-- "查無資料"顯示區 -->
-	<div id="noResult" class="alert alert-warning mt-4 d-none">查無符合的訂單資料！</div>
+	@if(ViewBag.NoResult == true)
+	{
+	<div id="noResult" class="alert alert-warning mt-4">
+			查無符合的訂單資料，請確認訂單編號與聯絡電話是否正確！
+		</div>		
+	}
 
 
 	<!-- 查詢結果顯示區 -->
-	<div class="card mt-4 d-none" id="orderResult">
+	@if(!string.IsNullOrEmpty(Model?.BookingNum) && ViewBag.NoResult != true)
+	{
+		<div class="card mt-4" id="orderResult">
 
-		<div class="card-header d-flex justify-content-between align-items-center">
-			<!-- 訂單編號 -->
-			<span class="fw-semibold" id="resultOrderNo"></span>
-			<!-- 訂單狀態 -->
-			<span class="badge" id="resultStatus"></span>
-		</div>
 
-		<div class="card-body">
 
-			<div class="row gy-3">
-				<!--document.getElementById("resultRoom").textContent = order.branch + "・" + order.roomType;
-			document.getElementById("resultDate").textContent = order.checkIn + " - " + order.checkOut;
-			document.getElementById("resultCustomer").textContent = order.customer;
-			document.getElementById("resultPhone").textContent = order.phone;
-			document.getElementById("resultTotal").textContent = "NT$ " + order.total.toLocaleString();-->
-				<div class="col-12">
-					<div class="row border-bottom pb-2">
-						<div class="col-md-4 text-secondary">分館／房型</div>
-						<!-- 顯示 預訂分館．房型 區塊 -->
-						<div class="col-md-8 fw-semibold text-md-end" id="resultRoom">@Model.BranchName ・ @Model.Roomtype</div>
+			<div class="card-header d-flex justify-content-between align-items-center">
+				<!-- 訂單編號 -->
+				<span class="fw-semibold" id="resultOrderNo">訂單 @Model.BookingNum</span>
+				<!-- 訂單狀態 -->
+				<span class="badge @BookingStatus(Model.BookingStatus)" id="resultStatus">@Model.BookingStatus</span>
+			</div>
+
+			<div class="card-body">
+
+				<div class="row gy-3">
+					<div class="col-12">
+						<div class="row border-bottom pb-2">
+							<div class="col-md-4 text-secondary">分館／房型</div>
+							<!-- 顯示 預訂分館．房型 區塊 -->
+							<div class="col-md-8 fw-semibold text-md-end" id="resultRoom">@Model.BranchName ・ @Model.Roomtype</div>
+						</div>
 					</div>
-				</div>
-				<div class="col-12">
-					<div class="row border-bottom pb-2">
-						<div class="col-md-4 text-secondary">入住／退房</div>
-						<!-- 顯示 入住日期 ~ 退房日期 區塊 -->
-						<div class="col-md-8 fw-semibold text-md-end" id="resultDate">@Model.StartDate ・ @Model.EndDate</div>
+					<div class="col-12">
+						<div class="row border-bottom pb-2">
+							<div class="col-md-4 text-secondary">入住／退房</div>
+							<!-- 顯示 入住日期 ~ 退房日期 區塊 -->
+							<div class="col-md-8 fw-semibold text-md-end" id="resultDate">@Model.StartDate. ・ @Model.EndDate</div>
+						</div>
 					</div>
-				</div>
-				<div class="col-12">
-					<div class="row border-bottom pb-2">
-						<div class="col-md-4 text-secondary">訂房人</div>
-						<!-- 顯示 訂房人姓名 區塊 -->
-						<div class="col-md-8 fw-semibold text-md-end" id="resultCustomer">@Model.Name</div>
+					<div class="col-12">
+						<div class="row border-bottom pb-2">
+							<div class="col-md-4 text-secondary">訂房人</div>
+							<!-- 顯示 訂房人姓名 區塊 -->
+							<div class="col-md-8 fw-semibold text-md-end" id="resultCustomer">@Model.Name</div>
+						</div>
 					</div>
-				</div>
-				<div class="col-12">
-					<div class="row border-bottom pb-2">
-						<div class="col-md-4 text-secondary">電話</div>
-						<!-- 顯示 訂房人姓名 區塊 -->
-						<div class="col-md-8 fw-semibold text-md-end" id="resultPhone">@Model.Phone</div>
+					<div class="col-12">
+						<div class="row border-bottom pb-2">
+							<div class="col-md-4 text-secondary">電話</div>
+							<!-- 顯示 訂房人姓名 區塊 -->
+							<div class="col-md-8 fw-semibold text-md-end" id="resultPhone">@Model.Phone</div>
+						</div>
 					</div>
-				</div>
-				<div class="col-12">
-					<div class="row">
-						<div class="col-md-4 text-secondary">總金額</div>
-						<!-- 顯示 房價總額 區塊 -->
-						<div class="col-md-8 fw-bold text-md-end" id="resultTotal">NT$ @Model.Price</div>
+					<div class="col-12">
+						<div class="row">
+							<div class="col-md-4 text-secondary">總金額</div>
+							<!-- 顯示 房價總額 區塊 -->
+							<div class="col-md-8 fw-bold text-md-end" id="resultTotal">NT$ @Model.Price</div>
+						</div>
 					</div>
+
 				</div>
 
 			</div>
 
-		</div>
 
-
-		<div class="card-footer bg-white">
-			<div class="d-flex justify-content-end">
-				<a asp-controller="Home" asp-action="Index" class="btn btn-outline-primary">返回</a>
+			<div class="card-footer bg-white">
+				<div class="d-flex justify-content-end">
+					<a asp-controller="Home" asp-action="Index" class="btn btn-outline-primary">返回</a>
+				</div>
 			</div>
-		</div>
 
-	</div>
+		</div>
+	}
+	
 	<!-- end 查詢結果顯示區 -->
 
 
@@ -149,73 +155,14 @@
 
 
 
-
-@section Styles {
-
-	<style>
-		/*
-						筆記：Bootstrap 的 invalid-feedback 預設是 display:none，顯示錯誤訊息時會讓輸入框高度改變（兩個輸入框和查詢按鈕無法對齊），
-						所以改成 -> 預留錯誤訊息空間、隱藏文字，驗證失敗時再顯示文字。
-						*/
-
-
-		/* ps. 錯誤訊息 --> class="invalid-feedback" */
-
-		.invalid-feedback {
-			display: block;
-			min-height: 24px; /* 預留錯誤訊息高度 */
-			visibility: hidden; /* 預設隱藏訊息文字 */
-		}
-
-			/* ps. 驗證失敗時：class="invalid-feedback show" */
-
-			.invalid-feedback.show {
-				visibility: visible;
-			}
-	</style>
-
-}
-
-
-
 @section Scripts {
 
 	<script>
-
-		//假資料
-		// const orderData = [
-		// 	{
-		// 		orderNo: "BK20260810018",
-		// 		phone: "0912-345678",
-		// 		branch: "台北館",
-		// 		roomType: "標準雙人房",
-		// 		checkIn: "2026/08/10",
-		// 		checkOut: "2026/08/12",
-		// 		customer: "王小明",
-		// 		total: 4800,
-		// 		status: "已完成"
-		// 	},
-		// 	{
-		// 		orderNo: "BK20260810019",
-		// 		phone: "0987-654321",
-		// 		branch: "台中館",
-		// 		roomType: "豪華雙人房",
-		// 		checkIn: "2026/08/15",
-		// 		checkOut: "2026/08/17",
-		// 		customer: "陳小華",
-		// 		total: 6000,
-		// 		status: "已付款"
-		// 	}
-		// ];
+	
 
 		const orderNoPattern = /^[A-Za-z0-9]+$/;  // 訂單編號格式驗證（僅允許英數字）
 		const phonePattern = /^[0-9\-\s]+$/;  // 聯絡電話格式驗證（允許數字、-、空格）
 
-
-		// 將聯絡電話中的非數字字元移除，僅保留數字
-		function normalizePhone(phone) {
-			return phone.replace(/\D/g, "");
-		}
 
 
 		// 訂單編號輸入框驗證
@@ -284,16 +231,14 @@
 		}
 
 
-
-
 		// 清空並隱藏結果區塊
 		function clearResult() {
 			const result = document.getElementById("orderResult");
 			const noResult = document.getElementById("noResult");
 
 			// 隱藏查詢成功和查無資料區塊
-			result.classList.add("d-none");
-			noResult.classList.add("d-none");
+			// result.classList.add("d-none");
+			// noResult.classList.add("d-none");
 
 			// 清空上一次查詢結果內容
 			document.getElementById("resultOrderNo").textContent = "";
@@ -306,55 +251,8 @@
 		}
 
 
-
-		// 根據訂單狀態設定 Bootstrap Badge 樣式
-		function getStatusBadgeClass(status) {
-			switch (status) {
-				case "已付款":
-					return "text-bg-success";
-				case "已取消":
-					return "text-bg-danger";
-				default:
-					return "text-bg-secondary";
-			}
-		}
-
-
-
-		// 顯示查詢結果
-		function showOrder(order) {
-			document.getElementById("resultOrderNo").textContent = "訂單 " + order.orderNo;
-
-			// 設定訂單狀態顯示
-			const statusBadge = document.getElementById("resultStatus");
-			statusBadge.textContent = order.status;  // 設定文字
-			statusBadge.className = "badge";  // 移除舊顏色
-			statusBadge.classList.add(  // 加入新的顏色
-				getStatusBadgeClass(order.status)
-			);
-
-			// 將訂單資料顯示到畫面
-			
-
-			// 顯示查詢結果區塊
-			document.getElementById("orderResult").classList.remove("d-none");
-		}
-
-
-
-		// 顯示查無資料訊息
-		function showNoResult() {
-			const noResult = document.getElementById("noResult");
-			noResult.textContent = "查無符合的資料，請確認訂單編號與聯絡電話是否輸入正確。";
-			noResult.classList.remove("d-none");
-		}
-
-
-
-
 		// 查詢按鈕點擊事件
 		document.getElementById("btnSearch").addEventListener("click", function(e) {
-			e.preventDefault(); // 防止表單送出後重新整理頁面
 
 			let isValid = true;
 
@@ -370,34 +268,12 @@
 
 			// 如果任一個欄位驗證失敗
 			if (!isValid) {
+				e.preventDefault(); // 防止表單送出後重新整理頁面
 				clearResult();  // 清空並隱藏結果區塊
 				return;
 			}
 
-			// 清除上一次查詢結果
-			clearResult();
-
-			// 將輸入的電話轉為純數字
-			const inputPhone = normalizePhone(phone.value);
-
-			// 比對訂單編號及聯絡電話是否符合（ps.輸入的電話、資料庫取得的電話一律轉成純數字再比對）　
-			// const order = orderData.find(x =>
-			// 	x.orderNo === orderNo.value.trim() &&
-			// 	normalizePhone(x.phone) === inputPhone
-			// );
-
-			// 查無資料 (order = undefined) --> 視為false
-			// if (!order) {
-			// 	showNoResult();  顯示查無資料
-			// 	return;
-			// }
-
-			// 找到相符的訂單，顯示查詢結果
-			showOrder(order);
-
 		});
-		// -- end 查詢按鈕點擊事件
-
 
 
 		// 訂單編號輸入時即時驗證
