@@ -32,57 +32,73 @@
             </form>
         </div>
     </section>
+</div>
 
+@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+{
+    <div class="alert alert-danger mt-4">
+        @Model.ErrorMessage
+    </div>
+}
+
+@if (Model.HasResult)
+{
     <section id="checkOutResult"
-             class="check-out-panel card border-0 shadow-sm mt-4 mt-md-5"
-             aria-labelledby="current-stay-title"
-             hidden>
+    class="check-out-panel card border-0 shadow-sm mt-4 mt-md-5"
+    aria-labelledby="current-stay-title"
+    >
         <div class="card-header bg-white border-bottom p-4 p-md-5">
             <h2 id="current-stay-title" class="h4 fw-bold mb-0">目前住房</h2>
         </div>
+        <form>
+            <div class="card-body p-4 p-md-5">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="check-out-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
+                            <p class="detail-label text-secondary mb-0">顧客</p>
+                            <p class="detail-value guest-name fw-semibold text-end mb-0">@Model.BookerName</p>
+                        </div>
+                        <div class="check-out-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
+                            <p class="detail-label text-secondary mb-0">Check-in</p>
+                            <p class="detail-value check-in-time fw-semibold text-end mb-0">@Model.CheckInAt</p>
+                        </div>
+                        <div class="check-out-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
+                            <p class="detail-label text-secondary mb-0">房型快照</p>
+                            <p class="detail-value room-type fw-semibold text-end mb-0">@Model.RoomTypeName</p>
+                        </div>
+                        <div class="check-out-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
+                            <p class="detail-label text-secondary mb-0">住房狀態</p>
+                            <p class="detail-value stay-status fw-semibold text-end mb-0">@Model.BookingStatus</p>
+                        </div>
+                    </div>
 
-        <div class="card-body p-4 p-md-5">
-            <div class="row g-4">
-                <div class="col-md-6">
-                    <div class="check-out-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
-                        <p class="detail-label text-secondary mb-0">顧客</p>
-                        <p class="detail-value guest-name fw-semibold text-end mb-0">王小明</p>
-                    </div>
-                    <div class="check-out-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
-                        <p class="detail-label text-secondary mb-0">Check-in</p>
-                        <p class="detail-value check-in-time fw-semibold text-end mb-0">08/10 16:26</p>
-                    </div>
-                    <div class="check-out-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
-                        <p class="detail-label text-secondary mb-0">房型快照</p>
-                        <p class="detail-value room-type fw-semibold text-end mb-0">標準雙人房</p>
-                    </div>
-                    <div class="check-out-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
-                        <p class="detail-label text-secondary mb-0">住房狀態</p>
-                        <p class="detail-value stay-status fw-semibold text-end mb-0">入住中</p>
+                    <div class="col-md-6 d-flex flex-column">
+                        <div class="check-out-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
+                            <p class="detail-label text-secondary mb-0">實際房號</p>
+                            <p class="detail-value room-number fw-semibold text-end mb-0">@Model.RoomNumber</p>
+                        </div>
+                        <div class="check-out-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
+                            <p class="detail-label text-secondary mb-0">預定退房</p>
+                            <p class="detail-value scheduled-check-out fw-semibold text-end mb-0">@Model.CheckOutDate</p>
+                        </div>
+                        <div class="check-out-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
+                            <p class="detail-label text-secondary mb-0">訂單編號</p>
+                            <p class="detail-value booking-number fw-semibold text-end mb-0">@Model.BookingNumber</p>
+                        </div>
                     </div>
                 </div>
-
-                <div class="col-md-6 d-flex flex-column">
-                    <div class="check-out-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
-                        <p class="detail-label text-secondary mb-0">實際房號</p>
-                        <p class="detail-value room-number fw-semibold text-end mb-0">302</p>
-                    </div>
-                    <div class="check-out-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
-                        <p class="detail-label text-secondary mb-0">預定退房</p>
-                        <p class="detail-value scheduled-check-out fw-semibold text-end mb-0">08/12</p>
-                    </div>
-                    <div class="check-out-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
-                        <p class="detail-label text-secondary mb-0">訂單編號</p>
-                        <p class="detail-value booking-number fw-semibold text-end mb-0">BK…018</p>
-                    </div>
+                <div class="check-out-action-wrapper col-md-6 ms-auto mt-4">
+                    <button type="button" 
+                            class="btn btn-primary btn-lg fw-semibold check-out-action mx-auto"
+                            data-bs-toggle="modal"
+                            data-bs-target="#checkOutConfirmationModal">
+                        確認退房
+                    </button>
                 </div>
             </div>
-            <div class="check-out-action-wrapper col-md-6 ms-auto mt-4">
-                <button type="button" class="btn btn-primary btn-lg fw-semibold check-out-action mx-auto">確認退房</button>
-            </div>
-        </div>
+		</form>
     </section>
-</div>
+}
 
 <div class="modal fade" id="checkOutConfirmationModal" tabindex="-1" aria-labelledby="checkOutConfirmationModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">

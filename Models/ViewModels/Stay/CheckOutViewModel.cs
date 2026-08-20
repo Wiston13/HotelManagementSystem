@@ -8,7 +8,7 @@
         public DateTime? CheckInAt { get; set; }
         public string? RoomTypeName { get; set; }
         public string? BookingStatus { get; set; }
-        public int? RoomNumber { get; set; }
+        public string? RoomNumber { get; set; }
         public DateOnly CheckOutDate { get; set; }
         public bool HasResult { get; set; }
         public string? ErrorMessage { get; set; }

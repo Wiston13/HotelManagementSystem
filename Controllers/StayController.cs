@@ -274,7 +274,40 @@ namespace HotelManagementSystem.Controllers
                 return View(model);
             }
 
+            StayRecord? stayRecord = null;
 
+            var booking = _context.Bookings.FirstOrDefault(b => b.BookingNumber == searchValue && b.BookingStatus == "CheckedIn" && b.BranchId == staff.BranchId);
+            if (booking != null)
+            {
+                stayRecord = _context.StayRecords.FirstOrDefault(s => s.BookingNumber == booking.BookingNumber && s.ActualCheckOutAt == null);
+            }
+            else
+            {
+                var room = _context.Rooms.FirstOrDefault(r => r.RoomNumber == searchValue && r.BranchId == staff.BranchId);
+                if (room != null)
+                {
+                    stayRecord = _context.StayRecords.FirstOrDefault(s => s.RoomId == room.RoomId && s.ActualCheckOutAt == null);
+                    if (stayRecord != null)
+                    {
+                        booking = _context.Bookings.FirstOrDefault(b => b.BookingNumber == stayRecord.BookingNumber && b.BookingStatus == "CheckedIn" && b.BranchId == staff.BranchId);
+                    }
+                }
+            }
+
+            if (stayRecord == null || booking == null)
+            {
+                model.ErrorMessage = "找不到指定紀錄";
+                return View(model);
+            }
+
+            model.HasResult = true;
+            model.BookerName = booking.BookerName;
+            model.CheckInAt = stayRecord.ActualCheckInAt;
+            model.RoomTypeName = booking.RoomTypeNameSnapshot;
+            model.BookingStatus = booking.BookingStatus;
+            model.RoomNumber = stayRecord.RoomNumberSnapshot;
+            model.CheckOutDate = booking.CheckOutDate;
+            model.BookingNumber = booking.BookingNumber;
 
 
 
