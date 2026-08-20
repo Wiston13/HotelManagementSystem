@@ -20,24 +20,16 @@ namespace HotelManagementSystem.Controllers
             _NoShowService = noShowService;
         }
 
-        public IActionResult CheckOut()
-        {
-            return View();
-        }
-
         [HttpGet]
         public async Task<IActionResult> CheckIn(string? bookingNumber)
         {
             await _NoShowService.UpdateNoShowsAsync();
 
-            var currentEmployeeNumber = "E20260807002"; // TODO 假設是登入的員工編號，實際應從登入資訊取得"
-
-            var staff = _context.Employees
-                .FirstOrDefault(e => e.EmployeeNumber == currentEmployeeNumber);
+            var staff = GetCurrentStaff();
 
             if (staff == null)
             {
-                return Content("目前員工資料不存在");
+                return Content("員工資料錯誤，請重新登入");
             }
 
             var model = new CheckInViewModel
@@ -130,14 +122,11 @@ namespace HotelManagementSystem.Controllers
         {
             await _NoShowService.UpdateNoShowsAsync();
 
-            var currentEmployeeNumber = "E20260807002"; // TODO 假設是登入的員工編號，實際應從登入資訊取得"
-
-            var staff = _context.Employees
-                .FirstOrDefault(e => e.EmployeeNumber == currentEmployeeNumber);
+            var staff = GetCurrentStaff();
 
             if (staff == null)
             {
-                return Content("目前員工資料不存在");
+                return Content("員工資料錯誤，請重新登入");
             }
 
             var model = new CheckInViewModel
@@ -221,14 +210,14 @@ namespace HotelManagementSystem.Controllers
                 ActualCheckInAt = now,
                 PrimaryGuestName = booking.BookerName,
                 ActualGuestCount = inputModel.ActualGuestCount.Value,
-                CheckedInByEmployeeNumber = staff.EmployeeNumber // TODO 假設是登入的員工編號，實際應從登入資訊取得"
+                CheckedInByEmployeeNumber = staff.EmployeeNumber
             };
 
             var operationLog = new OperationLog
             {
                 TargetBranchId = booking.BranchId,
                 OperatedAt = now,
-                OperatorEmployeeNumber = staff.EmployeeNumber, // TODO 登入資訊
+                OperatorEmployeeNumber = staff.EmployeeNumber,
                 OperationTypeId = 22,
                 TargetType = "Booking",
                 TargetIdentifier = booking.BookingNumber,
@@ -252,6 +241,157 @@ namespace HotelManagementSystem.Controllers
             TempData["SuccessMessage"] = "入住辦理成功";
 
             return RedirectToAction(nameof(CheckIn));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CheckOut(string? searchValue)
+        {
+            await _NoShowService.UpdateNoShowsAsync();
+
+            var staff = GetCurrentStaff();
+
+            if (staff == null)
+            {
+                return Content("員工資料錯誤，請重新登入");
+            }
+
+            var model = new CheckOutViewModel
+            {
+                SearchValue = searchValue
+            };
+
+            if (string.IsNullOrWhiteSpace(searchValue))
+            {
+                return View(model);
+            }
+
+            StayRecord? stayRecord = null;
+
+            var booking = _context.Bookings.FirstOrDefault(b => b.BookingNumber == searchValue
+                                                             && b.BookingStatus == "CheckedIn"
+                                                             && b.BranchId == staff.BranchId);
+            if (booking != null)
+            {
+                stayRecord = _context.StayRecords.FirstOrDefault(s => s.BookingNumber == booking.BookingNumber && s.ActualCheckOutAt == null);
+            }
+            else
+            {
+                var room = _context.Rooms.FirstOrDefault(r => r.RoomNumber == searchValue && r.BranchId == staff.BranchId);
+                if (room != null)
+                {
+                    stayRecord = _context.StayRecords.FirstOrDefault(s => s.RoomId == room.RoomId && s.ActualCheckOutAt == null);
+                    if (stayRecord != null)
+                    {
+                        booking = _context.Bookings.FirstOrDefault(b => b.BookingNumber == stayRecord.BookingNumber && b.BookingStatus == "CheckedIn" && b.BranchId == staff.BranchId);
+                    }
+                }
+            }
+
+            if (stayRecord == null || booking == null)
+            {
+                model.ErrorMessage = "找不到指定紀錄";
+                return View(model);
+            }
+
+            model.HasResult = true;
+            model.BookerName = booking.BookerName;
+            model.CheckInAt = stayRecord.ActualCheckInAt;
+            model.RoomTypeName = booking.RoomTypeNameSnapshot;
+            model.BookingStatus = booking.BookingStatus;
+            model.RoomNumber = stayRecord.RoomNumberSnapshot;
+            model.CheckOutDate = booking.CheckOutDate;
+            model.BookingNumber = booking.BookingNumber;
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CheckOut(CheckOutViewModel inputModel)
+        {
+            await _NoShowService.UpdateNoShowsAsync();
+
+            var staff = GetCurrentStaff();
+
+            if (staff == null)
+            {
+                return Content("員工資料錯誤，請重新登入");
+            }
+
+            var model = new CheckOutViewModel
+            {
+                BookingNumber = inputModel.BookingNumber
+            };
+
+            var booking = _context.Bookings.FirstOrDefault(b => b.BookingNumber == inputModel.BookingNumber
+                                                             && b.BookingStatus == "CheckedIn"
+                                                             && b.BranchId == staff.BranchId);
+
+            if (booking == null)
+            {
+                model.ErrorMessage = "訂單資料發生錯誤";
+                return View(model);
+            }
+
+            var stayRecord = _context.StayRecords.FirstOrDefault(s => s.BookingNumber == booking.BookingNumber
+                                                                   && s.ActualCheckOutAt == null);
+
+            if (stayRecord == null)
+            {
+                model.ErrorMessage = "住房紀錄發生錯誤";
+                return View(model);
+            }
+
+            var now = _Clock.Now;
+            var room = _context.Rooms.FirstOrDefault(r => r.RoomId == stayRecord.RoomId
+                                                       && r.BranchId == staff.BranchId);
+
+            if (room == null)
+            {
+                model.ErrorMessage = "房間資料發生錯誤";
+                return View(model);
+            }
+
+            var operationLog = new OperationLog()
+            {
+                TargetBranchId = room.BranchId,
+                OperatedAt = now,
+                OperatorEmployeeNumber = staff.EmployeeNumber,
+                OperationTypeId = 23,
+                TargetType = "Booking",
+                TargetIdentifier = booking.BookingNumber,
+                Description = $"完成訂單 {booking.BookingNumber} 的 Check-Out，房間 {room.RoomNumber} 已轉為待清潔。"
+            };
+
+            try
+            {
+                stayRecord.ActualCheckOutAt = now;
+                stayRecord.CheckedOutByEmployeeNumber = staff.EmployeeNumber;
+                booking.BookingStatus = "Completed";
+                room.CleaningStatus = "NeedsCleaning";
+                _context.OperationLogs.Add(operationLog);
+
+                _context.SaveChanges();
+            }
+            catch (DbUpdateException)
+            {
+                model.ErrorMessage = "退房資料寫入失敗，請重新查詢後再試一次";
+                return View(model);
+            }
+
+            TempData["SuccessMessage"] = "退房成功";
+
+            return RedirectToAction(nameof(CheckOut));
+        }
+
+        private Employee? GetCurrentStaff()
+        {
+            var currentEmployeeNumber = "E20260807002"; // TODO 假設是登入的員工編號，實際應從登入資訊取得"
+
+            var staff = _context.Employees
+                .FirstOrDefault(e => e.EmployeeNumber == currentEmployeeNumber && e.IsActive);
+
+            return staff;
         }
     }
 }
