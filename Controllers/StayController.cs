@@ -20,11 +20,6 @@ namespace HotelManagementSystem.Controllers
             _NoShowService = noShowService;
         }
 
-        public IActionResult CheckOut()
-        {
-            return View();
-        }
-
         [HttpGet]
         public async Task<IActionResult> CheckIn(string? bookingNumber)
         {
@@ -252,6 +247,37 @@ namespace HotelManagementSystem.Controllers
             TempData["SuccessMessage"] = "入住辦理成功";
 
             return RedirectToAction(nameof(CheckIn));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CheckOut(string? searchValue)
+        {
+            await _NoShowService.UpdateNoShowsAsync();
+
+            var currentEmployeeNumber = "E20260807002"; // TODO 假設是登入的員工編號，實際應從登入資訊取得"
+
+            var staff = _context.Employees
+                .FirstOrDefault(e => e.EmployeeNumber == currentEmployeeNumber);
+
+            if (staff == null)
+            {
+                return Content("目前員工資料不存在");
+            }
+
+            var model = new CheckOutViewModel
+            {
+                SearchValue = searchValue
+            };
+
+            if (string.IsNullOrWhiteSpace(searchValue))
+            {
+                return View(model);
+            }
+
+
+
+
+            return View(model);
         }
     }
 }

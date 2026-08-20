@@ -1,3 +1,4 @@
+@model HotelManagementSystem.Models.ViewModels.Stay.CheckOutViewModel
 @{
     ViewData["Title"] = "辦理退房";
 }
@@ -12,26 +13,23 @@
     <section class="check-out-search card border-0 shadow-sm" aria-labelledby="check-out-search-title">
         <div class="card-body p-4">
             <h2 id="check-out-search-title" class="visually-hidden">查詢目前住房</h2>
-            <div class="row g-3 align-items-end">
-                <div class="col-md-8 col-lg-7">
-                    <label for="stayLookup" class="form-label text-secondary">房號／訂單編號</label>
-                    <input id="stayLookup"
-                           class="form-control form-control-lg"
-                           type="text"
-                           value="302"
-                           aria-label="房號或訂單編號"
-                           aria-describedby="stayLookupFeedback" />
-                    <div id="stayLookupFeedback" class="invalid-feedback">
-                        請輸入示範房號 302 或訂單編號 BK…018。
+            <form asp-controller="Stay" asp-action="CheckOut" method="get">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-8 col-lg-7">
+                        <label asp-for="SearchValue" class="form-label text-secondary">房號／訂單編號</label>
+
+                        <input asp-for="SearchValue"
+                               class="form-control form-control-lg" />
+                    </div>
+
+                    <div class="col-md-4 col-lg-3">
+                        <button type="submit"
+                                class="btn btn-primary btn-lg fw-semibold w-100">
+                            查詢
+                        </button>
                     </div>
                 </div>
-                <div class="col-md-4 col-lg-3">
-                    <button type="button"
-                            id="checkOutSearchButton"
-                            class="btn btn-primary btn-lg fw-semibold w-100"
-                            aria-controls="checkOutResult">查詢</button>
-                </div>
-            </div>
+            </form>
         </div>
     </section>
 
@@ -104,22 +102,3 @@
         </div>
     </div>
 </div>
-
-@section Scripts {
-    <script>
-        const stayLookup = document.getElementById('stayLookup');
-        const checkOutResult = document.getElementById('checkOutResult');
-
-        document.getElementById('checkOutSearchButton')?.addEventListener('click', function () {
-            const lookupValue = stayLookup.value.trim();
-            const isMockStay = lookupValue === '302' || lookupValue === 'BK…018';
-
-            stayLookup.classList.toggle('is-invalid', !isMockStay);
-            checkOutResult.hidden = !isMockStay;
-        });
-
-        document.querySelector('.check-out-action')?.addEventListener('click', function () {
-            bootstrap.Modal.getOrCreateInstance(document.getElementById('checkOutConfirmationModal')).show();
-        });
-    </script>
-}
