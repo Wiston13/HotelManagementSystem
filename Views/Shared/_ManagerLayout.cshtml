@@ -1,6 +1,13 @@
+@using Microsoft.AspNetCore.Http
 @{
+   
+
     var pageTitle = ViewData["Title"] as string;
-    var managerName = ViewData["ManagerName"] as string;
+    var sUserRole = Context.Session.GetString("UserRole");
+    var sUserName = Context.Session.GetString("UserName");
+    
+  
+  
 
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
@@ -106,9 +113,9 @@
                 <div class="backoffice-layout__header d-flex justify-content-between align-items-center pb-3 mb-4 border-bottom">
                     <h2 class="h4 mb-0 fw-bold">@pageTitle</h2>
                     <div class="text-secondary small">
-                        <i class="bi bi-person-circle me-1"></i> 總系統管理員 @if (!string.IsNullOrWhiteSpace(managerName))
+                        <i class="bi bi-person-circle me-1"></i> 總系統管理員 @if (!string.IsNullOrWhiteSpace(sUserName))
                         {
-                            <text>・@managerName</text>
+                            <text>・@sUserName</text>
                         }
                     </div>
                 </div>

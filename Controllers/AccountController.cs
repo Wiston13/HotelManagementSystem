@@ -59,6 +59,8 @@ namespace HotelManagementSystem.Controllers
             // 步驟五：登入成功，將員工權限與姓名存入 Session 供後續頁面檢查
             HttpContext.Session.SetString("UserRole", employee.Role);
             HttpContext.Session.SetString("UserName", employee.EmployeeName);
+            HttpContext.Session.SetString("BranchId", employee.BranchId.ToString());
+            
 
             // 🚀 步驟六：多角色與多館別分流邏輯核心（嚴格優先權版本）
             string targetUrl = "/EmployeeHome/Index"; // 預設防呆網址
@@ -72,22 +74,32 @@ namespace HotelManagementSystem.Controllers
             // 🌟 【第二優先】如果是管理員，上面就處理完了；走到這裡的絕對是「一般員工」
             else if (employee.Role == "BranchEmployee")
             {
-                // 🎯 依據 BranchId 判斷各自的分館主畫面
+                // 🎯 依據 6 個真實 BranchId 判斷各自的分館主畫面
                 switch (employee.BranchId)
                 {
                     case 1:
-                        targetUrl = "/EmployeeHome";   // 台北分館員工
+                        targetUrl = "/EmployeeHome";       // 1. 台北中山商旅
                         break;
                     case 2:
-                        targetUrl = "/TaichungHome/Index"; // 台中分館員工
+                        targetUrl = "/TaipeiXinyiHome/Index"; // 2. 台北信義商旅 (請對齊組員實際的 Controller 名稱)
                         break;
                     case 3:
-                        targetUrl = "/KaohsiungHome/Index"; // 高雄分館員工
+                        targetUrl = "/TaichungHome/Index";    // 3. 台中草悟商旅
+                        break;
+                    case 4:
+                        targetUrl = "/TainanHome/Index";      // 4. 台南安平商旅
+                        break;
+                    case 5:
+                        targetUrl = "/KaohsiungHome/Index";   // 5. 高雄港灣商旅
+                        break;
+                    case 6:
+                        targetUrl = "/HualienHome/Index";     // 6. 花蓮站前商旅
                         break;
                     default:
-                        targetUrl = "/EmployeeHome/Index";  // 未知館別防呆
+                        targetUrl = "/EmployeeHome/Index";    // 未知館別防呆
                         break;
                 }
+
             }
 
             // 🌟 最終大總結：將精確分流後的跳轉網址，用唯一的 return 回傳給前端

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Http;
 using System;
 
-namespace HotelManagementSystem.Controllers
+namespace HotelManagementSystem.Filters
 {
     public class AdminAuthorizeAttribute : ActionFilterAttribute
     {

@@ -2,8 +2,9 @@
 
 namespace HotelManagementSystem.Controllers
 {
-    public class OperationLogController : Controller
+    public class OperationLogController : AdminBaseController
     {
+       
         public IActionResult Search()
         {
             return View();

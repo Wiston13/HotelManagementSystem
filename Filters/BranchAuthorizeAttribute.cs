@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Http;
 using System;
 
-namespace HotelManagementSystem.Controllers
+namespace HotelManagementSystem.Filters
 {
     // 專門保護分館系統的攔截器（系統管理員嚴禁入內版）
     public class BranchAuthorizeAttribute : ActionFilterAttribute

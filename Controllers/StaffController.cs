@@ -2,11 +2,14 @@
 
 namespace HotelManagementSystem.Controllers
 {
-    public class StaffController : Controller
+    public class StaffController : AdminBaseController
     {
-        [AdminAuthorize]
+       
         public IActionResult Employees()
         {
+            Console.WriteLine(HttpContext.Session.GetString("UserRole"));
+            Console.WriteLine(HttpContext.Session.GetString("UserName"));
+            Console.WriteLine(HttpContext.Session.GetString("BranchId"));
             return View();
         }
     }
