@@ -352,24 +352,23 @@ namespace HotelManagementSystem.Controllers
                 return View(model);
             }
 
+            var operationLog = new OperationLog()
+            {
+                TargetBranchId = room.BranchId,
+                OperatedAt = now,
+                OperatorEmployeeNumber = staff.EmployeeNumber,
+                OperationTypeId = 23,
+                TargetType = "Booking",
+                TargetIdentifier = booking.BookingNumber,
+                Description = $"完成訂單 {booking.BookingNumber} 的 Check-Out，房間 {room.RoomNumber} 已轉為待清潔。"
+            };
+
             try
             {
                 stayRecord.ActualCheckOutAt = now;
                 stayRecord.CheckedOutByEmployeeNumber = staff.EmployeeNumber;
                 booking.BookingStatus = "Completed";
                 room.CleaningStatus = "NeedsCleaning";
-
-                var operationLog = new OperationLog()
-                {
-                    TargetBranchId = room.BranchId,
-                    OperatedAt = now,
-                    OperatorEmployeeNumber = staff.EmployeeNumber,
-                    OperationTypeId = 23,
-                    TargetType = "Booking",
-                    TargetIdentifier = booking.BookingNumber,
-                    Description = $"完成訂單 {booking.BookingNumber} 的 Check-Out，房間 {room.RoomNumber} 已轉為{room.CleaningStatus}。"
-                };
-
                 _context.OperationLogs.Add(operationLog);
 
                 _context.SaveChanges();
