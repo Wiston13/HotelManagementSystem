@@ -2,7 +2,7 @@
     HotelManagementSystem - 第一版開發基準資料驗證
     SQL Server（唯讀）
 
-    前置：依序執行 01、02、03。
+    前置：依序執行 01、02、03；若需要營運量體，再執行 05。
     本檔不修改資料，可在開發操作前後重跑比較結果。
 */
 
@@ -238,6 +238,14 @@ UNION ALL
 SELECT N'同一房間超過一筆未退房住房', COUNT(*)
 FROM (SELECT [RoomId] FROM [dbo].[StayRecords] WHERE [ActualCheckOutAt] IS NULL GROUP BY [RoomId] HAVING COUNT(*) > 1) AS X
 UNION ALL
+SELECT N'同一房間住房時間區間互相重疊', COUNT(*)
+FROM [dbo].[StayRecords] AS A
+INNER JOIN [dbo].[StayRecords] AS B
+    ON B.[RoomId] = A.[RoomId]
+   AND B.[StayRecordId] > A.[StayRecordId]
+   AND A.[ActualCheckInAt] < COALESCE(B.[ActualCheckOutAt], CONVERT(datetime2(0),'9999-12-31'))
+   AND B.[ActualCheckInAt] < COALESCE(A.[ActualCheckOutAt], CONVERT(datetime2(0),'9999-12-31'))
+UNION ALL
 SELECT N'CheckedIn 沒有唯一有效住房', COUNT(*)
 FROM [dbo].[Bookings] AS B
 WHERE B.[BookingStatus] = 'CheckedIn'
@@ -339,4 +347,256 @@ UNION ALL SELECT N'Rooms', IDENT_CURRENT('dbo.Rooms'), MAX([RoomId]) FROM [dbo].
 UNION ALL SELECT N'StayRecords', IDENT_CURRENT('dbo.StayRecords'), MAX([StayRecordId]) FROM [dbo].[StayRecords]
 UNION ALL SELECT N'OperationTypes', IDENT_CURRENT('dbo.OperationTypes'), MAX([OperationTypeId]) FROM [dbo].[OperationTypes]
 UNION ALL SELECT N'OperationLogs', IDENT_CURRENT('dbo.OperationLogs'), MAX([OperationLogId]) FROM [dbo].[OperationLogs];
+
+/* 15. 核心情境與可選營運量體的責任區隔 */
+SELECT
+    N'Core' AS [DataSet],
+    (SELECT COUNT(*) FROM [dbo].[Bookings]
+     WHERE [BookingNumber] NOT BETWEEN 'BK202608078000' AND 'BK202608079999') AS [Bookings],
+    (SELECT COUNT(*) FROM [dbo].[StayRecords]
+     WHERE [StayRecordId] NOT BETWEEN 10001 AND 11148) AS [StayRecords],
+    (SELECT COUNT(*) FROM [dbo].[OperationLogs]
+     WHERE [OperationLogId] NOT BETWEEN 100001 AND 103648) AS [OperationLogs]
+UNION ALL
+SELECT
+    N'Volume',
+    (SELECT COUNT(*) FROM [dbo].[Bookings]
+     WHERE [BookingNumber] BETWEEN 'BK202608078000' AND 'BK202608079999'),
+    (SELECT COUNT(*) FROM [dbo].[StayRecords]
+     WHERE [StayRecordId] BETWEEN 10001 AND 11148),
+    (SELECT COUNT(*) FROM [dbo].[OperationLogs]
+     WHERE [OperationLogId] BETWEEN 100001 AND 103648);
+
+/* 16. 營運量體摘要；未執行 05 時回傳空集合。 */
+SELECT
+    B.[BranchId], BR.[BranchName], B.[BookingStatus],
+    COUNT(*) AS [BookingCount], SUM(B.[TotalAmount]) AS [TotalAmount]
+FROM [dbo].[Bookings] AS B
+INNER JOIN [dbo].[Branches] AS BR ON BR.[BranchId] = B.[BranchId]
+WHERE B.[BookingNumber] BETWEEN 'BK202608078000' AND 'BK202608079999'
+GROUP BY B.[BranchId], BR.[BranchName], B.[BookingStatus]
+ORDER BY B.[BranchId], B.[BookingStatus];
+
+SELECT
+    CONVERT(char(7), B.[CheckInDate], 120) AS [CheckInMonth],
+    B.[BookingStatus], COUNT(*) AS [BookingCount]
+FROM [dbo].[Bookings] AS B
+WHERE B.[BookingNumber] BETWEEN 'BK202608078000' AND 'BK202608079999'
+GROUP BY CONVERT(char(7), B.[CheckInDate], 120), B.[BookingStatus]
+ORDER BY [CheckInMonth], B.[BookingStatus];
+
+SELECT
+    OT.[OperationTypeCode], OT.[OperationTypeName], COUNT(*) AS [OperationCount]
+FROM [dbo].[OperationLogs] AS OL
+INNER JOIN [dbo].[OperationTypes] AS OT ON OT.[OperationTypeId] = OL.[OperationTypeId]
+WHERE OL.[OperationLogId] BETWEEN 100001 AND 103648
+GROUP BY OT.[OperationTypeCode], OT.[OperationTypeName]
+ORDER BY OT.[OperationTypeCode];
+
+/* 17. 營運量體專用一致性檢查；已載入 05 時各列預期為 0。 */
+;WITH [VolumePresent] AS
+(
+    SELECT CASE WHEN EXISTS
+    (
+        SELECT 1 FROM [dbo].[Bookings]
+        WHERE [BookingNumber] BETWEEN 'BK202608078000' AND 'BK202608079999'
+    ) THEN 1 ELSE 0 END AS [IsLoaded]
+)
+SELECT N'量體 Booking 不是 2000 筆' AS [VolumeCheck],
+       CASE WHEN (SELECT COUNT(*) FROM [dbo].[Bookings]
+                       WHERE [BookingNumber] BETWEEN 'BK202608078000' AND 'BK202608079999') = 2000
+            THEN 0 ELSE 1 END AS [IssueCount]
+FROM [VolumePresent] WHERE [IsLoaded] = 1
+UNION ALL
+SELECT N'量體 StayRecord 不是 1148 筆',
+       CASE WHEN (SELECT COUNT(*) FROM [dbo].[StayRecords]
+                       WHERE [StayRecordId] BETWEEN 10001 AND 11148) = 1148
+            THEN 0 ELSE 1 END
+FROM [VolumePresent] WHERE [IsLoaded] = 1
+UNION ALL
+SELECT N'量體 OperationLog 不是 3648 筆',
+       CASE WHEN (SELECT COUNT(*) FROM [dbo].[OperationLogs]
+                       WHERE [OperationLogId] BETWEEN 100001 AND 103648) = 3648
+            THEN 0 ELSE 1 END
+FROM [VolumePresent] WHERE [IsLoaded] = 1
+UNION ALL
+SELECT N'量體狀態數量不符合固定分布', COUNT(*)
+FROM
+(
+    SELECT E.[BookingStatus], E.[ExpectedCount], COUNT(B.[BookingNumber]) AS [ActualCount]
+    FROM
+    (
+        VALUES
+        ('Completed',1100),('Cancelled',300),('NoShow',120),('CheckedIn',48),('Paid',432)
+    ) AS E([BookingStatus],[ExpectedCount])
+    LEFT JOIN [dbo].[Bookings] AS B
+        ON B.[BookingStatus] = E.[BookingStatus]
+       AND B.[BookingNumber] BETWEEN 'BK202608078000' AND 'BK202608079999'
+    GROUP BY E.[BookingStatus], E.[ExpectedCount]
+    HAVING COUNT(B.[BookingNumber]) <> E.[ExpectedCount]
+) AS X
+CROSS JOIN [VolumePresent] AS VP
+WHERE VP.[IsLoaded] = 1
+UNION ALL
+SELECT N'量體已完成住房時間互相重疊', COUNT(*)
+FROM [dbo].[StayRecords] AS A
+INNER JOIN [dbo].[Bookings] AS BA ON BA.[BookingNumber] = A.[BookingNumber]
+INNER JOIN [dbo].[StayRecords] AS B
+    ON B.[RoomId] = A.[RoomId]
+   AND B.[StayRecordId] > A.[StayRecordId]
+   AND A.[ActualCheckInAt] < B.[ActualCheckOutAt]
+   AND B.[ActualCheckInAt] < A.[ActualCheckOutAt]
+INNER JOIN [dbo].[Bookings] AS BB ON BB.[BookingNumber] = B.[BookingNumber]
+CROSS JOIN [VolumePresent] AS VP
+WHERE VP.[IsLoaded] = 1
+  AND BA.[BookingNumber] BETWEEN 'BK202608078000' AND 'BK202608079999'
+  AND BB.[BookingNumber] BETWEEN 'BK202608078000' AND 'BK202608079999'
+  AND BA.[BookingStatus] = 'Completed' AND BB.[BookingStatus] = 'Completed'
+UNION ALL
+SELECT N'量體訂單成立時間不早於實際入住', COUNT(*)
+FROM [dbo].[Bookings] AS B
+INNER JOIN [dbo].[StayRecords] AS SR ON SR.[BookingNumber] = B.[BookingNumber]
+CROSS JOIN [VolumePresent] AS VP
+WHERE VP.[IsLoaded] = 1
+  AND B.[BookingNumber] BETWEEN 'BK202608078000' AND 'BK202608079999'
+  AND B.[CreatedAt] >= SR.[ActualCheckInAt]
+UNION ALL
+SELECT N'量體取消時間順序不合理', COUNT(*)
+FROM [dbo].[Bookings] AS B
+CROSS JOIN [VolumePresent] AS VP
+WHERE VP.[IsLoaded] = 1
+  AND B.[BookingNumber] BETWEEN 'BK202608078000' AND 'BK202608079999'
+  AND B.[BookingStatus] = 'Cancelled'
+  AND (B.[CancelledAt] <= B.[CreatedAt]
+       OR B.[CancelledAt] >= CAST(B.[CheckInDate] AS datetime2(0)))
+UNION ALL
+SELECT N'量體 NoShow 尚未達退房日', COUNT(*)
+FROM [dbo].[Bookings] AS B
+CROSS JOIN [VolumePresent] AS VP
+WHERE VP.[IsLoaded] = 1
+  AND B.[BookingNumber] BETWEEN 'BK202608078000' AND 'BK202608079999'
+  AND B.[BookingStatus] = 'NoShow'
+  AND B.[CheckOutDate] >= @Today
+UNION ALL
+SELECT N'量體 Paid 不是未來入住', COUNT(*)
+FROM [dbo].[Bookings] AS B
+CROSS JOIN [VolumePresent] AS VP
+WHERE VP.[IsLoaded] = 1
+  AND B.[BookingNumber] BETWEEN 'BK202608078000' AND 'BK202608079999'
+  AND B.[BookingStatus] = 'Paid'
+  AND B.[CheckInDate] <= @Today
+UNION ALL
+SELECT N'量體操作員工與目標分館不一致', COUNT(*)
+FROM [dbo].[OperationLogs] AS OL
+INNER JOIN [dbo].[Employees] AS E ON E.[EmployeeNumber] = OL.[OperatorEmployeeNumber]
+CROSS JOIN [VolumePresent] AS VP
+WHERE VP.[IsLoaded] = 1
+  AND OL.[OperationLogId] BETWEEN 100001 AND 103648
+  AND E.[BranchId] <> OL.[TargetBranchId]
+UNION ALL
+SELECT N'量體 NoShow 出現員工操作紀錄', COUNT(*)
+FROM [dbo].[OperationLogs] AS OL
+INNER JOIN [dbo].[Bookings] AS B
+    ON B.[BookingNumber] = CONVERT(varchar(20), OL.[TargetIdentifier])
+CROSS JOIN [VolumePresent] AS VP
+WHERE VP.[IsLoaded] = 1
+  AND OL.[OperationLogId] BETWEEN 100001 AND 103648
+  AND B.[BookingStatus] = 'NoShow'
+UNION ALL
+SELECT N'量體 Completed 缺少唯一 Check-in 或 Check-out 操作', COUNT(*)
+FROM [dbo].[Bookings] AS B
+CROSS JOIN [VolumePresent] AS VP
+WHERE VP.[IsLoaded] = 1
+  AND B.[BookingNumber] BETWEEN 'BK202608078000' AND 'BK202608079999'
+  AND B.[BookingStatus] = 'Completed'
+  AND
+  (
+      (SELECT COUNT(*) FROM [dbo].[OperationLogs] AS OL
+       WHERE OL.[OperationLogId] BETWEEN 100001 AND 103648
+         AND OL.[TargetIdentifier] = B.[BookingNumber]
+         AND OL.[OperationTypeId] = 22) <> 1
+      OR
+      (SELECT COUNT(*) FROM [dbo].[OperationLogs] AS OL
+       WHERE OL.[OperationLogId] BETWEEN 100001 AND 103648
+         AND OL.[TargetIdentifier] = B.[BookingNumber]
+         AND OL.[OperationTypeId] = 23) <> 1
+  )
+UNION ALL
+SELECT N'量體 CheckedIn 缺少唯一 Check-in 操作', COUNT(*)
+FROM [dbo].[Bookings] AS B
+CROSS JOIN [VolumePresent] AS VP
+WHERE VP.[IsLoaded] = 1
+  AND B.[BookingNumber] BETWEEN 'BK202608078000' AND 'BK202608079999'
+  AND B.[BookingStatus] = 'CheckedIn'
+  AND
+  (
+      SELECT COUNT(*) FROM [dbo].[OperationLogs] AS OL
+      WHERE OL.[OperationLogId] BETWEEN 100001 AND 103648
+        AND OL.[TargetIdentifier] = B.[BookingNumber]
+        AND OL.[OperationTypeId] = 22
+  ) <> 1
+UNION ALL
+SELECT N'量體 Cancelled 缺少唯一取消操作', COUNT(*)
+FROM [dbo].[Bookings] AS B
+CROSS JOIN [VolumePresent] AS VP
+WHERE VP.[IsLoaded] = 1
+  AND B.[BookingNumber] BETWEEN 'BK202608078000' AND 'BK202608079999'
+  AND B.[BookingStatus] = 'Cancelled'
+  AND
+  (
+      SELECT COUNT(*) FROM [dbo].[OperationLogs] AS OL
+      WHERE OL.[OperationLogId] BETWEEN 100001 AND 103648
+        AND OL.[TargetIdentifier] = B.[BookingNumber]
+        AND OL.[OperationTypeId] = 21
+  ) <> 1;
+
+/* 18. 未來 180 天不得出現房型需求超過 Open 實體房間的日期。 */
+;WITH [Calendar] AS
+(
+    SELECT @Today AS [BusinessDate]
+    UNION ALL
+    SELECT DATEADD(DAY, 1, [BusinessDate])
+    FROM [Calendar]
+    WHERE [BusinessDate] < DATEADD(DAY, 180, @Today)
+),
+[OpenCapacity] AS
+(
+    SELECT R.[BranchId], R.[RoomTypeId], COUNT(*) AS [OpenRoomCount]
+    FROM [dbo].[Rooms] AS R
+    WHERE R.[SupplyStatus] = 'Open'
+    GROUP BY R.[BranchId], R.[RoomTypeId]
+),
+[DailyDemand] AS
+(
+    SELECT
+        OC.[BranchId], OC.[RoomTypeId], C.[BusinessDate], OC.[OpenRoomCount],
+        (
+            SELECT COUNT(*)
+            FROM [dbo].[Bookings] AS B
+            WHERE B.[BranchId] = OC.[BranchId]
+              AND B.[RoomTypeId] = OC.[RoomTypeId]
+              AND B.[BookingStatus] IN ('Paid','CheckedIn')
+              AND B.[CheckInDate] <= C.[BusinessDate]
+              AND B.[CheckOutDate] > C.[BusinessDate]
+        )
+        +
+        (
+            SELECT COUNT(*)
+            FROM [dbo].[StayRecords] AS SR
+            INNER JOIN [dbo].[Bookings] AS B ON B.[BookingNumber] = SR.[BookingNumber]
+            WHERE B.[BranchId] = OC.[BranchId]
+              AND B.[RoomTypeId] = OC.[RoomTypeId]
+              AND B.[BookingStatus] = 'CheckedIn'
+              AND SR.[ActualCheckOutAt] IS NULL
+              AND B.[CheckOutDate] <= C.[BusinessDate]
+        ) AS [OccupiedRoomCount]
+    FROM [OpenCapacity] AS OC
+    CROSS JOIN [Calendar] AS C
+)
+SELECT
+    N'未來 180 天房型需求超過 Open 實體房間' AS [InventoryCheck],
+    COUNT(*) AS [IssueCount]
+FROM [DailyDemand]
+WHERE [OccupiedRoomCount] > [OpenRoomCount]
+OPTION (MAXRECURSION 200);
 GO

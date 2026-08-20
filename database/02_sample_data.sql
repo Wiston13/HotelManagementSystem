@@ -6,7 +6,8 @@
     1. 01_create_hotel_management_schema.sql
     2. 02_sample_data.sql（本檔：穩定基礎資料）
     3. 03_development_scenarios.sql（動態開發情境）
-    4. 04_validate_sample_data.sql（唯讀驗證與摘要）
+    4. 05_development_volume_data.sql（可選：營運量體資料）
+    5. 04_validate_sample_data.sql（唯讀驗證與摘要）
 
     本檔責任：
     - 分館、房型、實體房間、員工、固定操作類型
@@ -14,7 +15,7 @@
 
     注意：
     - 本檔會清除八張表的資料；只適用開發／測試資料庫。
-    - 完整開發資料須依序執行至 03_development_scenarios.sql。
+    - 核心開發資料須依序執行至 03；需要查詢／匯出量體時再執行 05。
     - 全部測試帳號密碼固定為 Hotel@123。
     - 固定 PasswordHash 僅供本機開發／展示，不得用於正式環境。
 */
