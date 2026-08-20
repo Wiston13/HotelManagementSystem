@@ -380,7 +380,10 @@ BEGIN TRY
        AND EOUT.[EmployeeSlot] = 1 + (N.[SequenceNumber] + 1) % EOUT.[EmployeeCount]
     WHERE N.[SequenceNumber] BETWEEN 0 AND 1099;
 
-    /* 300 筆取消：顧客因素與飯店因素各半，取消時間一定晚於成立時間。 */
+    /*
+       300 筆已取消：顧客因素與飯店因素各半。
+       全部使用已發生的歷史入住日；飯店因素同時覆蓋入住日前與同日 16:00 後取消。
+    */
     INSERT INTO @VolumeBookings
     (
         [SequenceNumber], [BookingNumber], [BranchId], [RoomTypeId], [BookerName],
@@ -399,11 +402,23 @@ BEGIN TRY
         DATEADD(MINUTE, 510 + N.[SequenceNumber] % 481,
             CAST(DATEADD(DAY, -(8 + N.[SequenceNumber] % 45), D.[CheckInDate]) AS datetime2(0))),
         CASE WHEN N.[SequenceNumber] % 2 = 0 THEN 'GuestRequest' ELSE 'HotelUnableToFulfill' END,
-        CASE WHEN N.[SequenceNumber] % 2 = 0
-             THEN N'顧客行程調整，分館完成身分與訂單資料核對後取消。'
-             ELSE N'分館確認原房型於入住期間無法履約，完成聯絡後取消。' END,
-        DATEADD(MINUTE, 600 + N.[SequenceNumber] % 361,
-            CAST(DATEADD(DAY, -(1 + N.[SequenceNumber] % 5), D.[CheckInDate]) AS datetime2(0))),
+        CASE
+            WHEN N.[SequenceNumber] % 2 = 0
+                THEN N'顧客行程調整，分館完成身分與訂單資料核對後於期限內取消。'
+            WHEN N.[SequenceNumber] % 4 = 1
+                THEN N'合法入住時間確認原房型無法履約，以飯店因素取消。'
+            ELSE N'分館於入住日前確認原房型無法履約，完成聯絡後取消。'
+        END,
+        CASE
+            WHEN N.[SequenceNumber] % 2 = 0
+                THEN DATEADD(MINUTE, 600 + N.[SequenceNumber] % 361,
+                    CAST(DATEADD(DAY, -(1 + N.[SequenceNumber] % 5), D.[CheckInDate]) AS datetime2(0)))
+            WHEN N.[SequenceNumber] % 4 = 1
+                THEN DATEADD(MINUTE, 960 + N.[SequenceNumber] % 120,
+                    CAST(D.[CheckInDate] AS datetime2(0)))
+            ELSE DATEADD(MINUTE, 720 + N.[SequenceNumber] % 241,
+                    CAST(DATEADD(DAY, -(1 + N.[SequenceNumber] % 3), D.[CheckInDate]) AS datetime2(0)))
+        END,
         ECANCEL.[EmployeeNumber],
         NULL, NULL, NULL, NULL, NULL, NULL, NULL
     FROM @Numbers AS N
@@ -411,7 +426,7 @@ BEGIN TRY
     INNER JOIN @RoomTypeCatalog AS RT ON RT.[RoomTypeSequence] = 1 + N.[SequenceNumber] % 24
     CROSS APPLY
     (
-        VALUES (DATEADD(DAY, -360 + (N.[SequenceNumber] * 7) % 450, @Today))
+        VALUES (DATEADD(DAY, -(1 + ((N.[SequenceNumber] - 1100) * 7) % 360), @Today))
     ) AS D([CheckInDate])
     CROSS APPLY
     (
@@ -487,8 +502,8 @@ BEGIN TRY
         VALUES
         (
             CASE WHEN (AR.[ActiveSequence] - 1) % 8 < 2
-                 THEN DATEADD(DAY, -(3 + AR.[ActiveSequence] % 3), @Today)
-                 ELSE DATEADD(DAY, -(AR.[ActiveSequence] % 3), @Today) END
+                 THEN DATEADD(DAY, -(4 + AR.[ActiveSequence] % 3), @Today)
+                 ELSE DATEADD(DAY, -(1 + AR.[ActiveSequence] % 3), @Today) END
         )
     ) AS D([CheckInDate])
     CROSS APPLY
@@ -505,7 +520,10 @@ BEGIN TRY
        AND EIN.[EmployeeSlot] = 1 + AR.[ActiveSequence] % EIN.[EmployeeCount]
     WHERE N.[SequenceNumber] BETWEEN 1520 AND 1567;
 
-    /* 432 筆未來 Paid：只使用目前開放新訂房分館的啟用房型。 */
+    /*
+       432 筆 Paid：只使用目前開放新訂房分館的啟用房型。
+       入住與退房日均落在 Today～Today + 60，並保留 1～4 晚與跨月分布。
+    */
     INSERT INTO @VolumeBookings
     (
         [SequenceNumber], [BookingNumber], [BranchId], [RoomTypeId], [BookerName],
@@ -522,7 +540,7 @@ BEGIN TRY
         RT.[MaxOccupancy], RT.[NightlyPrice],
         RT.[NightlyPrice] * (1 + N.[SequenceNumber] % 4), 'Paid',
         DATEADD(MINUTE, 480 + N.[SequenceNumber] % 541,
-            CAST(DATEADD(DAY, -(N.[SequenceNumber] % 30), @Today) AS datetime2(0))),
+            CAST(DATEADD(DAY, -(1 + N.[SequenceNumber] % 30), @Today) AS datetime2(0))),
         NULL, NULL, NULL, NULL,
         NULL, NULL, NULL, NULL, NULL, NULL, NULL
     FROM @Numbers AS N
@@ -531,23 +549,35 @@ BEGIN TRY
         ON RT.[RoomTypeSequence] = 1 + N.[SequenceNumber] % @FutureRoomTypeCount
     CROSS APPLY
     (
+        VALUES (1 + N.[SequenceNumber] % 4)
+    ) AS S([StayNights])
+    CROSS APPLY
+    (
         VALUES
         (
             DATEADD
             (
                 DAY,
-                1 +
-                (
-                    ((N.[SequenceNumber] - 1568) / @FutureRoomTypeCount) * 13
-                    + RT.[RoomTypeSequence] * 7
-                ) % 180,
+                CASE
+                    /*
+                       古都雙人房有 4 間房被逾期未退房住房繼續占用，
+                       剩餘 1 間可用容量；其 Paid 訂單以不重疊的 2 晚區間分布。
+                    */
+                    WHEN RT.[RoomTypeId] = 14
+                        THEN 5 + ((N.[SequenceNumber] - 1568) / @FutureRoomTypeCount) * 2
+                    ELSE
+                        (
+                            ((N.[SequenceNumber] - 1568) / @FutureRoomTypeCount) * 13
+                            + RT.[RoomTypeSequence] * 7
+                        ) % (61 - S.[StayNights])
+                END,
                 @Today
             )
         )
     ) AS D([CheckInDate])
     CROSS APPLY
     (
-        VALUES (DATEADD(DAY, 1 + N.[SequenceNumber] % 4, D.[CheckInDate]))
+        VALUES (DATEADD(DAY, S.[StayNights], D.[CheckInDate]))
     ) AS O([CheckOutDate])
     WHERE N.[SequenceNumber] BETWEEN 1568 AND 1999;
 

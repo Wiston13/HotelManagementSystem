@@ -53,6 +53,17 @@ BEGIN TRY
     DECLARE @NowTaipei datetime2(0) =
         CONVERT(datetime2(0), SYSDATETIMEOFFSET() AT TIME ZONE 'Taipei Standard Time');
     DECLARE @Today date = CAST(@NowTaipei AS date);
+    /*
+       同入住日飯店因素取消必須已進入 16:00 後的合法 Check-in 區間。
+       若本檔在 16:05 前執行，改用昨天，避免建立尚未發生的取消事件。
+    */
+    DECLARE @SameDayHotelCancellationDate date =
+        CASE
+            WHEN @NowTaipei >= DATEADD(MINUTE,965,CAST(@Today AS datetime2(0))) THEN @Today
+            ELSE DATEADD(DAY,-1,@Today)
+        END;
+    DECLARE @SameDayHotelCancelledAt datetime2(0) =
+        DATEADD(MINUTE,965,CAST(@SameDayHotelCancellationDate AS datetime2(0)));
 
     /* =========================================================
        1. 固定房間情境
@@ -136,7 +147,7 @@ BEGIN TRY
         DATEADD(MINUTE,810,CAST(DATEADD(DAY,-4,@Today) AS datetime2(0))), NULL,NULL,NULL,NULL),
     ('BK202608070010', 6,22, N'張凱翔', '0912345010', 'guest010@example.com',
         DATEADD(DAY,4,@Today), DATEADD(DAY,6,@Today), N'山海雙人房', 2, 2600.00, 5200.00, 'Paid',
-        DATEADD(MINUTE,795,CAST(DATEADD(DAY,-8,@Today) AS datetime2(0))), NULL,NULL,NULL,NULL),
+        DATEADD(MINUTE,795,CAST(DATEADD(DAY,-10,@Today) AS datetime2(0))), NULL,NULL,NULL,NULL),
     ('BK202608070011', 2, 9, N'劉思妤', '0912345011', 'guest011@example.com',
         DATEADD(DAY,14,@Today), DATEADD(DAY,18,@Today), N'家庭套房', 4, 6500.00, 26000.00, 'Paid',
         DATEADD(MINUTE,565,CAST(DATEADD(DAY,-1,@Today) AS datetime2(0))), NULL,NULL,NULL,NULL),
@@ -204,15 +215,15 @@ BEGIN TRY
     ('BK202608070031', 2, 8, N'羅淑芬', '0912345031', 'guest031@example.com',
         DATEADD(DAY,2,@Today), DATEADD(DAY,4,@Today), N'豪華雙床房', 2, 4600.00, 9200.00, 'Cancelled',
         DATEADD(MINUTE,660,CAST(DATEADD(DAY,-7,@Today) AS datetime2(0))),
-        'HotelUnableToFulfill', N'原房型電力設備檢修，分館已確認無法依原訂單履約。', DATEADD(MINUTE,680,CAST(@Today AS datetime2(0))), 'E20260807004'),
+        'HotelUnableToFulfill', N'原房型電力設備檢修，分館已確認無法依原訂單履約。', DATEADD(MINUTE,680,CAST(DATEADD(DAY,-1,@Today) AS datetime2(0))), 'E20260807004'),
     ('BK202608070032', 4,16, N'廖信宏', '0912345032', 'guest032@example.com',
         DATEADD(DAY,12,@Today), DATEADD(DAY,14,@Today), N'家庭四人房', 4, 4500.00, 9000.00, 'Cancelled',
         DATEADD(MINUTE,750,CAST(DATEADD(DAY,-4,@Today) AS datetime2(0))),
         'GuestRequest', N'顧客家庭活動取消，於期限內完成核對。', DATEADD(MINUTE,800,CAST(DATEADD(DAY,-2,@Today) AS datetime2(0))), 'E20260807013'),
     ('BK202608070033', 5,20, N'江美華', '0912345033', 'guest033@example.com',
-        @Today, DATEADD(DAY,2,@Today), N'家庭四人房', 4, 5000.00, 10000.00, 'Cancelled',
-        DATEADD(MINUTE,480,CAST(DATEADD(DAY,-9,@Today) AS datetime2(0))),
-        'HotelUnableToFulfill', N'合法入住時原房型全部房間經確認均無法提供。', DATEADD(MINUTE,600,CAST(@Today AS datetime2(0))), 'E20260807005'),
+        @SameDayHotelCancellationDate, DATEADD(DAY,2,@SameDayHotelCancellationDate), N'家庭四人房', 4, 5000.00, 10000.00, 'Cancelled',
+        DATEADD(MINUTE,480,CAST(DATEADD(DAY,-9,@SameDayHotelCancellationDate) AS datetime2(0))),
+        'HotelUnableToFulfill', N'合法入住時原房型全部房間經確認均無法提供。', @SameDayHotelCancelledAt, 'E20260807005'),
     ('BK202608070034', 4,14, N'邱冠宇', '0912345034', 'guest034@example.com',
         DATEADD(DAY,-8,@Today), DATEADD(DAY,-7,@Today), N'古都雙人房', 2, 2700.00, 2700.00, 'NoShow',
         DATEADD(MINUTE,515,CAST(DATEADD(DAY,-14,@Today) AS datetime2(0))), NULL,NULL,NULL,NULL),
@@ -299,9 +310,9 @@ BEGIN TRY
     (15,6,DATEADD(MINUTE,920,CAST(DATEADD(DAY,-2,@Today) AS datetime2(0))),'E20260807001',15,'Employee',N'E20260807008',N'停用員工帳號 E20260807008。'),
 
     (16,1,DATEADD(MINUTE,630,CAST(DATEADD(DAY,-1,@Today) AS datetime2(0))),'E20260807002',21,'Booking',N'BK202608070030',N'因顧客因素取消訂單 BK202608070030。'),
-    (17,2,DATEADD(MINUTE,680,CAST(@Today AS datetime2(0))),'E20260807004',21,'Booking',N'BK202608070031',N'因飯店因素取消訂單 BK202608070031。'),
+    (17,2,DATEADD(MINUTE,680,CAST(DATEADD(DAY,-1,@Today) AS datetime2(0))),'E20260807004',21,'Booking',N'BK202608070031',N'因飯店因素取消訂單 BK202608070031。'),
     (18,4,DATEADD(MINUTE,800,CAST(DATEADD(DAY,-2,@Today) AS datetime2(0))),'E20260807013',21,'Booking',N'BK202608070032',N'因顧客因素取消訂單 BK202608070032。'),
-    (19,5,DATEADD(MINUTE,600,CAST(@Today AS datetime2(0))),'E20260807005',21,'Booking',N'BK202608070033',N'因飯店因素取消訂單 BK202608070033。'),
+    (19,5,@SameDayHotelCancelledAt,'E20260807005',21,'Booking',N'BK202608070033',N'因飯店因素取消訂單 BK202608070033。'),
     (20,5,DATEADD(MINUTE,780,CAST(DATEADD(DAY,-1,@Today) AS datetime2(0))),'E20260807016',21,'Booking',N'BK202608070039',N'因顧客因素取消訂單 BK202608070039。'),
 
     (21,1,DATEADD(MINUTE,990,CAST(DATEADD(DAY,-1,@Today) AS datetime2(0))),'E20260807002',22,'Booking',N'BK202608070020',N'完成 Check-in，指派房間 301。'),

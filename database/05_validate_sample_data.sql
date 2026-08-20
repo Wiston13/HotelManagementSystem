@@ -267,8 +267,50 @@ WHERE (B.[BookingStatus] = 'Cancelled' AND
        (B.[CancellationCause] IS NULL OR B.[CancellationReason] IS NULL OR
         B.[CancelledAt] IS NULL OR B.[CancelledByEmployeeNumber] IS NULL))
    OR (B.[BookingStatus] <> 'Cancelled' AND
-       (B.[CancellationCause] IS NOT NULL OR B.[CancellationReason] IS NOT NULL OR
-        B.[CancelledAt] IS NOT NULL OR B.[CancelledByEmployeeNumber] IS NOT NULL))
+        (B.[CancellationCause] IS NOT NULL OR B.[CancellationReason] IS NOT NULL OR
+         B.[CancelledAt] IS NOT NULL OR B.[CancelledByEmployeeNumber] IS NOT NULL))
+UNION ALL
+SELECT N'訂單成立時間在未來', COUNT(*)
+FROM [dbo].[Bookings]
+WHERE [CreatedAt] > @NowTaipei
+UNION ALL
+SELECT N'取消時間在未來', COUNT(*)
+FROM [dbo].[Bookings]
+WHERE [CancelledAt] > @NowTaipei
+UNION ALL
+SELECT N'取消時間不晚於訂單成立時間', COUNT(*)
+FROM [dbo].[Bookings]
+WHERE [CancelledAt] <= [CreatedAt]
+UNION ALL
+SELECT N'顧客因素取消已進入入住日', COUNT(*)
+FROM [dbo].[Bookings]
+WHERE [BookingStatus] = 'Cancelled'
+  AND [CancellationCause] = 'GuestRequest'
+  AND [CancelledAt] >= CAST([CheckInDate] AS datetime2(0))
+UNION ALL
+SELECT N'飯店因素取消不在合法時段', COUNT(*)
+FROM [dbo].[Bookings]
+WHERE [BookingStatus] = 'Cancelled'
+  AND [CancellationCause] = 'HotelUnableToFulfill'
+  AND NOT
+  (
+      [CancelledAt] < CAST([CheckInDate] AS datetime2(0))
+      OR
+      (
+          [CancelledAt] >= DATEADD(HOUR,16,CAST([CheckInDate] AS datetime2(0)))
+          AND [CancelledAt] < DATEADD(HOUR,12,CAST([CheckOutDate] AS datetime2(0)))
+      )
+  )
+UNION ALL
+SELECT N'Paid 訂單超過 Today + 60 正式可訂上限', COUNT(*)
+FROM [dbo].[Bookings]
+WHERE [BookingStatus] = 'Paid'
+  AND ([CheckInDate] > DATEADD(DAY,60,@Today) OR [CheckOutDate] > DATEADD(DAY,60,@Today))
+UNION ALL
+SELECT N'NoShow 尚未達退房日 12:00 cutoff', COUNT(*)
+FROM [dbo].[Bookings]
+WHERE [BookingStatus] = 'NoShow'
+  AND @NowTaipei < DATEADD(HOUR,12,CAST([CheckOutDate] AS datetime2(0)))
 UNION ALL
 SELECT N'取消辦理員工與訂單分館不一致', COUNT(*)
 FROM [dbo].[Bookings] AS B
@@ -291,15 +333,69 @@ FROM [dbo].[StayRecords] AS SR
 INNER JOIN [dbo].[Bookings] AS B ON B.[BookingNumber] = SR.[BookingNumber]
 WHERE SR.[ActualGuestCount] > B.[MaxOccupancySnapshot]
 UNION ALL
-SELECT N'測資快照與目前房型或房號不一致', COUNT(*)
+SELECT N'實際 Check-in 時間在未來', COUNT(*)
+FROM [dbo].[StayRecords] AS SR
+WHERE SR.[ActualCheckInAt] > @NowTaipei
+UNION ALL
+SELECT N'實際 Check-out 時間在未來', COUNT(*)
+FROM [dbo].[StayRecords] AS SR
+WHERE SR.[ActualCheckOutAt] > @NowTaipei
+UNION ALL
+SELECT N'實際 Check-in 時間不在訂單合法入住區間', COUNT(*)
 FROM [dbo].[StayRecords] AS SR
 INNER JOIN [dbo].[Bookings] AS B ON B.[BookingNumber] = SR.[BookingNumber]
-INNER JOIN [dbo].[RoomTypes] AS RT ON RT.[RoomTypeId] = B.[RoomTypeId]
-INNER JOIN [dbo].[Rooms] AS R ON R.[RoomId] = SR.[RoomId]
-WHERE B.[RoomTypeNameSnapshot] <> RT.[RoomTypeName]
-   OR B.[MaxOccupancySnapshot] <> RT.[MaxOccupancy]
-   OR B.[NightlyPriceSnapshot] <> RT.[NightlyPrice]
-   OR SR.[RoomNumberSnapshot] <> R.[RoomNumber]
+WHERE SR.[ActualCheckInAt] < DATEADD(HOUR,16,CAST(B.[CheckInDate] AS datetime2(0)))
+   OR SR.[ActualCheckInAt] >= DATEADD(HOUR,12,CAST(B.[CheckOutDate] AS datetime2(0)))
+UNION ALL
+SELECT N'實際 Check-out 時間不晚於 Check-in', COUNT(*)
+FROM [dbo].[StayRecords] AS SR
+WHERE SR.[ActualCheckOutAt] IS NOT NULL
+  AND SR.[ActualCheckOutAt] <= SR.[ActualCheckInAt]
+UNION ALL
+SELECT N'CheckedIn 或 Completed 缺少唯一且時間相符的 Check-in 操作', COUNT(*)
+FROM [dbo].[Bookings] AS B
+INNER JOIN [dbo].[StayRecords] AS SR ON SR.[BookingNumber] = B.[BookingNumber]
+WHERE B.[BookingStatus] IN ('CheckedIn','Completed')
+  AND
+  (
+      SELECT COUNT(*)
+      FROM [dbo].[OperationLogs] AS OL
+      WHERE OL.[TargetIdentifier] = B.[BookingNumber]
+        AND OL.[OperationTypeId] = 22
+        AND OL.[TargetBranchId] = B.[BranchId]
+        AND OL.[OperatedAt] = SR.[ActualCheckInAt]
+  ) <> 1
+UNION ALL
+SELECT N'Completed 缺少唯一且時間相符的 Check-out 操作', COUNT(*)
+FROM [dbo].[Bookings] AS B
+INNER JOIN [dbo].[StayRecords] AS SR ON SR.[BookingNumber] = B.[BookingNumber]
+WHERE B.[BookingStatus] = 'Completed'
+  AND
+  (
+      SELECT COUNT(*)
+      FROM [dbo].[OperationLogs] AS OL
+      WHERE OL.[TargetIdentifier] = B.[BookingNumber]
+        AND OL.[OperationTypeId] = 23
+        AND OL.[TargetBranchId] = B.[BranchId]
+        AND OL.[OperatedAt] = SR.[ActualCheckOutAt]
+  ) <> 1
+UNION ALL
+SELECT N'Cancelled 缺少唯一且時間相符的取消操作', COUNT(*)
+FROM [dbo].[Bookings] AS B
+WHERE B.[BookingStatus] = 'Cancelled'
+  AND
+  (
+      SELECT COUNT(*)
+      FROM [dbo].[OperationLogs] AS OL
+      WHERE OL.[TargetIdentifier] = B.[BookingNumber]
+        AND OL.[OperationTypeId] = 21
+        AND OL.[TargetBranchId] = B.[BranchId]
+        AND OL.[OperatedAt] = B.[CancelledAt]
+  ) <> 1
+UNION ALL
+SELECT N'操作紀錄時間在未來', COUNT(*)
+FROM [dbo].[OperationLogs]
+WHERE [OperatedAt] > @NowTaipei
 UNION ALL
 SELECT N'DisabledReason 與供應狀態不一致', COUNT(*)
 FROM [dbo].[Rooms]
@@ -318,6 +414,23 @@ UNION ALL
 SELECT N'房型 ImageUrl 非本機 seed 路徑', COUNT(*)
 FROM [dbo].[RoomTypes]
 WHERE [ImageUrl] NOT LIKE '/images/seed/room-types/%';
+
+/*
+   12A. Seed baseline check：僅用於剛執行 01→02→03（與可選 04）後排除手誤。
+   Snapshot 保存訂單成立／入住當下的歷史值；開發操作修改主檔後出現差異是合法的，
+   因此下列 DifferenceCount 不屬於上方「前後都應維持 0」的一般 invariant。
+*/
+SELECT N'Booking Snapshot 與目前 RoomType 不同' AS [SeedBaselineCheck], COUNT(*) AS [DifferenceCount]
+FROM [dbo].[Bookings] AS B
+INNER JOIN [dbo].[RoomTypes] AS RT ON RT.[RoomTypeId] = B.[RoomTypeId]
+WHERE B.[RoomTypeNameSnapshot] <> RT.[RoomTypeName]
+   OR B.[MaxOccupancySnapshot] <> RT.[MaxOccupancy]
+   OR B.[NightlyPriceSnapshot] <> RT.[NightlyPrice]
+UNION ALL
+SELECT N'StayRecord 房號 Snapshot 與目前 Room 不同', COUNT(*)
+FROM [dbo].[StayRecords] AS SR
+INNER JOIN [dbo].[Rooms] AS R ON R.[RoomId] = SR.[RoomId]
+WHERE SR.[RoomNumberSnapshot] <> R.[RoomNumber];
 
 /* 13. 規模限制檢查：正常基準應回傳 0 列 */
 SELECT N'分館房型數不在 3～5' AS [ScaleIssue], B.[BranchName] AS [Target], COUNT(RT.[RoomTypeId]) AS [ActualCount]
@@ -461,30 +574,73 @@ WHERE VP.[IsLoaded] = 1
   AND B.[BookingNumber] BETWEEN 'BK202608078000' AND 'BK202608079999'
   AND B.[CreatedAt] >= SR.[ActualCheckInAt]
 UNION ALL
-SELECT N'量體取消時間順序不合理', COUNT(*)
+SELECT N'量體取消時間或原因規則不合法', COUNT(*)
 FROM [dbo].[Bookings] AS B
 CROSS JOIN [VolumePresent] AS VP
 WHERE VP.[IsLoaded] = 1
   AND B.[BookingNumber] BETWEEN 'BK202608078000' AND 'BK202608079999'
   AND B.[BookingStatus] = 'Cancelled'
-  AND (B.[CancelledAt] <= B.[CreatedAt]
-       OR B.[CancelledAt] >= CAST(B.[CheckInDate] AS datetime2(0)))
+  AND
+  (
+      B.[CreatedAt] > @NowTaipei
+      OR B.[CancelledAt] > @NowTaipei
+      OR B.[CancelledAt] <= B.[CreatedAt]
+      OR
+      (
+          B.[CancellationCause] = 'GuestRequest'
+          AND B.[CancelledAt] >= CAST(B.[CheckInDate] AS datetime2(0))
+      )
+      OR
+      (
+          B.[CancellationCause] = 'HotelUnableToFulfill'
+          AND NOT
+          (
+              B.[CancelledAt] < CAST(B.[CheckInDate] AS datetime2(0))
+              OR
+              (
+                  B.[CancelledAt] >= DATEADD(HOUR,16,CAST(B.[CheckInDate] AS datetime2(0)))
+                  AND B.[CancelledAt] < DATEADD(HOUR,12,CAST(B.[CheckOutDate] AS datetime2(0)))
+              )
+          )
+      )
+  )
 UNION ALL
-SELECT N'量體 NoShow 尚未達退房日', COUNT(*)
+SELECT N'量體 NoShow 尚未達退房日 12:00 cutoff', COUNT(*)
 FROM [dbo].[Bookings] AS B
 CROSS JOIN [VolumePresent] AS VP
 WHERE VP.[IsLoaded] = 1
   AND B.[BookingNumber] BETWEEN 'BK202608078000' AND 'BK202608079999'
   AND B.[BookingStatus] = 'NoShow'
-  AND B.[CheckOutDate] >= @Today
+  AND @NowTaipei < DATEADD(HOUR,12,CAST(B.[CheckOutDate] AS datetime2(0)))
 UNION ALL
-SELECT N'量體 Paid 不是未來入住', COUNT(*)
+SELECT N'量體 Paid 不在 Today 至 Today + 60 正式可訂範圍', COUNT(*)
 FROM [dbo].[Bookings] AS B
 CROSS JOIN [VolumePresent] AS VP
 WHERE VP.[IsLoaded] = 1
   AND B.[BookingNumber] BETWEEN 'BK202608078000' AND 'BK202608079999'
   AND B.[BookingStatus] = 'Paid'
-  AND B.[CheckInDate] <= @Today
+  AND
+  (
+      B.[CheckInDate] < @Today
+      OR B.[CheckInDate] > DATEADD(DAY,60,@Today)
+      OR B.[CheckOutDate] <= B.[CheckInDate]
+      OR B.[CheckOutDate] > DATEADD(DAY,60,@Today)
+  )
+UNION ALL
+SELECT N'量體 CheckedIn 的入住時間尚未發生或不合法', COUNT(*)
+FROM [dbo].[Bookings] AS B
+INNER JOIN [dbo].[StayRecords] AS SR ON SR.[BookingNumber] = B.[BookingNumber]
+CROSS JOIN [VolumePresent] AS VP
+WHERE VP.[IsLoaded] = 1
+  AND B.[BookingNumber] BETWEEN 'BK202608078000' AND 'BK202608079999'
+  AND B.[BookingStatus] = 'CheckedIn'
+  AND
+  (
+      SR.[ActualCheckInAt] > @NowTaipei
+      OR SR.[ActualCheckInAt] < DATEADD(HOUR,16,CAST(B.[CheckInDate] AS datetime2(0)))
+      OR SR.[ActualCheckInAt] >= DATEADD(HOUR,12,CAST(B.[CheckOutDate] AS datetime2(0)))
+      OR SR.[ActualCheckOutAt] IS NOT NULL
+  )
 UNION ALL
 SELECT N'量體操作員工與目標分館不一致', COUNT(*)
 FROM [dbo].[OperationLogs] AS OL
@@ -550,14 +706,14 @@ WHERE VP.[IsLoaded] = 1
         AND OL.[OperationTypeId] = 21
   ) <> 1;
 
-/* 18. 未來 180 天不得出現房型需求超過 Open 實體房間的日期。 */
+/* 18. 第一版正式可訂範圍 Today～Today + 60 不得出現需求超過 Open 實體房間的日期。 */
 ;WITH [Calendar] AS
 (
     SELECT @Today AS [BusinessDate]
     UNION ALL
     SELECT DATEADD(DAY, 1, [BusinessDate])
     FROM [Calendar]
-    WHERE [BusinessDate] < DATEADD(DAY, 180, @Today)
+    WHERE [BusinessDate] < DATEADD(DAY, 60, @Today)
 ),
 [OpenCapacity] AS
 (
@@ -594,9 +750,9 @@ WHERE VP.[IsLoaded] = 1
     CROSS JOIN [Calendar] AS C
 )
 SELECT
-    N'未來 180 天房型需求超過 Open 實體房間' AS [InventoryCheck],
+    N'Today 至 Today + 60 房型需求超過 Open 實體房間' AS [InventoryCheck],
     COUNT(*) AS [IssueCount]
 FROM [DailyDemand]
 WHERE [OccupiedRoomCount] > [OpenRoomCount]
-OPTION (MAXRECURSION 200);
+OPTION (MAXRECURSION 100);
 GO
