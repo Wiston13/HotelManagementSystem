@@ -96,6 +96,12 @@ namespace HotelManagementSystem.Controllers
         }
 
         
+        
 
     }
 }
+
+/*
+ *  取消訂單流程
+ *  前端顯示訂單數量
+ */
