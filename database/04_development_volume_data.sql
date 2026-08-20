@@ -522,7 +522,8 @@ BEGIN TRY
 
     /*
        432 筆 Paid：只使用目前開放新訂房分館的啟用房型。
-       入住與退房日均落在 Today～Today + 60，並保留 1～4 晚與跨月分布。
+       入住與退房日均落在 Today～Today + 60，並不超過各自成立日 + 60。
+       CreatedAt 保留不同歷史日期，同時保留 1～4 晚與跨月分布。
     */
     INSERT INTO @VolumeBookings
     (
@@ -539,8 +540,7 @@ BEGIN TRY
         P.[ContactPhone], P.[Email], D.[CheckInDate], O.[CheckOutDate], RT.[RoomTypeName],
         RT.[MaxOccupancy], RT.[NightlyPrice],
         RT.[NightlyPrice] * (1 + N.[SequenceNumber] % 4), 'Paid',
-        DATEADD(MINUTE, 480 + N.[SequenceNumber] % 541,
-            CAST(DATEADD(DAY, -(1 + N.[SequenceNumber] % 30), @Today) AS datetime2(0))),
+        C.[CreatedAt],
         NULL, NULL, NULL, NULL,
         NULL, NULL, NULL, NULL, NULL, NULL, NULL
     FROM @Numbers AS N
@@ -579,6 +579,34 @@ BEGIN TRY
     (
         VALUES (DATEADD(DAY, S.[StayNights], D.[CheckInDate]))
     ) AS O([CheckOutDate])
+    CROSS APPLY
+    (
+        /* 成立日最多可往前的天數，由該筆退房日距 Today 的天數反推。 */
+        VALUES (60 - DATEDIFF(DAY, @Today, O.[CheckOutDate]))
+    ) AS L([MaxCreatedDaysAgo])
+    CROSS APPLY
+    (
+        VALUES
+        (
+            CASE
+                WHEN L.[MaxCreatedDaysAgo] = 0 THEN 0
+                ELSE 1 + (N.[SequenceNumber] % 30) %
+                    CASE WHEN L.[MaxCreatedDaysAgo] < 30 THEN L.[MaxCreatedDaysAgo] ELSE 30 END
+            END
+        )
+    ) AS A([CreatedDaysAgo])
+    CROSS APPLY
+    (
+        VALUES
+        (
+            CASE
+                /* 退房日剛好為 Today + 60 時，訂單只能於今日成立。 */
+                WHEN A.[CreatedDaysAgo] = 0 THEN @NowTaipei
+                ELSE DATEADD(MINUTE, 480 + N.[SequenceNumber] % 541,
+                    CAST(DATEADD(DAY, -A.[CreatedDaysAgo], @Today) AS datetime2(0)))
+            END
+        )
+    ) AS C([CreatedAt])
     WHERE N.[SequenceNumber] BETWEEN 1568 AND 1999;
 
     IF (SELECT COUNT(*) FROM @VolumeBookings) <> 2000

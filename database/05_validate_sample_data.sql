@@ -307,6 +307,15 @@ FROM [dbo].[Bookings]
 WHERE [BookingStatus] = 'Paid'
   AND ([CheckInDate] > DATEADD(DAY,60,@Today) OR [CheckOutDate] > DATEADD(DAY,60,@Today))
 UNION ALL
+SELECT N'Paid 訂單日期超過成立當下可訂 60 日上限', COUNT(*)
+FROM [dbo].[Bookings]
+WHERE [BookingStatus] = 'Paid'
+  AND
+  (
+      [CheckInDate] > DATEADD(DAY,60,CAST([CreatedAt] AS date))
+      OR [CheckOutDate] > DATEADD(DAY,60,CAST([CreatedAt] AS date))
+  )
+UNION ALL
 SELECT N'NoShow 尚未達退房日 12:00 cutoff', COUNT(*)
 FROM [dbo].[Bookings]
 WHERE [BookingStatus] = 'NoShow'
@@ -625,6 +634,18 @@ WHERE VP.[IsLoaded] = 1
       OR B.[CheckInDate] > DATEADD(DAY,60,@Today)
       OR B.[CheckOutDate] <= B.[CheckInDate]
       OR B.[CheckOutDate] > DATEADD(DAY,60,@Today)
+  )
+UNION ALL
+SELECT N'量體 Paid 訂單日期超過成立當下可訂 60 日上限', COUNT(*)
+FROM [dbo].[Bookings] AS B
+CROSS JOIN [VolumePresent] AS VP
+WHERE VP.[IsLoaded] = 1
+  AND B.[BookingNumber] BETWEEN 'BK202608078000' AND 'BK202608079999'
+  AND B.[BookingStatus] = 'Paid'
+  AND
+  (
+      B.[CheckInDate] > DATEADD(DAY,60,CAST(B.[CreatedAt] AS date))
+      OR B.[CheckOutDate] > DATEADD(DAY,60,CAST(B.[CreatedAt] AS date))
   )
 UNION ALL
 SELECT N'量體 CheckedIn 的入住時間尚未發生或不合法', COUNT(*)
