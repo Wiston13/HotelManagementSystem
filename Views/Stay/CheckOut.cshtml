@@ -42,16 +42,25 @@
     </div>
 }
 
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="alert alert-success mt-4">
+        @successMessage
+    </div>
+}
+
 @if (Model.HasResult)
 {
     <section id="checkOutResult"
     class="check-out-panel card border-0 shadow-sm mt-4 mt-md-5"
-    aria-labelledby="current-stay-title"
-    >
+    aria-labelledby="current-stay-title">
         <div class="card-header bg-white border-bottom p-4 p-md-5">
             <h2 id="current-stay-title" class="h4 fw-bold mb-0">目前住房</h2>
         </div>
-        <form>
+        <form id="checkOutForm"
+              asp-controller="Stay"
+              asp-action="CheckOut"
+              method="post">
             <div class="card-body p-4 p-md-5">
                 <div class="row g-4">
                     <div class="col-md-6">
@@ -97,25 +106,36 @@
                     </button>
                 </div>
             </div>
+            <input asp-for="BookingNumber" type="hidden" />
 		</form>
     </section>
-}
-
-<div class="modal fade" id="checkOutConfirmationModal" tabindex="-1" aria-labelledby="checkOutConfirmationModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content check-out-confirm-modal border-0 shadow">
-            <div class="modal-header">
-                <h2 class="modal-title h5 fw-bold" id="checkOutConfirmationModalLabel">確認退房</h2>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
-            </div>
-            <div class="modal-body">
-                <p class="mb-2">請確認旅客退房前作業是否已完成。</p>
-                <p class="mb-0 text-secondary">是否確認完成此筆入住的退房作業？</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-primary" id="confirmCheckOutButton" data-bs-dismiss="modal">確定</button>
+   
+    <div class="modal fade" id="checkOutConfirmationModal" tabindex="-1" aria-labelledby="checkOutConfirmationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content check-out-confirm-modal border-0 shadow">
+                <div class="modal-header">
+                    <h2 class="modal-title h5 fw-bold" id="checkOutConfirmationModalLabel">確認退房</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2">請確認旅客退房前作業是否已完成。</p>
+                    <p class="mb-0 text-secondary">是否確認完成此筆入住的退房作業？</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" 
+                            class="btn btn-outline-secondary" 
+                            data-bs-dismiss="modal">
+                        取消
+                    </button>
+                    <button type="submit" 
+                            class="btn btn-primary" 
+                            form="checkOutForm">
+                        確定
+                    </button>
+                </div>
             </div>
         </div>
     </div>
-</div>
+}
+
+
