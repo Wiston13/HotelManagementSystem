@@ -21,6 +21,19 @@ GO
 USE [HotelManagementSystem];
 GO
 
+/*
+   Filtered index（UX_StayRecords_ActiveRoom）在 sqlcmd／SSMS
+   不同連線預設下都需要一致的 SET 選項；這些設定不改變 Schema。
+*/
+SET ANSI_NULLS ON;
+SET ANSI_PADDING ON;
+SET ANSI_WARNINGS ON;
+SET ARITHABORT ON;
+SET CONCAT_NULL_YIELDS_NULL ON;
+SET QUOTED_IDENTIFIER ON;
+SET NUMERIC_ROUNDABORT OFF;
+GO
+
 /* =========================================================
    重新建立資料表：先依 FK 相依順序刪除
    ========================================================= */
