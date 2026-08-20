@@ -2,7 +2,7 @@
     HotelManagementSystem - 第一版開發基準資料驗證
     SQL Server（唯讀）
 
-    前置：依序執行 01、02、03；若需要營運量體，再執行 05。
+    前置：依序執行 01、02、03；若需要營運量體，再執行 04。
     本檔不修改資料，可在開發操作前後重跑比較結果。
 */
 
@@ -367,7 +367,7 @@ SELECT
     (SELECT COUNT(*) FROM [dbo].[OperationLogs]
      WHERE [OperationLogId] BETWEEN 100001 AND 103648);
 
-/* 16. 營運量體摘要；未執行 05 時回傳空集合。 */
+/* 16. 營運量體摘要；未執行 04 時回傳空集合。 */
 SELECT
     B.[BranchId], BR.[BranchName], B.[BookingStatus],
     COUNT(*) AS [BookingCount], SUM(B.[TotalAmount]) AS [TotalAmount]
