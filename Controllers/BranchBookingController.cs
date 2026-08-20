@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 //validate anti forgery token
 
- namespace HotelManagementSystem.Controllers
+namespace HotelManagementSystem.Controllers
 {
     public class BranchBookingController : Controller
     {
@@ -15,32 +15,27 @@ using Microsoft.EntityFrameworkCore;
         {
             _context = context;
         }
-        private string StatusToChenese(string input)
+        private string StatusLanguage(string input)
         {
-            string output="";
+            string output = "";
             switch (input)
             {
-                case "Completed":
-                    output = "已完成";
-                    break;
-                case "CheckedIn":
-                    output = "入住中";
-                    break;
-                case "Cancelled":
-                    output = "已取消";
-                    break;
-                case "NoShow":
-                    output = "逾期未入住";
-                    break;
-                case "Paid":
-                    output = "已付款";
-                    break;
+                case "Completed": output = "已完成"; break;
+                case "CheckedIn": output = "入住中"; break;
+                case "Cancelled": output = "已取消"; break;
+                case "NoShow": output = "逾期未入住"; break;
+                case "Paid": output = "已付款"; break;
+                case "已完成": output = "Completed"; break;
+                case "入住中": output = "CheckedIn"; break;
+                case "已取消": output = "Cancelled"; break;
+                case "逾期未入住": output = "NoShow"; break;
+                case "已付款": output = "Paid"; break;
             }
             return output;
         }
-        
 
-        public async Task<IActionResult> BookingSearch(string keyword,string dateRange, string bookingStatus)
+
+        public IActionResult BookingSearch(string keyword, string dateRange, string bookingStatus)
         {
             ViewBag.Keyword = keyword;
             ViewBag.DateRange = dateRange;
@@ -68,15 +63,15 @@ using Microsoft.EntityFrameworkCore;
                 {
                     if (DateTime.TryParse(dates[0], out DateTime startDate) && DateTime.TryParse(dates[1], out DateTime endDate))
                     {
-                        query = query.Where(x => new DateTime(x.CheckInDate.Year, x.CheckInDate.Month, x.CheckInDate.Day) >= startDate
-                        && new DateTime(x.CheckOutDate.Year, x.CheckOutDate.Month, x.CheckOutDate.Day) <= endDate);
+                        query = query.Where(x => x.CheckInDate >= DateOnly.FromDateTime(startDate)
+                        && x.CheckOutDate <= DateOnly.FromDateTime(endDate));
                     }
                 }
             }
 
             if (!string.IsNullOrEmpty(bookingStatus))
             {
-                query=query.Where(x=> StatusToChenese(x.BookingStatus) == bookingStatus);
+                query = query.Where(x => x.BookingStatus == StatusLanguage(bookingStatus));
             }
 
             foreach (var item in query)
@@ -88,8 +83,8 @@ using Microsoft.EntityFrameworkCore;
                     Name = item.BookerName,
                     Phone = item.ContactPhone,
                     Roomtype = item.RoomTypeNameSnapshot,
-                    BookingStatus = StatusToChenese(item.BookingStatus),
-                    StartDate = new DateTime(item.CheckInDate.Year, item.CheckInDate.Month, item.CheckInDate.Day),
+                    BookingStatus = StatusLanguage(item.BookingStatus),
+                    StartDate = new DateTime(item.CheckInDate.Year, item.CheckInDate.Month, item.CheckInDate.Day) ,
                     EndDate = new DateTime(item.CheckOutDate.Year, item.CheckOutDate.Month, item.CheckOutDate.Day),
                     Price = "NT$ " + item.NightlyPriceSnapshot.ToString("N0")
                 });
@@ -99,6 +94,8 @@ using Microsoft.EntityFrameworkCore;
 
             return View(result);
         }
+
         
+
     }
 }

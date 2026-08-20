@@ -35,7 +35,7 @@ namespace HotelManagementSystem.Controllers
         }
 
 
-
+        //把資料庫BookingStatus英文轉成中文
         private string StatusToChenese(string input)
         {
             string output = "";

@@ -4,7 +4,7 @@
 @model List<HotelManagementSystem.Models.BookingSearchModel.BookingData>
 
 @{
-    string BookingStatus(string s)
+    string BookingStatusStyle(string s)
     {
         string r = "";
         if (s == "已完成") r = "bg-success-subtle text-success";
@@ -110,7 +110,7 @@
                                 <td>@item.Name</td>
                                 <td>@item.Roomtype</td>
                                 <td>@item.Phone.Insert(4, "-")</td>
-                                <td><span class="badge @BookingStatus(item.BookingStatus) px-2 py-1">@item.BookingStatus</span></td>
+                                <td><span class="badge @BookingStatusStyle(item.BookingStatus) px-2 py-1">@item.BookingStatus</span></td>
                                 <td class="text-end pe-4">
 
                                     @* <button type="button" class="btn btn-sm btn-outline-secondary px-3 btn-detail" disabled></button> *@
