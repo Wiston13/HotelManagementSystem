@@ -20,7 +20,8 @@
 
 @* 筆記：
     1. 記得處理 Description, Region, ImageUrl 可能為null的情況！ 
-    2. 之後再建ViewModel。電話格式化放到ViewModel處理
+    2. 電話格式化待處理 (預計建立可共用的Helpers PhoneFormatter，依台灣各地區號規則自動格式化)
+       思考：房型人數欄位做成複選；或房型結果頁也做日期、房型人數篩選欄位？
     3. JavaScript 從 .cshtml 搬到 .js 
     4. 後端傳遞與資料關聯使用 BranchId，各頁面如果要顯示分館名稱 ->在該頁的ViewModel中提供BranchName
     5. !! 問題：點上一頁，分館欄位還留有歷史資料，導致必須重新選擇一次分館，才可選房型人數
@@ -371,13 +372,17 @@
         @foreach (var branch in Model.Branches)
         {
             <div class="col branch-card" data-region="@branch.Region">
-                <div class="card border-0" data-Intro="@branch.Description">
+                <div class="card border-0 branch-card-wrapper" data-Intro="@branch.Description">
 
-                    <img src="@branch.ImageUrl"
-                         class="card-img-top rounded-0 branch-img-trigger"
-                         alt="@branch.BranchName">
 
-                    <div class="card-body px-0">
+                    <div class="position-relative">
+                        <img src="@branch.ImageUrl"
+                             class="card-img-top rounded-0 branch-img-trigger"
+                             alt="@branch.BranchName">
+                    </div>
+                    
+
+                    <div class="card-body px-3">
                         <h5 class="card-title text-primary fw-bold branch-title">
                             @branch.BranchName
                         </h5>
@@ -388,6 +393,15 @@
                             @branch.Phone
                         </p>
                     </div>
+
+
+                    @if (!branch.AcceptsNewBookings)
+                    {
+                        <div class="branch-closed-overlay">
+                            <span>目前停止接受新訂房</span>
+                        </div>
+                    }
+
 
                 </div>
             </div>
