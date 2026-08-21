@@ -2,6 +2,7 @@
 using HotelManagementSystem.Models.BookingSearchModel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using static Microsoft.Extensions.Logging.EventSource.LoggingEventSource;
 
 //validate anti forgery token
 
@@ -37,6 +38,7 @@ namespace HotelManagementSystem.Controllers
 
         public IActionResult BookingSearch(string keyword, string dateRange, string bookingStatus)
         {
+            int BranchId = 1;//銜接分館判斷
             ViewBag.Keyword = keyword;
             ViewBag.DateRange = dateRange;
             ViewBag.BookingStatus = bookingStatus;
@@ -53,7 +55,7 @@ namespace HotelManagementSystem.Controllers
 
             if (!string.IsNullOrEmpty(keyword))
             {
-                query = query.Where(x => x.BookingNumber!.Contains(keyword) || x.BookerName!.Contains(keyword) || x.ContactPhone!.Contains(keyword));
+                query = query.Where(x => (x.BookingNumber!.Contains(keyword) || x.BookerName!.Contains(keyword) || x.ContactPhone!.Contains(keyword)) && x.BranchId == BranchId);
             }
 
             if (!string.IsNullOrEmpty(dateRange))
@@ -95,7 +97,15 @@ namespace HotelManagementSystem.Controllers
             return View(result);
         }
 
-        
+        [HttpPost]
+        public IActionResult BookingCancel(string bookingNum, string keyword, string dateRange, string bookingStatus)
+        {
+            var result = _context.Bookings.FirstOrDefault(x => x.BookingNumber == bookingNum);
+            result.BookingStatus = "Cancelled";
+            //_context.SaveChanges();
+
+            return RedirectToAction("BookingSearch", new { keyword=keyword, dateRange= dateRange, bookingNum= bookingNum });
+        }
         
 
     }
@@ -103,5 +113,4 @@ namespace HotelManagementSystem.Controllers
 
 /*
  *  取消訂單流程
- *  前端顯示訂單數量
  */

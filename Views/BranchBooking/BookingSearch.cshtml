@@ -84,9 +84,12 @@
     
 
     <!-- 查詢結果列表區塊 -->
+    <div class="@(Model != null && Model.Any() ? "" : "d-none")">
+        <h5>查詢訂單數量：@Model.Count 筆</h5>
+    </di>
     <div id="resultList" class="card border-0 shadow-sm @(Model != null && Model.Any() ? "" : "d-none")">
-        <div class="card-body p-0">
-
+       
+        <div class="card-body p-0">            
             <div class="table-responsive" style="max-height: 580px; overflow-y: auto; background-color: #f8f9fa;">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light text-secondary small sticky-top">
@@ -232,6 +235,12 @@
 </div>
 
 <!-- 再次確認取消modal -->
+<form asp-action="BookingCancel" asp-controller="BranchBooking" method="post" class="row g-3 align-items-end" id="cancelForm">
+    <input type="hidden" name="bookingNum" id="cancelBookingNum" value="" />
+    <input type="hidden" name="keyword" value="@ViewBag.Keyword" />
+    <input type="hidden" name="dateRange" value="@ViewBag.DateRange" />
+    <input type="hidden" name="bookingStatus" value="@ViewBag.BookingStatus" />
+
 <div class="modal fade" id="confirmActionModal" tabindex="-1" aria-labelledby="confirmActionModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content border-0 shadow">
@@ -243,13 +252,13 @@
                 <p class="mb-0 fw-semibold">確定要執行取消此訂單嗎？<br><span class="text-muted small">此動作無法復原。</span></p>
             </div>
             <div class="modal-footer bg-light justify-content-center py-2">
-                <button type="button" id="finalSubmitCancelBtn" class="btn btn-danger btn-sm px-3">確定取消</button>
+                <button type="submit" id="finalSubmitCancelBtn" class="btn btn-danger btn-sm px-3">確定取消</button>
                 <button type="button" class="btn btn-outline-secondary btn-sm px-3" data-bs-dismiss="modal">返回</button>
             </div>
         </div>
     </div>
 </div>
-
+</form>
 
 
 
@@ -283,6 +292,7 @@
             const confirmCancelBtn = document.getElementById('confirmCancelBtn');
             const cancelReasonSection = document.getElementById('cancelReasonSection');
             const finalSubmitCancelBtn = document.getElementById('finalSubmitCancelBtn');
+            const cancelBookingNum = document.getElementById('cancelBookingNum');
 
             const confirmActionModal = new bootstrap.Modal(document.getElementById('confirmActionModal'));
 
@@ -418,11 +428,14 @@
                 // 操作人員
                 const cancelOperator = '';
 
+                cancelBookingNum.value = modalBookingNum.textContent;
+                alert()
 
                 confirmActionModal.hide();
                 bootstrap.Modal.getInstance(document.getElementById('bookingDetailModal')).hide();
 
                 // 此區送資料邏輯尚未實作
+
 
                 location.reload();
             })
