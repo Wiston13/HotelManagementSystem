@@ -1,6 +1,6 @@
 ﻿@* 飯店後台：跨分館訂單資料輸出頁 *@
 @{
-    ViewData["Title"] = "訂單資料輸出";
+    ViewData["Title"] = "訂單資料匯出";
 }
 
 <div>
@@ -13,13 +13,16 @@
                 <div class="row g-3 align-items-end">
                     <div class="col-12 col-md-4">
                         <label class="form-label fw-semibold">選擇分館</label>
-                        <select class="form-select" id="branchSelect" required>
-                            
-                            <option value="全部分館" selected>全部分館</option>
-                            <option value="台北商旅">台北商旅</option>
-                            <option value="台中商旅">台中商旅</option>
-                            <option value="高雄商旅">高雄商旅</option>
-                        </select>
+                       <select class="form-select" id="branchSelect" required>
+    <option value="全部分館" selected>全部分館</option>
+    <option value="台北中山商旅">台北中山商旅</option>
+    <option value="台北信義商旅">台北信義商旅</option>
+    <option value="台中草悟商旅">台中草悟商旅</option>
+    <option value="台南安平商旅">台南安平商旅</option>
+    <option value="高雄港灣商旅">高雄港灣商旅</option>
+    <option value="花蓮站前商旅">花蓮站前商旅</option>
+</select>
+
                     </div>
                     <div class="col-12 col-md-5">
                         <label class="form-label fw-semibold">入住日期區間</label>
@@ -32,6 +35,7 @@
                     <div class="col-12 col-md-3 d-grid">
                        
                         <button type="button" class="btn btn-primary py-2" id="btnSearch" onclick="executeSearch()">查詢</button>
+
                     </div>
                 </div>
             </form>
@@ -43,7 +47,7 @@
         <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
             <h5 class="fw-bold mb-0 text-dark" id="totalCountText">共 0 筆</h5>
             
-            <button type="button" class="btn btn-outline-primary btn-sm" id="btnExport" onclick="executeExport()">📥 輸出訂單 csv 檔</button>
+            <button type="button" class="btn btn-outline-primary btn-sm" id="btnExport" onclick="executeExport()">📥 匯出訂單 csv 檔</button>
         </div>
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0" style="font-size: 0.9rem; min-width: 2600px;">
@@ -95,140 +99,7 @@
 
 @section Scripts {
     <script>
-        // 1. 全域 Mock Data 資料庫 (精準對齊正式 sample_data)
-        var globalOrderMockData = [
-            {
-                booking_no: "BK202608070001",
-                branch_name: "台北商旅",
-                created_at: "2026-08-11 09:15:00",
-                guest_name: "陳冠宇",
-                phone: "0912345001",
-                email: "guest001@example.com",
-                check_in: "2026-08-14",
-                check_out: "2026-08-16",
-                nights: 2,
-                room_type_snapshot: "標準雙人房",
-                price_snapshot: 2800.00,
-                total_amount: 5600.00,
-                status: "Paid",
-                cancel_cause: "",
-                cancel_reason: "",
-                refund_amount: 0,
-                cancel_emp: "",
-                cancel_at: "",
-                room_no: "",
-                act_occupancy: 0,
-                act_checkin_at: "",
-                checkin_emp: "",
-                act_checkout_at: "",
-                checkout_emp: ""
-            },
-            {
-                booking_no: "BK202608070003",
-                branch_name: "台北商旅",
-                created_at: "2026-08-07 11:00:00",
-                guest_name: "周子晴",
-                phone: "0912345003",
-                email: "guest003@example.com",
-                check_in: "2026-08-12",
-                check_out: "2026-08-14",
-                nights: 2,
-                room_type_snapshot: "標準雙人房",
-                price_snapshot: 2800.00,
-                total_amount: 5600.00,
-                status: "CheckedIn",
-                cancel_cause: "",
-                cancel_reason: "",
-                refund_amount: 0,
-                cancel_emp: "",
-                cancel_at: "",
-                room_no: "201",
-                act_occupancy: 2,
-                act_checkin_at: "2026-08-12 16:20:00",
-                checkin_emp: "E20260807002",
-                act_checkout_at: "",
-                checkout_emp: ""
-            },
-            {
-                booking_no: "BK202608070004",
-                branch_name: "台中商旅",
-                created_at: "2026-08-02 14:20:00",
-                guest_name: "黃詩涵",
-                phone: "0912345004",
-                email: "guest004@example.com",
-                check_in: "2026-08-09",
-                check_out: "2026-08-11",
-                nights: 2,
-                room_type_snapshot: "標準雙人房",
-                price_snapshot: 2500.00,
-                total_amount: 5000.00,
-                status: "Completed",
-                cancel_cause: "",
-                cancel_reason: "",
-                refund_amount: 0,
-                cancel_emp: "",
-                cancel_at: "",
-                room_no: "302",
-                act_occupancy: 2,
-                act_checkin_at: "2026-08-09 16:00:00",
-                checkin_emp: "E20260807004",
-                act_checkout_at: "2026-08-11 11:00:00",
-                checkout_emp: "E20260807004"
-            },
-            {
-                booking_no: "BK202608070005",
-                branch_name: "台北商旅",
-                created_at: "2026-08-10 09:40:00",
-                guest_name: "吳家豪",
-                phone: "0912345005",
-                email: "guest005@example.com",
-                check_in: "2026-08-24",
-                check_out: "2026-08-26",
-                nights: 2,
-                room_type_snapshot: "家庭四人房",
-                price_snapshot: 4200.00,
-                total_amount: 8400.00,
-                status: "Cancelled",
-                cancel_cause: "GuestRequest",
-                cancel_reason: "顧客行程變更，於取消期限內提出取消。",
-                refund_amount: 8400.00,
-                cancel_emp: "E20260807002",
-                cancel_at: "2026-08-13 10:30:00",
-                room_no: "",
-                act_occupancy: 0,
-                act_checkin_at: "",
-                checkin_emp: "",
-                act_checkout_at: "",
-                checkout_emp: ""
-            },
-            {
-                booking_no: "BK202608070007",
-                branch_name: "台北商旅",
-                created_at: "2026-08-04 08:50:00",
-                guest_name: "許博翔",
-                phone: "0912345007",
-                email: "guest007@example.com",
-                check_in: "2026-08-10",
-                check_out: "2026-08-12",
-                nights: 2,
-                room_type_snapshot: "標準雙人房",
-                price_snapshot: 2800.00,
-                total_amount: 5600.00,
-                status: "NoShow",
-                cancel_cause: "",
-                cancel_reason: "",
-                refund_amount: 0,
-                cancel_emp: "",
-                cancel_at: "",
-                room_no: "",
-                act_occupancy: 0,
-                act_checkin_at: "",
-                checkin_emp: "",
-                act_checkout_at: "",
-                checkout_emp: ""
-            }
-        ];
-
+        // 1. 正式資料載體
         var currentFilteredData = [];
 
         // 2. 狀態清理器
@@ -248,26 +119,26 @@
                 check_out: item.check_out, 
                 nights: nights,
                 room_type_snapshot: item.room_type_snapshot, 
-                price_snapshot: item.price_snapshot.toFixed(2),
-                total_amount: item.total_amount.toFixed(2), 
+                price_snapshot: typeof item.price_snapshot === 'number' ? item.price_snapshot.toFixed(2) : item.price_snapshot,
+                total_amount: typeof item.total_amount === 'number' ? item.total_amount.toFixed(2) : item.total_amount, 
                 status: item.status, 
-                cancel_cause: "", 
-                cancel_reason: "", 
-                refund_amount: "", 
-                cancel_emp: "", 
-                cancel_at: "",
-                room_no: "", 
-                act_occupancy: "", 
-                act_checkin_at: "", 
-                checkin_emp: "", 
-                act_checkout_at: "", 
-                checkout_emp: ""
+                cancel_cause: item.cancel_cause || "", 
+                cancel_reason: item.cancel_reason || "", 
+                refund_amount: typeof item.refund_amount === 'number' ? item.refund_amount.toFixed(2) : (item.refund_amount || "0.00"), 
+                cancel_emp: item.cancel_emp || "", 
+                cancel_at: item.cancel_at || "",
+                room_no: item.room_no || "", 
+                act_occupancy: item.act_occupancy || "", 
+                act_checkin_at: item.act_checkin_at || "", 
+                checkin_emp: item.checkin_emp || "", 
+                act_checkout_at: item.act_checkout_at || "", 
+                checkout_emp: item.checkout_emp || ""
             };
 
             if (item.status === "Cancelled") {
                 base.cancel_cause = item.cancel_cause; 
                 base.cancel_reason = item.cancel_reason;
-                base.refund_amount = item.refund_amount.toFixed(2); 
+                base.refund_amount = typeof item.refund_amount === 'number' ? item.refund_amount.toFixed(2) : item.refund_amount; 
                 base.cancel_emp = item.cancel_emp; 
                 base.cancel_at = item.cancel_at;
             } else if (item.status === "CheckedIn") {
@@ -286,69 +157,89 @@
             return base;
         }
 
-        // 3. 查詢按鈕觸發事件
-        function executeSearch() {
+        // 3. 核心連動：手動接管查詢按鈕
+        async function executeSearch() {
             var sDate = document.getElementById("dateStart").value;
             var eDate = document.getElementById("dateEnd").value;
             var selectedBranch = document.getElementById("branchSelect").value;
             var resultTableBody = document.getElementById("resultTableBody");
+            var btnSearch = document.getElementById("btnSearch");
 
-            currentFilteredData = globalOrderMockData.filter(function(item) {
-                if (item.check_in < sDate || item.check_in > eDate) return false;
-                if (selectedBranch && selectedBranch !== "全部分館" && item.branch_name !== selectedBranch) return false;
-                return true;
-            });
+            btnSearch.disabled = true;
+            btnSearch.innerText = "連線資料庫中...";
 
-            resultTableBody.innerHTML = "";
+            try {
+                // 使用最保險的相對路徑呼叫 API
+                var url = `/BookingExport/GetOrders?branch=${encodeURIComponent(selectedBranch)}&start=${sDate}&end=${eDate}`;
+                var response = await fetch(url);
+                var result = await response.json();
 
-            if (currentFilteredData.length > 0) {
-                document.getElementById("totalCountText").innerText = "共 " + currentFilteredData.length + " 筆";
-                currentFilteredData.forEach(function(rawItem) {
-                    var item = processRowByStatus(rawItem);
-                    var tr = document.createElement("tr");
+                if (!result.success) {
+                    alert("資料庫讀取失敗：" + result.message);
+                    return;
+                }
 
-                    var badgeClass = "text-bg-secondary";
-                    if (item.status === "Paid" || item.status === "Completed") badgeClass = "text-bg-success";
-                    if (item.status === "CheckedIn") badgeClass = "text-bg-warning";
-                    if (item.status === "Cancelled") badgeClass = "text-bg-danger";
+                currentFilteredData = result.data;
+                resultTableBody.innerHTML = "";
 
-                    tr.innerHTML = '<td>' + item.booking_no + '</td>' +
-                        '<td>' + item.branch_name + '</td>' +
-                        '<td>' + item.created_at + '</td>' +
-                        '<td>' + item.guest_name + '</td>' +
-                        '<td>' + item.phone + '</td>' +
-                        '<td>' + item.email + '</td>' +
-                        '<td>' + item.check_in + '</td>' +
-                        '<td>' + item.check_out + '</td>' +
-                        '<td class="text-center">' + item.nights + '</td>' +
-                        '<td>' + item.room_type_snapshot + '</td>' +
-                        '<td class="text-end">$' + item.price_snapshot + '</td>' +
-                        '<td class="text-end">$' + item.total_amount + '</td>' +
-                        '<td class="text-end">$' + item.total_amount + '</td>' + // 13. 付款金額
-                        '<td>' + (item.created_at || '-') + '</td>' +            // 14. 付款時間
-                        '<td><span class="badge ' + badgeClass + '">' + item.status + '</span></td>' + // 15. 訂單狀態
-                        '<td>' + (item.cancel_cause || '-') + '</td>' +          // 16. 取消因素
-                        '<td>' + (item.cancel_reason || '-') + '</td>' +         // 17. 取消原因
-                        '<td class="text-end">' + (item.refund_amount ? '$' + item.refund_amount : '-') + '</td>' + // 18. 模擬退款金額
-                        '<td>' + (item.cancel_emp || '-') + '</td>' +            // 19. 取消員工
-                        '<td>' + (item.cancel_at || '-') + '</td>' +             // 20. 取消時間
-                        '<td>' + (item.room_no || '-') + '</td>' +               // 21. 入住時房號
-                        '<td class="text-center">' + (item.act_occupancy !== "" ? item.act_occupancy : '-') + '</td>' + // 22. 實際入住人數
-                        '<td>' + (item.act_checkin_at || '-') + '</td>' +        // 23. 實際入住時間
-                        '<td>' + (item.checkin_emp || '-') + '</td>' +           // 24. 入住辦理員工
-                        '<td>' + (item.act_checkout_at || '-') + '</td>' +       // 25. 實際退房時間
-                        '<td>' + (item.checkout_emp || '-') + '</td>';           // 26. 退房辦理員工
-                    resultTableBody.appendChild(tr);
-                });
-                document.getElementById("resultCard").classList.remove("d-none");
-                document.getElementById("noDataCard").classList.add("d-none");
-            } else {
-                document.getElementById("resultCard").classList.add("d-none");
-                document.getElementById("noDataCard").classList.remove("d-none");
+                if (currentFilteredData.length > 0) {
+                    document.getElementById("totalCountText").innerText = "共 " + currentFilteredData.length + " 筆";
+                    
+                    currentFilteredData.forEach(function(rawItem) {
+                        var item = processRowByStatus(rawItem);
+                        var tr = document.createElement("tr");
+
+                        var badgeClass = "text-bg-secondary";
+                        if (item.status === "Paid" || item.status === "Completed") badgeClass = "text-bg-success";
+                        if (item.status === "CheckedIn") badgeClass = "text-bg-warning";
+                        if (item.status === "Cancelled") badgeClass = "text-bg-danger";
+
+                        tr.innerHTML = '<td>' + item.booking_no + '</td>' +
+                            '<td>' + item.branch_name + '</td>' +
+                            '<td>' + item.created_at + '</td>' +
+                            '<td>' + item.guest_name + '</td>' +
+                            '<td>' + item.phone + '</td>' +
+                            '<td>' + item.email + '</td>' +
+                            '<td>' + item.check_in + '</td>' +
+                            '<td>' + item.check_out + '</td>' +
+                            '<td class="text-center">' + item.nights + '</td>' +
+                            '<td>' + item.room_type_snapshot + '</td>' +
+                            '<td class="text-end">$' + item.price_snapshot + '</td>' +
+                            '<td class="text-end">$' + item.total_amount + '</td>' + 
+                            '<td class="text-end">$' + item.total_amount + '</td>' + 
+                            '<td>' + (item.created_at || '-') + '</td>' +            
+                            '<td><span class="badge ' + badgeClass + '">' + item.status + '</span></td>' + 
+                            '<td>' + (item.cancel_cause || '-') + '</td>' +          
+                            '<td>' + (item.cancel_reason || '-') + '</td>' +         
+                            '<td class="text-end">' + (item.refund_amount ? '$' + item.refund_amount : '-') + '</td>' + 
+                            '<td>' + (item.cancel_emp || '-') + '</td>' +            
+                            '<td>' + (item.cancel_at || '-') + '</td>' +             
+                            '<td>' + (item.room_no || '-') + '</td>' +               
+                            '<td class="text-center">' + (item.act_occupancy !== "" ? item.act_occupancy : '-') + '</td>' + 
+                            '<td>' + (item.act_checkin_at || '-') + '</td>' +        
+                            '<td>' + (item.checkin_emp || '-') + '</td>' +           
+                            '<td>' + (item.act_checkout_at || '-') + '</td>' +       
+                            '<td>' + (item.checkout_emp || '-') + '</td>';           
+                        resultTableBody.appendChild(tr);
+                    });
+                    
+                    document.getElementById("resultCard").classList.remove("d-none");
+                    document.getElementById("noDataCard").classList.add("d-none");
+                } else {
+                    document.getElementById("resultCard").classList.add("d-none");
+                    document.getElementById("noDataCard").classList.remove("d-none");
+                }
+
+            } catch (error) {
+                console.error(error);
+                alert("網路請求失敗，請確保後端伺服器運行正常。");
+            } finally {
+                btnSearch.disabled = false;
+                btnSearch.innerText = "查詢";
             }
         }
 
-        // 4. 匯出 CSV 按鈕觸發事件 
+        // 4. 匯出 CSV 按鈕觸發事件
         function executeExport() {
             if (currentFilteredData.length === 0) return;
 
@@ -364,42 +255,24 @@
             currentFilteredData.forEach(function(rawItem) {
                 var item = processRowByStatus(rawItem);
                 var row = [
-                    '"' + item.booking_no + '"',          // 1. 訂單編號
-                    '"' + item.branch_name + '"',         // 2. 分館
-                    '"' + item.created_at + '"',          // 3. 訂單成立時間
-                    '"' + item.guest_name + '"',          // 4. 訂房人姓名
-                    '"' + item.phone + '"',               // 5. 聯絡電話
-                    '"' + item.email + '"',               // 6. Email
-                    '"' + item.check_in + '"',            // 7. 入住日
-                    '"' + item.check_out + '"',           // 8. 退房日
-                    item.nights,                          // 9. 住宿晚數
-                    '"' + item.room_type_snapshot + '"',  // 10. 房型名稱快照
-                    item.price_snapshot,                  // 11. 每晚價格快照
-                    item.total_amount,                    // 12. 訂單總金額
-                    item.total_amount,                    // 13. 付款金額 (規格 6：直接對齊 total_amount)
-                    '"' + item.created_at + '"',          // 14. 付款時間 (規格 6：直接對齊 created_at)
-                    '"' + item.status + '"',              // 15. 訂單狀態
-                    '"' + item.cancel_cause + '"',        // 16. 取消因素
-                    '"' + item.cancel_reason + '"',       // 17. 取消原因
-                    (item.status === "Cancelled" ? item.total_amount : "0.00"), // 18. 模擬退款金額
-                    '"' + item.cancel_emp + '"',          // 19. 取消員工
-                    '"' + item.cancel_at + '"',           // 20. 取消時間
-                    '"' + item.room_no + '"',             // 21. 入住時房號
-                    (item.act_occupancy !== "" ? item.act_occupancy : "0"), // 22. 實際入住人數
-                    '"' + item.act_checkin_at + '"',      // 23. 實際入住時間
-                    '"' + item.checkin_emp + '"',         // 24. 入住辦理員工
-                    '"' + item.act_checkout_at + '"',     // 25. 實際退房時間
-                    '"' + item.checkout_emp + '"'         // 26. 退房辦理員工
+                    '"' + item.booking_no + '"', '"' + item.branch_name + '"', '"' + item.created_at + '"',
+                    '"' + item.guest_name + '"', '"' + item.phone + '"', '"' + item.email + '"',
+                    '"' + item.check_in + '"', '"' + item.check_out + '"', item.nights,
+                    '"' + item.room_type_snapshot + '"', item.price_snapshot, item.total_amount,
+                    item.total_amount, '"' + item.created_at + '"', '"' + item.status + '"',
+                    '"' + item.cancel_cause + '"', '"' + item.cancel_reason + '"', item.refund_amount || 0,
+                    '"' + item.cancel_emp + '"', '"' + item.cancel_at + '"', '"' + item.room_no + '"',
+                    item.act_occupancy || 0, '"' + item.act_checkin_at + '"', '"' + item.checkin_emp + '"',
+                    '"' + item.act_checkout_at + '"', '"' + item.checkout_emp + '"'
                 ];
                 csvRows.push(row.join(","));
             });
 
-            var csvContent = "\uFEFF" + csvRows.join("\n");
-            var blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-            var url = URL.createObjectURL(blob);
+            var csvString = csvRows.join("\n");
+            var blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvString], { type: "text/csv;charset=utf-8;" });
             var link = document.createElement("a");
-            link.setAttribute("href", url);
-            link.setAttribute("download", "BookingExport.csv");
+            link.href = URL.createObjectURL(blob);
+            link.download = `飯店訂單報表_${new Date().toISOString().slice(0, 10)}.csv`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
