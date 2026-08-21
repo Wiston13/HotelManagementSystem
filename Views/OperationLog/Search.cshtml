@@ -1,4 +1,4 @@
-﻿@* 飯店後台：基本操作紀錄查詢頁 *@
+﻿@model IEnumerable<dynamic>
 @{
     ViewData["Title"] = "操作紀錄";
 }
@@ -7,7 +7,7 @@
     <p class="text-secondary mb-4">查詢系統內各帳號的操作歷程紀錄</p>
 
     <!-- 查詢條件區塊 (Card) -->
-    <div class="card mb-4 shadow-sm">
+    <div class="card mb-4 shadow-sm" id="searchCard">
         <div class="card-body">
             <form id="searchForm" onsubmit="return false;">
                 <!-- 第一排：日期區間、分館、操作類型 -->
@@ -17,9 +17,9 @@
                             日期區間 <span class="text-danger">*</span>
                         </label>
                         <div class="input-group">
-                            <input type="date" class="form-control" id="dateStart" value="2026-08-10">
+                            <input type="date" class="form-control" id="dateStart">
                             <span class="input-group-text bg-light text-secondary">至</span>
-                            <input type="date" class="form-control" id="dateEnd" value="2026-08-11">
+                            <input type="date" class="form-control" id="dateEnd">
                         </div>
                     </div>
 
@@ -29,9 +29,12 @@
                         </label>
                         <select class="form-select" id="branchSelect">
                             <option value="全部分館">全部分館</option>
-                            <option value="台北商旅">台北商旅</option>
-                            <option value="台中商旅">台中商旅</option>
-                            <option value="高雄商旅">高雄商旅</option>
+                            <option value="台北中山商旅">台北中山商旅</option>
+                            <option value="台北信義商旅">台北信義商旅</option>
+                            <option value="台中草悟商旅">台中草悟商旅</option>
+                            <option value="台南安平商旅">台南安平商旅</option>
+                            <option value="高雄港灣商旅">高雄港灣商旅</option>
+                            <option value="花蓮站前商旅">花蓮站前商旅</option>
                         </select>
                     </div>
 
@@ -39,44 +42,15 @@
                         <label class="form-label">
                             操作類型 <span class="text-danger">*</span>
                         </label>
-                        
                         <select class="form-select" id="typeSelect">
                             <option value="全部類型" selected>全部類型</option>
-
-                            <optgroup label="🏢 分館與房型管理">
-                                <option value="建立分館">建立分館</option>
-                                <option value="修改分館">修改分館</option>
-                                <option value="開放新訂房">開放新訂房</option>
-                                <option value="停止新訂房">停止新訂房</option>
-                                <option value="建立房型">建立房型</option>
-                                <option value="修改房型">修改房型</option>
-                                <option value="停用房型">停用房型</option>
-                                <option value="啟用房型">啟用房型</option>
-                            </optgroup>
-
-                            <optgroup label="🔑 房間與保留控制">
-                                <option value="建立房間">建立房間</option>
-                                <option value="修改房間">修改房間</option>
-                                <option value="停用房間">停用房間</option>
-                                <option value="啟用房間">啟用房間</option>
-                                <option value="設為保留">設為保留</option>
-                                <option value="解除保留">解除保留</option>
-                                <option value="更新清潔狀態">更新清潔狀態</option>
-                            </optgroup>
-
-                            <optgroup label="👤 員工帳號管理">
-                                <option value="建立帳號">建立帳號</option>
-                                <option value="修改帳號">修改帳號</option>
-                                <option value="停用帳號">停用帳號</option>
-                                <option value="啟用帳號">啟用帳號</option>
-                                <option value="重設密碼">重設密碼</option>
-                            </optgroup>
-
-                            <optgroup label="🛎️ 訂單與日常櫃檯">
-                                <option value="取消訂單">取消訂單</option>
-                                <option value="Check-in">Check-in</option>
-                                <option value="Check-out">Check-out</option>
-                            </optgroup>
+                            @if (ViewBag.ActionTypes != null)
+                            {
+                                foreach (var name in ViewBag.ActionTypes)
+                                {
+                                    <option value="@name">@name</option>
+                                }
+                            }
                         </select>
                     </div>
                 </div>
@@ -89,7 +63,7 @@
                     </div>
 
                     <div class="col-12 col-md-4">
-                        <label class="form-label">操作對象 <span class="text-secondary">＊選填</span></label>
+                        <label class="form-label">識別編號 <span class="text-secondary">＊選填</span></label>
                         <input type="text" class="form-control" id="targetInput" placeholder="編號 / 房號">
                     </div>
 
@@ -132,8 +106,6 @@
         </div>
     </div>
 </div>
-
-
 @section Scripts {
     <script>
         document.addEventListener("DOMContentLoaded", function() {
@@ -149,113 +121,75 @@
             const operatorInput = document.getElementById("operatorInput");
             const targetInput = document.getElementById("targetInput");
 
-            // 1. 原始模擬資料集
-            const mockData = [
-                {
-                    date: "2026-08-10",
-                    displayTime: "08/10 16:05",
-                    branch: "台北商旅",
-                    operator: "林怡君",
-                    type: "解除保留",
-                    target: "房間",
-                    targetIdentifier: "304",
-                    description: "房間 304 已解除保留並恢復開放販售"
-                },
-                { date: "2026-08-10", displayTime: "08/10 16:05", branch: "台北商旅", operator: "林怡君", type: "Check-in", target: "訂單", targetIdentifier: "BK...0184", description: "訂單BK...0184 已辦理入住" },
-                { date: "2026-08-11", displayTime: "08/11 11:38", branch: "台北商旅", operator: "張雅婷", type: "Check-out", target: "訂單", targetIdentifier: "BK...024", description: "訂單BK...024 已辦理退房" },
-                { date: "2026-08-11", displayTime: "08/11 12:10", branch: "高雄商旅", operator: "系統管理員", type: "停用帳號", target: "員工帳號", targetIdentifier: "kaohsiung03", description: "員工帳號kaohsiung03 已停用" }
-            ];
-
-            // 2. 鎖定日期上限為今天
+            // 🎯 1. 動態計算今天的 yyyy-MM-dd 格式，徹底破解各家瀏覽器語系衝突 Bug！
             const today = new Date();
             const year = today.getFullYear();
             const month = String(today.getMonth() + 1).padStart(2, '0');
             const day = String(today.getDate()).padStart(2, '0');
             const todayStr = `${year}-${month}-${day}`;
 
-            // 3. 交叉防呆限制邏輯
-            function updateDateConstraints() {
-                dateStart.setAttribute("max", todayStr);
-                if (dateStart.value) {
-                    dateEnd.setAttribute("min", dateStart.value);
-                }
-                if (dateEnd.value) {
-                    if (dateEnd.value < todayStr) {
-                        dateStart.setAttribute("max", dateEnd.value);
-                    } else {
-                        dateStart.setAttribute("max", todayStr);
+            // 🎯 2. 動態計算一個月前的日期作為開始日期
+            const oneMonthAgo = new Date();
+            oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+            const startYear = oneMonthAgo.getFullYear();
+            const startMonth = String(oneMonthAgo.getMonth() + 1).padStart(2, '0');
+            const startDay = String(oneMonthAgo.getDate()).padStart(2, '0');
+            const startStr = `${startYear}-${startMonth}-${startDay}`;
+
+            // 🚀 正式安全賦值
+            dateStart.value = startStr;
+            dateEnd.value = todayStr;
+
+            // 🎯 3. 徹底鎖死防呆：限制可選的最大日期就是今天
+            dateStart.setAttribute("max", todayStr);
+            dateEnd.setAttribute("max", todayStr);
+
+            // 🎯 4. 日期連動防呆：後面的日期絕對不能小於前面
+            function validateDates() {
+                if (dateStart.value && dateEnd.value) {
+                    if (dateStart.value > dateEnd.value) {
+                        // 如果開始大於結束，強制把結束日期拉回跟開始日期一樣
+                        dateEnd.value = dateStart.value;
                     }
-                } else {
-                    dateEnd.setAttribute("max", todayStr);
+                    // 動態限制結束日期的最小值不能小於開始日期
+                    dateEnd.setAttribute("min", dateStart.value);
                 }
             }
 
-            updateDateConstraints();
+            // 一開網頁先執行一次防呆鎖定
+            validateDates();
 
-            dateStart.addEventListener("change", function() {
-                if (dateEnd.value && dateStart.value > dateEnd.value) {
-                    dateStart.value = dateEnd.value;
-                }
-                if (dateStart.value > todayStr) {
-                    dateStart.value = todayStr;
-                }
-                updateDateConstraints();
-            });
+            // 監聽日期更換事件
+            dateStart.addEventListener("change", validateDates);
+            dateEnd.addEventListener("change", validateDates);
 
-            dateEnd.addEventListener("change", function() {
-                if (dateStart.value && dateEnd.value < dateStart.value) {
-                    dateEnd.value = dateStart.value;
-                }
-                if (dateEnd.value > todayStr) {
-                    dateEnd.value = todayStr;
-                }
-                updateDateConstraints();
-            });
-
-            // 4. 搜尋與過濾繪製邏輯
-            btnSearch.addEventListener("click", function() {
-                const sDate = dateStart.value;
-                const eDate = dateEnd.value;
-                const branch = branchSelect.value;
-                const type = typeSelect.value;
-                const operator = operatorInput.value.trim().toLowerCase();
-                const target = targetInput.value.trim().toLowerCase();
-
-                if (sDate > eDate) {
-                    alert("開始日期不能大於結束日期！");
-                    return;
-                }
-
-                const filtered = mockData.filter(item => {
-                    // 日期篩選
-                    if (item.date < sDate || item.date > eDate) return false;
-
-                  
-                    if (branch !== "全部分館" && branch !== "" && item.branch !== branch) return false;
-
-                    // 操作類型篩選
-                    if (type !== "全部類型" && item.type !== type) return false;
-
-                    if (operator && !item.operator.toLowerCase().includes(operator)) return false;
-                    if (target && !item.target.toLowerCase().includes(target) && !item.targetIdentifier.toLowerCase().includes(target)) return false;
-
-                    return true;
-                });
-
+            // 🎯 5. 獨立宣告繪製表格的共用方法
+            function renderTable(dataList) {
                 resultTableBody.innerHTML = "";
-
-                if (filtered.length > 0) {
-                    filtered.forEach(item => {
+                if (dataList && dataList.length > 0) {
+                    dataList.forEach(item => {
                         const tr = document.createElement("tr");
-                      
+
+                        // 時間字串格式化
+                        let displayTime = item.operatedAt ? item.operatedAt.replace("T", " ").substring(0, 16) : "";
+
+                        // 分館代號精準對照
+                        let branchName = "總公司行政處";
+                        if (item.targetBranchId == 1) branchName = "台北中山商旅";
+                        else if (item.targetBranchId == 2) branchName = "台北信義商旅";
+                        else if (item.targetBranchId == 3) branchName = "台中草悟商旅";
+                        else if (item.targetBranchId == 4) branchName = "台南安平商旅";
+                        else if (item.targetBranchId == 5) branchName = "高雄港灣商旅";
+                        else if (item.targetBranchId == 6) branchName = "花蓮站前商旅";
+
                         tr.innerHTML = `
-                                    <td class="text-secondary">${item.displayTime}</td>
-                                    <td>${item.branch}</td>
-                                    <td>${item.operator}</td>
-                                    <td><span class="badge bg-light text-dark border">${item.type}</span></td>
-                                    <td>${item.target}</td>
-                                    <td class="font-monospace fw-semibold">${item.targetIdentifier}</td>
-                                    <td class="small text-muted">${item.description}</td>
+                                    <td class="text-secondary">${displayTime}</td>
+                                    <td>${branchName}</td>
+                                    <td>${item.operatorName || item.operatorEmployeeNumber || ""}</td>
+                                    <td><span class="badge bg-light text-dark border">${item.operationTypeName || "操作"}</span></td>
+                                    <td>${item.targetType || ""}</td>
+                                    <td class="font-monospace fw-semibold">${item.targetIdentifier || ""}</td>
+                                    <td class="small text-muted">${item.description || ""}</td>
                                 `;
                         resultTableBody.appendChild(tr);
                     });
@@ -265,7 +199,33 @@
                     resultCard.classList.add("d-none");
                     noDataCard.classList.remove("d-none");
                 }
-            });
+            }
+
+            // 🎯 6. Fetch 異步連線後端核心
+            function fetchRealData() {
+                const queryParams = new URLSearchParams({
+                    startDate: dateStart.value,
+                    endDate: dateEnd.value,
+                    branch: branchSelect.value,
+                    type: typeSelect.value,
+                    operatorInput: operatorInput.value.trim(),
+                    target: targetInput.value.trim()
+                });
+
+                fetch(`/OperationLog/GetFilteredLogs?${queryParams.toString()}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        renderTable(data);
+                    })
+                    .catch(err => {
+                        console.error("資料庫過濾發生錯誤:", err);
+                    });
+            }
+
+            // 🎯 7. 監聽點擊查詢按鈕事件
+            btnSearch.addEventListener("click", fetchRealData);
         });
     </script>
 }
+
+
