@@ -3,64 +3,11 @@
 *@
 
 @model HotelManagementSystem.Models.ViewModels.Booking.RoomSelectionViewModel
-@* <h3>RoomSelection 測試</h3>
-<p>分館 ID：@Model.BranchId</p>
-<p>入住日期：@Model.CheckInDate</p>
-<p>退房日期：@Model.CheckOutDate</p>
-<p>入住人數：@Model.GuestCount</p>
-<p>分館名稱：@Model.BranchName</p>
-<hr />
-<h4>房型資料測試</h4>
-@foreach (var roomType in Model.RoomTypes)
-{
-    <p>
-        ID：@roomType.RoomTypeId |
-        房型：@roomType.RoomTypeName |
-        人數：@roomType.MaxOccupancy |
-        床型：@roomType.BedType |
-        價格：@roomType.NightlyPrice
-    </p>
-} *@
-
-
-
 
 @{
     ViewData["Title"] = "房型結果及訂房確認";
 
     var Nights = (Model.CheckOutDate - Model.CheckInDate).Days;
-
-
-    // 靜態頁面展示用假資料
-    var BranchName = "台北館";
-    var CheckInDate = new DateTime(2026, 8, 14);
-    var CheckOutDate = new DateTime(2026, 8, 16);
-
-    // var Nights = (CheckOutDate - CheckInDate).Days;
-
-    var roomList = new[]
-    {
-        new
-        {
-            RoomTypeId = 1,
-            RoomName = "標準雙人房",
-            BedType = "一大床",
-            MaxOccupancy = 2,
-            Description = "基本雙人房型。",
-            Price = 2400m,
-            Stock = 3
-        },
-        new
-        {
-            RoomTypeId = 2,
-            RoomName = "精緻雙床房",
-            BedType = "兩小床",
-            MaxOccupancy = 2,
-            Description = "舒適雙人房型。",
-            Price = 3000m,
-            Stock = 2
-        }
-    };
 }
 
 
@@ -72,7 +19,6 @@
        class="btn btn-link px-0 text-decoration-none mb-2">
         ← 修改查詢條件
     </a>
-
 
 
     <!-- 上方標題與查詢條件摘要 --> 
@@ -93,10 +39,8 @@
                     <div class="card mb-3 shadow-sm border-0">
                         <div class="card-body d-flex justify-content-between align-items-center">
                             <div class="d-flex align-items-center">
-                                @* <div class="bg-light text-center border rounded p-3 me-3 d-flex align-items-center justify-content-center" style="width: 110px; height: 80px;">
-                                    <small class="text-muted">房型照片</small>
-                                </div> *@
-                                @* 假資料（靜態頁面展示用） *@
+
+                                @* 房型照片 *@
                                 <img src="@room.ImageUrl"
                                      alt="@room.RoomTypeName"
                                      class="rounded me-3"
@@ -107,19 +51,22 @@
                                     <div class="d-flex align-items-baseline mb-1">
                                         <h5 class="card-title fw-bold mb-0">@room.RoomTypeName</h5>
                                         <small class="text-secondary ms-2" style="position: relative; top: -1px;">
-                                            ・剩餘數量計算中(待處理)
+                                            ・剩餘 @room.AvailableRooms 間
                                         </small>
                                     </div>
+
                                     @* 床型 *@
                                     <div class="text-secondary mb-2">
                                         @room.BedType
                                     </div>
+
                                     @* 最多入住人數 *@
                                     <div class="mb-2">
                                         <span class="badge bg-light text-secondary border fw-normal" style="font-size: 0.75rem;">
                                             最多 @room.MaxOccupancy 人
                                         </span>
                                     </div>
+
                                     @* 房型描述 *@
                                     <p class="card-text text-muted mb-0">
                                         @room.Description
@@ -153,8 +100,7 @@
 
         <!-- ================= 右側：訂房確認摘要卡片 ================= -->
         <div class="col-lg-4">
-            <div class="card p-4 shadow-sm border-0 bg-light">
-                
+            <div class="card p-4 shadow-sm border-0 bg-light">                
 
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h4 class="fw-bold mb-0">房型選擇</h4>
@@ -164,21 +110,21 @@
                     </span>
                 </div>
 
-
                 <div class="d-flex justify-content-between py-2 border-bottom">
                     <span class="text-muted">分館</span>
                     <strong class="text-dark">@Model.BranchName</strong>
-
-
                 </div>
+
                 <div class="d-flex justify-content-between py-2 border-bottom">
                     <span class="text-muted">房型</span>
                     <strong id="displayRoomName" class="text-primary">請選擇房型</strong>
                 </div>
+
                 <div class="d-flex justify-content-between py-2 border-bottom">
                     <span class="text-muted">住宿</span>
                     <strong class="text-dark">@Nights 晚</strong>
                 </div>
+
                 <div class="d-flex justify-content-between py-3">
                     <span class="text-muted h5 mb-0">總金額</span>
                     <h4 class="text-danger fw-bold mb-0" id="displayTotalPrice">NT$ 0</h4>

@@ -33,5 +33,5 @@ public class RoomTypeViewModel
 
     public string? ImageUrl { get; set; }
 
-    public int TotalRooms { get; set; }
+    public int AvailableRooms { get; set; }
 }
