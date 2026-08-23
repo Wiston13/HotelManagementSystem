@@ -5,6 +5,8 @@
     ViewData["Title"] = "訂房成功";
 }
 
+@model HotelManagementSystem.Models.ViewModels.Booking.SuccessViewModel
+
 <div class="booking-success card border-0 shadow-sm mx-auto my-4 my-md-5 p-4 p-md-5 text-center">
 
     <div class="success-icon mx-auto mb-3" aria-hidden="true">
@@ -23,25 +25,25 @@
     <div class="booking-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
         <p class="detail-label text-secondary mb-0">分館</p>
         @* class裡的branch得等待後續課程決定要不要拔 *@
-        <p class="detail-value branch fw-semibold text-end mb-0">台北館</p>
+        <p class="detail-value branch fw-semibold text-end mb-0">@Model.BranchName</p>
     </div>
 
     <div class="booking-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
         <p class="detail-label text-secondary mb-0">房型</p>
-        <p class="detail-value room-type fw-semibold text-end mb-0">標準雙人房</p>
+        <p class="detail-value room-type fw-semibold text-end mb-0">@Model.RoomTypeName</p>
     </div>
 
     <div class="booking-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
         <p class="detail-label text-secondary mb-0">入住期間</p>
         <p class="detail-value during-the-stay fw-semibold text-end mb-0">
-            2026/08/10 至 2026/08/12
+            @Model.CheckInDate.ToString("yyyy/MM/dd") 至 @Model.CheckOutDate.ToString("yyyy/MM/dd")
         </p>
     </div>
 
     <div class="booking-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
         <p class="detail-label text-secondary mb-0">確認信</p>
         <p class="detail-value email fw-semibold text-end mb-0">
-            已寄送至 name@example.com
+            已寄送至 @Model.Email
         </p>
     </div>
 

@@ -3,6 +3,7 @@ using HotelManagementSystem.Models.Entities;
 using HotelManagementSystem.Models.ViewModels.Booking;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
 
 namespace HotelManagementSystem.Controllers
 {
@@ -89,6 +90,8 @@ namespace HotelManagementSystem.Controllers
         }
 
 
+
+
         public IActionResult Payment(int branchId, DateOnly checkIn, DateOnly checkOut, int roomTypeId)
         {
             // 根據房型選擇頁傳來的 branchId 找該分館資料
@@ -121,9 +124,49 @@ namespace HotelManagementSystem.Controllers
             return View(model);
         }
 
-        public IActionResult Success()
+
+
+
+        public IActionResult Success(int branchId, DateOnly checkIn, DateOnly checkOut, int roomTypeId, string bookerName, string contactPhone, string email)
         {
-            return View();
+            // 根據付款頁傳來的 branchId 找該分館資料
+            var branch = _context.Branches.FirstOrDefault(b => b.BranchId == branchId);
+
+            // 根據付款頁傳來的 roomTypeId 找該房型資料，同時載入關聯的Rooms資料
+            var roomType = _context.RoomTypes
+                .Include(rt => rt.Rooms)
+                .FirstOrDefault(rt => rt.RoomTypeId == roomTypeId);
+
+            // 再次確認剩餘房量：
+            // 1.計算可售房量
+            var availableCount = roomType.Rooms.Count(r => r.SupplyStatus == "Open");
+            // 2.查詢日期重疊且未取消的訂單筆數
+            var bookingCount = _context.Bookings
+                .Count(b =>
+                    b.BranchId == branchId &&
+                    b.RoomTypeId == roomTypeId &&
+                    b.CheckInDate < checkOut &&
+                    b.CheckOutDate > checkIn &&
+                    b.BookingStatus != "Cancelled"
+                );
+            // 3.算剩餘房量
+            var remainingCount = availableCount - bookingCount;
+
+
+
+            // 建立 SuccessViewModel
+            var model = new SuccessViewModel
+            {
+                BookingNumber = "",
+                BranchName = branch.BranchName,
+                RoomTypeName = roomType.RoomTypeName,
+                CheckInDate = checkIn,
+                CheckOutDate = checkOut,
+                Email = email
+            };
+
+
+            return View(model);
         }
         
         public IActionResult Lookup()
