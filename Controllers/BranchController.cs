@@ -1,32 +1,70 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using HotelManagementSystem.Models;
+using HotelManagementSystem.Models.Entities;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace HotelManagementSystem.Controllers
 {
     public class BranchController : Controller
     {
-        // GET: /Branch/ 或 /Branch/Index
-        // 顯示分館管理主頁面
-        [HttpGet]
-        public IActionResult Index()
+        private readonly HotelManagementContext _context;
+
+        public BranchController(HotelManagementContext context)
         {
-            return View(); // 對應 Views/Branch/Index.cshtml
+            _context = context;
+        }
+
+        // GET: /Branch/
+        // 從資料庫查出所有分館，並傳給 View 進行渲染
+        [HttpGet]
+        public async Task<IActionResult> Index()
+        {
+            var branches = await _context.Branches
+                .AsNoTracking()
+                .OrderBy(b => b.BranchId)
+                .ToListAsync();
+
+            return View(branches); // 將 Model 傳遞給 Index.cshtml
         }
 
         // POST: /Branch/Save
-        // 處理新增或編輯分館資料
+        // 處理 Modal 表單送出的「新增」或「編輯」
         [HttpPost]
-        public IActionResult Save(int branchId, string branchName, string? region, string phone, string address, bool acceptsNewBookings, string? imageUrl, string? description)
+        [ValidateAntiForgeryToken] // 提升表單安全性，防止 CSRF 攻擊
+        public async Task<IActionResult> Save(Branch branch)
         {
-            if (branchId == 0)
+            if (!ModelState.IsValid)
             {
-                // TODO: 執行「新增分館」資料庫邏輯
+                // 如果驗證沒過，重新載入 Index 畫面
+                var branches = await _context.Branches.AsNoTracking().ToListAsync();
+                return View("Index", branches);
+            }
+
+            if (branch.BranchId == 0)
+            {
+                // 【新增分館】
+                _context.Branches.Add(branch);
             }
             else
             {
-                // TODO: 執行「修改分館」資料庫邏輯
+                // 【修改分館】
+                var existingBranch = await _context.Branches.FindAsync(branch.BranchId);
+                if (existingBranch != null)
+                {
+                    existingBranch.BranchName = branch.BranchName;
+                    existingBranch.Region = branch.Region;
+                    existingBranch.Phone = branch.Phone;
+                    existingBranch.Address = branch.Address;
+                    existingBranch.AcceptsNewBookings = branch.AcceptsNewBookings;
+                    existingBranch.ImageUrl = branch.ImageUrl;
+                    existingBranch.Description = branch.Description;
+                }
             }
 
-            // 儲存完成後重導向回主頁面
+            // 儲存至 SQL Server 資料庫
+            await _context.SaveChangesAsync();
+
+            // 儲存完成後重導向回 Index 頁面重新整理資料
             return RedirectToAction(nameof(Index));
         }
     }
