@@ -2,14 +2,20 @@ using HotelManagementSystem.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using HotelManagementSystem.Models.ViewModels.Home;
+using HotelManagementSystem.Services;
 
 namespace HotelManagementSystem.Controllers
 {
     public class HomeController : Controller
     {
         private readonly HotelManagementContext _context;
-        public HomeController(HotelManagementContext context) {
-            _context = context;                    
+
+        private readonly TaipeiClock _taipeiClock;
+        public HomeController(HotelManagementContext context, TaipeiClock taipeiClock) 
+        {
+            _context = context;
+
+            _taipeiClock = taipeiClock;
         }
 
 
@@ -17,6 +23,8 @@ namespace HotelManagementSystem.Controllers
         {
             var model = new HomeViewModel
             {
+                Today = _taipeiClock.Today,
+
                 Branches = _context.Branches
                     .Select(b => new BranchViewModel
                     {

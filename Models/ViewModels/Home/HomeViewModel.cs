@@ -4,6 +4,9 @@ public class HomeViewModel
 {
     public List<BranchViewModel> Branches { get; set; } = new();
     public List<RoomTypeViewModel> RoomTypes { get; set; } = new();
+
+    // 今天日期
+    public DateOnly Today { get; set; }
 }
 
 public class BranchViewModel

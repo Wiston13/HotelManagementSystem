@@ -16,9 +16,9 @@ namespace HotelManagementSystem.Controllers
 
 
         [HttpGet]
-        public IActionResult RoomSelection(int branchId, DateTime checkIn, DateTime checkOut, int guestCount)
+        public IActionResult RoomSelection(int branchId, DateOnly checkIn, DateOnly checkOut, int guestCount)
         {
-            // 根據 BranchId 查詢Branches資料表中整筆分館資料
+            // 根據首頁傳來的 branchId 查詢 資料庫 Branches資料表中 該分館的整筆資料
             var branch = _context.Branches
                 .FirstOrDefault(b => b.BranchId == branchId);
 
@@ -36,21 +36,24 @@ namespace HotelManagementSystem.Controllers
             var bookings = _context.Bookings
                 .Where(b =>
                     b.BranchId == branchId &&
-                    b.CheckInDate < DateOnly.FromDateTime(checkOut) &&
-                    b.CheckOutDate > DateOnly.FromDateTime(checkIn) &&
+                    b.CheckInDate < checkOut &&
+                    b.CheckOutDate > checkIn &&
                     b.BookingStatus != "Cancelled"
                 )
                 .ToList();
-            
+
+            // 計算入住晚數
+            var nights = checkOut.DayNumber - checkIn.DayNumber;
 
 
-            // 建立 ViewModel
+            // 建立 RoomSelectionViewModel
             var model = new RoomSelectionViewModel
             {
                 BranchId = branchId,
                 BranchName = branch?.BranchName ?? "",  //ps. ?? --> 如果左邊是 null，就使用右邊的值(空字串)
                 CheckInDate = checkIn,
                 CheckOutDate = checkOut,
+                Nights = nights,
                 GuestCount = guestCount,
 
                 RoomTypes = roomTypes.Select(r =>
@@ -86,9 +89,36 @@ namespace HotelManagementSystem.Controllers
         }
 
 
-        public IActionResult Payment()
+        public IActionResult Payment(int branchId, DateOnly checkIn, DateOnly checkOut, int roomTypeId)
         {
-            return View();
+            // 根據房型選擇頁傳來的 branchId 找該分館資料
+            var branch = _context.Branches.FirstOrDefault(b => b.BranchId == branchId);
+
+            // 根據房型選擇頁傳來的 roomTypeId 找該房型資料
+            var roomType = _context.RoomTypes.FirstOrDefault(rt => rt.RoomTypeId == roomTypeId);
+
+            // 根據房型選擇頁傳來的 checkIn, checkOut 計算入住晚數
+            var nights = checkOut.DayNumber - checkIn.DayNumber;
+
+            // 計算總金額
+            var totalPrice = roomType.NightlyPrice * nights;
+
+
+            // 建立 PaymentViewModel
+            var model = new PaymentViewModel
+            {
+                BranchId = branchId,
+                BranchName = branch.BranchName,
+                CheckInDate = checkIn,
+                CheckOutDate = checkOut,
+                Nights = nights,
+                RoomTypeId = roomTypeId,
+                RoomTypeName = roomType.RoomTypeName,
+                NightlyPrice = roomType.NightlyPrice,
+                TotalPrice = totalPrice,
+            };
+
+            return View(model);
         }
 
         public IActionResult Success()

@@ -8,9 +8,11 @@ public class RoomSelectionViewModel
 
     public string BranchName { get; set; } = "";
 
-    public DateTime CheckInDate { get; set; }
+    public DateOnly CheckInDate { get; set; }
 
-    public DateTime CheckOutDate { get; set; }
+    public DateOnly CheckOutDate { get; set; }
+
+    public int Nights { get; set; }
 
     public int GuestCount { get; set; }
 

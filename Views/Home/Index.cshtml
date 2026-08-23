@@ -8,25 +8,6 @@
 
 
 @model HotelManagementSystem.Models.ViewModels.Home.HomeViewModel
-@* <h3>分館數量：@Model.Branches.Count</h3>
-@foreach (var branch in Model.Branches)
-{
-    <p>
-        @branch.BranchId -
-        @branch.BranchName -
-        @branch.Region
-    </p>
-} *@
-
-@* 筆記：
-    1. 記得處理 Description, Region, ImageUrl 可能為null的情況！ 
-    2. 電話格式化待處理 (預計建立可共用的Helpers PhoneFormatter，依台灣各地區號規則自動格式化)
-       思考：房型人數欄位做成複選；或房型結果頁也做日期、房型人數篩選欄位？
-    3. JavaScript 從 .cshtml 搬到 .js 
-    4. 後端傳遞與資料關聯使用 BranchId，各頁面如果要顯示分館名稱 ->在該頁的ViewModel中提供BranchName
-    5. !! 問題：點上一頁，分館欄位還留有歷史資料，導致必須重新選擇一次分館，才可選房型人數
-*@
-
 
 
 <!-- 插件區 -->
@@ -97,13 +78,15 @@
     </div>
 </div>
 
+
 <script>
     // 日期顯示區
-    let maxRangeDate = new Date();
+    let todayDate = "@Model.Today.ToString("yyyy-MM-dd")";
+    let maxRangeDate = new Date(todayDate);    //todayDate日期字串 轉成 JavaScript 的 Date
     maxRangeDate.setDate(maxRangeDate.getDate() + 60);
     flatpickr("#dateTime", {
         mode: "range",
-        minDate: "today",
+        minDate: todayDate,
         maxDate: maxRangeDate,
         dateFormat: "Y-m-d",
         altInput: true,

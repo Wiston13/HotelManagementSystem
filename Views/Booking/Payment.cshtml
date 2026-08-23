@@ -1,13 +1,31 @@
 ﻿@*
 	For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 *@
-@{
-}
 
 @*
 	飯店管理系統 - 模擬付款頁面原型
 	已完全修正所有標籤閉合與跑版問題，內嵌姓名防呆與卡號自動空格功能
 *@
+
+@{
+    ViewData["Title"] = "付款頁";
+}
+
+@model HotelManagementSystem.Models.ViewModels.Booking.PaymentViewModel
+@* 暫時測試 PaymentViewModel 是否成功取得資料 *@
+<div class="alert alert-info">
+    <strong>PaymentViewModel 測試：</strong><br />
+    BranchId：@Model.BranchId<br />
+    BranchName：@Model.BranchName<br />
+    CheckInDate：@Model.CheckInDate<br />
+    CheckOutDate：@Model.CheckOutDate<br />
+    RoomTypeId：@Model.RoomTypeId<br />
+    RoomTypeName：@Model.RoomTypeName<br />
+    NightlyPrice：NT$ @Model.NightlyPrice.ToString("N0")<br />
+    TotalPrice：NT$ @Model.TotalPrice.ToString("N0")
+</div>
+
+
 
 <div class="container py-4">
 
@@ -132,7 +150,7 @@
 								</span>
 
 								<span class="h4 fw-bold mb-0">
-									NT$ 4,800
+									NT$ @Model.TotalPrice.ToString("N0")
 								</span>
 							</div>
 
@@ -166,7 +184,7 @@
 								分館
 							</div>
 							<div id="branchName" class="col-8 col-md-9 fw-semibold text-end">
-								台北館
+								@Model.BranchName
 							</div>
 						</div>
 
@@ -176,7 +194,7 @@
 								房型
 							</div>
 							<div id="roomTypeName" class="col-8 col-md-9 fw-semibold text-end">
-								標準雙人房
+								@Model.RoomTypeName
 							</div>
 						</div>
 
@@ -186,7 +204,7 @@
 								每晚房價
 							</div>
 							<div id="pricePerNight" class="col-8 col-md-9 fw-semibold text-end">
-								NT$ 2,400
+								NT$ @Model.NightlyPrice.ToString("N0")
 							</div>
 						</div>
 						
@@ -196,7 +214,7 @@
 								入住日期
 							</div>
 							<div id="checkInDate" class="col-8 col-md-9 fw-semibold text-end">
-								2026/08/14
+								@Model.CheckInDate
 							</div>
 						</div>
 						
@@ -206,7 +224,7 @@
 								退房日期
 							</div>
 							<div id="checkOutDate" class="col-8 col-md-9 fw-semibold text-end">
-								2026/08/16
+								@Model.CheckOutDate
 							</div>
 						</div>
 						
@@ -216,7 +234,7 @@
 								入住晚數
 							</div>
 							<div id="nights" class="col-8 col-md-9 fw-semibold text-end">
-								2 晚
+								@Model.Nights 晚
 							</div>
 						</div>
 						<hr class="my-1">
@@ -227,7 +245,7 @@
 								總金額
 							</div>
 							<div id="totalAmount" class="col-8 col-md-9 h4 fw-bold mb-0 text-end">
-								NT$ 4,800
+								NT$ @Model.TotalPrice.ToString("N0")
 							</div>
 						</div>
 

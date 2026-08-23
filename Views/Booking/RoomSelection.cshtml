@@ -5,9 +5,7 @@
 @model HotelManagementSystem.Models.ViewModels.Booking.RoomSelectionViewModel
 
 @{
-    ViewData["Title"] = "房型結果及訂房確認";
-
-    var Nights = (Model.CheckOutDate - Model.CheckInDate).Days;
+    ViewData["Title"] = "查詢結果及房型選擇";
 }
 
 
@@ -122,7 +120,7 @@
 
                 <div class="d-flex justify-content-between py-2 border-bottom">
                     <span class="text-muted">住宿</span>
-                    <strong class="text-dark">@Nights 晚</strong>
+                    <strong class="text-dark">@Model.Nights 晚</strong>
                 </div>
 
                 <div class="d-flex justify-content-between py-3">
@@ -133,11 +131,10 @@
 
                 <!-- 送出表單至第三頁 (Payment) -->
                 <form asp-controller="Booking" asp-action="Payment" method="post">
-                    <input type="hidden" name="branchName" value="@Model.BranchName" />
+                    <input type="hidden" name="branchId" value="@Model.BranchId" />
                     <input type="hidden" name="checkIn" value="@Model.CheckInDate.ToString("yyyy-MM-dd")" />
                     <input type="hidden" name="checkOut" value="@Model.CheckOutDate.ToString("yyyy-MM-dd")" />
                     <input type="hidden" id="inputRoomTypeId" name="roomTypeId" value="" />
-                    <input type="hidden" id="inputTotalPrice" name="totalPrice" value="0" />
 
                     <button type="submit" id="btnPay" class="btn btn-primary btn-lg w-100 mt-2" disabled>
                         前往付款
@@ -151,14 +148,14 @@
 @section Scripts {
     <script>
         function selectRoom(id, name, pricePerNight) {
-            var nights = @Nights;
+            var nights = @Model.Nights;
             var total = pricePerNight * nights;
 
             document.getElementById('displayRoomName').innerText = name;
             document.getElementById('displayTotalPrice').innerText = 'NT$ ' + total.toLocaleString();
 
             document.getElementById('inputRoomTypeId').value = id;
-            document.getElementById('inputTotalPrice').value = total;
+            
 
             document.getElementById('btnPay').disabled = false;
         }
