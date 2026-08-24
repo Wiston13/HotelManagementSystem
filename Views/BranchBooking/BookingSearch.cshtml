@@ -4,6 +4,8 @@
 @model List<HotelManagementSystem.Models.BookingSearchModel.BookingData>
 
 @{
+    string EmployeeNum = "E20260807002";
+
     string BookingStatusStyle(string s)
     {
         string r = "";
@@ -14,7 +16,6 @@
         else r = "bg-secondary-subtle text-secondary";
         return r;
     }
-
 }
 
 
@@ -88,8 +89,8 @@
         <h5>查詢訂單數量：@Model.Count 筆</h5>
     </di>
     <div id="resultList" class="card border-0 shadow-sm @(Model != null && Model.Any() ? "" : "d-none")">
-       
-        <div class="card-body p-0">            
+
+        <div class="card-body p-0">
             <div class="table-responsive" style="max-height: 580px; overflow-y: auto; background-color: #f8f9fa;">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light text-secondary small sticky-top">
@@ -144,120 +145,125 @@
 </div>
 
 <!-- Modal 彈跳視窗 -->
-<div class="modal fade" id="bookingDetailModal" tabindex="-1" aria-labelledby="bookingDetailModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
+<form asp-action="BookingCancel" asp-controller="BranchBooking" method="post" class="row g-3 align-items-end" id="cancelForm">
+    <div class="modal fade" id="bookingDetailModal" tabindex="-1" aria-labelledby="bookingDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
 
-            <!-- Modal 標題 -->
-            <div class="modal-header bg-light">
-                <h5 class="modal-title fw-bold text-dark" id="bookingDetailModalLabel">訂單詳細資訊</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-
-            <!-- Modal 內容 (對應附圖的排版) -->
-            <div class="modal-body p-4">
-                <div class="row g-3">
-                    <div class="col-sm-6">
-                        <span class="text-secondary small">訂單編號</span>
-                        <p id="modalBookingNum" class="fw-bold fs-6 mb-0 text-primary">-</p>
-                    </div>
-                    <div class="col-sm-6">
-                        <span class="text-secondary small">訂房人</span>
-                        <p id="modalName" class="fw-bold fs-6 mb-0">-</p>
-                    </div>
-
-                    <div class="col-sm-6">
-                        <span class="text-secondary small">聯絡電話</span>
-                        <p id="modalPhone" class="mb-0">-</p>
-                    </div>
-                    <div class="col-sm-6">
-                        <span class="text-secondary small">成立時間</span>
-                        <p id="modalCreateTime" class="mb-0">-</p>
-                    </div>
-
-                    <div class="col-sm-6">
-                        <span class="text-secondary small">房型</span>
-                        <p id="modalRoomtype" class="mb-0">-</p>
-                    </div>
-                    <div class="col-sm-6">
-                        <span class="text-secondary small">住宿日期</span>
-                        <p id="modalBookingDate" class="mb-0">-</p>
-                    </div>
-
-                    <div class="col-sm-6">
-                        <span class="text-secondary small">成交價格</span>
-                        <p id="modalPrice" class="fw-bold text-danger mb-0">-</p>
-                    </div>
-                    <div class="col-sm-6">
-                        <span class="text-secondary small">目前狀態</span>
-                        <p id="modalStatus" class="mb-0">-</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 輸入取消原因區塊 -->
-            <div id="cancelReasonSection" class="d-none mt-4 mx-1 p-3 bg-light border rounded">
-                <h6 class="fw-bold text-danger mb-3">請填寫取消原因</h6>
-                <div class="mb-3">
-                    <label class="form-label">選擇取消原因<span class="text-danger">*必填</span></label>
-                    <select class="form-select" id="cancelReasonSelect">
-                        <option value="請選擇..." disabled selected>請選擇...</option>
-                        <option value="顧客因素">顧客因素</option>
-                        <option value="飯店因素">飯店因素</option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">備註說明<span class="text-danger">*必填</span></label>
-                    <textarea class="form-control" id="cancelMemo" rows="2" placeholder="請輸入詳細原因"></textarea>
-                </div>
-                <div class="d-flex justify-content-end">
-                    <div id="overtimeWarn" class="text-danger mt-1 me-1 d-none">
-                        已超過顧客因素取消期限。
-                        顧客因素取消須於入住日前一日 23:59 前完成。
-                    </div>
-                    <button type="button" id="confirmCancelBtn" class="btn btn-danger btn-sm d-none px-3">                        
-                        確認取消訂單
-                    </button>
+                <!-- Modal 標題 -->
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title fw-bold text-dark" id="bookingDetailModalLabel">訂單詳細資訊</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
 
-            </div>
+                <!-- Modal 內容 (對應附圖的排版) -->
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <span class="text-secondary small">訂單編號</span>
+                            <p id="modalBookingNum" class="fw-bold fs-6 mb-0 text-primary">-</p>
+                        </div>
+                        <div class="col-sm-6">
+                            <span class="text-secondary small">訂房人</span>
+                            <p id="modalName" class="fw-bold fs-6 mb-0">-</p>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <span class="text-secondary small">聯絡電話</span>
+                            <p id="modalPhone" class="mb-0">-</p>
+                        </div>
+                        <div class="col-sm-6">
+                            <span class="text-secondary small">成立時間</span>
+                            <p id="modalCreateTime" class="mb-0">-</p>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <span class="text-secondary small">房型</span>
+                            <p id="modalRoomtype" class="mb-0">-</p>
+                        </div>
+                        <div class="col-sm-6">
+                            <span class="text-secondary small">住宿日期</span>
+                            <p id="modalBookingDate" class="mb-0">-</p>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <span class="text-secondary small">成交價格</span>
+                            <p id="modalPrice" class="fw-bold text-danger mb-0">-</p>
+                        </div>
+                        <div class="col-sm-6">
+                            <span class="text-secondary small">目前狀態</span>
+                            <p id="modalStatus" class="mb-0">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 輸入取消原因區塊 -->
+                <div id="cancelReasonSection" class="d-none mt-4 mx-1 p-3 bg-light border rounded">
+                    <h6 class="fw-bold text-danger mb-3">請填寫取消原因</h6>
+                    <div class="mb-3">
+                        <label class="form-label">選擇取消原因<span class="text-danger">*必填</span></label>
+                        <select class="form-select" id="cancelReasonSelect">
+                            <option value="請選擇..." disabled selected>請選擇...</option>
+                            <option value="顧客因素">顧客因素</option>
+                            <option value="飯店因素">飯店因素</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">備註說明<span class="text-danger">*必填</span></label>
+                        <textarea class="form-control" id="cancelMemo" rows="2" placeholder="請輸入詳細原因"></textarea>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <div id="overtimeWarn" class="text-danger mt-1 me-1 d-none">
+                            已超過顧客因素取消期限。
+                            顧客因素取消須於入住日前一日 23:59 前完成。
+                        </div>
+                        <button type="button" id="confirmCancelBtn" class="btn btn-danger btn-sm d-none px-3">
+                            確認取消訂單
+                        </button>
+                    </div>
+
+                </div>
 
                 
-            <!-- Modal 底部按鈕 (包含取消訂單按鈕) -->
-            <div class="modal-footer bg-light">
-                <button type="button" id="goToCancelBtn" class="btn btn-outline-danger btn-sm px-3">
-                    <i class="bi bi-x-circle me-1"></i> 取消訂單
-                </button>
-                <button type="button" class="btn btn-secondary btn-sm px-4" data-bs-dismiss="modal">關閉</button>
+                <!-- Modal 底部按鈕 (包含取消訂單按鈕) -->
+                <div class="modal-footer bg-light">
+                    <button type="button" id="goToCancelBtn" class="btn btn-outline-danger btn-sm px-3">
+                        <i class="bi bi-x-circle me-1"></i> 取消訂單
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-sm px-4" data-bs-dismiss="modal">關閉</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- 再次確認取消modal -->
-<form asp-action="BookingCancel" asp-controller="BranchBooking" method="post" class="row g-3 align-items-end" id="cancelForm">
+    <!-- 再次確認取消modal -->
     <input type="hidden" name="bookingNum" id="cancelBookingNum" value="" />
+
     <input type="hidden" name="keyword" value="@ViewBag.Keyword" />
     <input type="hidden" name="dateRange" value="@ViewBag.DateRange" />
-    <input type="hidden" name="bookingStatus" value="@ViewBag.BookingStatus" />
+    <input type="hidden" name="keyStatus" value="@ViewBag.BookingStatus" />
 
-<div class="modal fade" id="confirmActionModal" tabindex="-1" aria-labelledby="confirmActionModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-danger text-white py-2">
-                <h6 class="modal-title fw-bold" id="confirmActionModalLabel">系統提示</h6>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body text-center py-4">
-                <p class="mb-0 fw-semibold">確定要執行取消此訂單嗎？<br><span class="text-muted small">此動作無法復原。</span></p>
-            </div>
-            <div class="modal-footer bg-light justify-content-center py-2">
-                <button type="submit" id="finalSubmitCancelBtn" class="btn btn-danger btn-sm px-3">確定取消</button>
-                <button type="button" class="btn btn-outline-secondary btn-sm px-3" data-bs-dismiss="modal">返回</button>
+    <input type="hidden" name="cancelCause" value="" id="cancelCause" />
+    <input type="hidden" name="cancelReason" value="" id="cancelReason" />
+    <input type="hidden" name="employeeNum" value="@EmployeeNum" />
+
+    <div class="modal fade" id="confirmActionModal" tabindex="-1" aria-labelledby="confirmActionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-danger text-white py-2">
+                    <h6 class="modal-title fw-bold" id="confirmActionModalLabel">系統提示</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center py-4">
+                    <p class="mb-0 fw-semibold">確定要執行取消此訂單嗎？<br><span class="text-muted small">此動作無法復原。</span></p>
+                </div>
+                <div class="modal-footer bg-light justify-content-center py-2">
+                    <button type="submit" id="finalSubmitCancelBtn" class="btn btn-danger btn-sm px-3">確定取消</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm px-3" data-bs-dismiss="modal">返回</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 </form>
 
 
@@ -267,11 +273,11 @@
 
 
 <style>
-    .sticky-top {
-        position: sticky;
-        top: 0;
-        z-index: 10;
-    }
+        .sticky-top {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
 </style>
 
 
@@ -282,196 +288,192 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/zh.js"></script>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const searchForm = document.getElementById("searchForm");
-            const keyword = document.getElementById("keyword");
+            document.addEventListener("DOMContentLoaded", function() {
+                const searchForm = document.getElementById("searchForm");
+                const keyword = document.getElementById("keyword");
 
-            const overtimeWarn = document.getElementById("overtimeWarn");
+                const overtimeWarn = document.getElementById("overtimeWarn");
 
-            const goToCancelBtn = document.getElementById('goToCancelBtn');
-            const confirmCancelBtn = document.getElementById('confirmCancelBtn');
-            const cancelReasonSection = document.getElementById('cancelReasonSection');
-            const finalSubmitCancelBtn = document.getElementById('finalSubmitCancelBtn');
-            const cancelBookingNum = document.getElementById('cancelBookingNum');
+                const goToCancelBtn = document.getElementById('goToCancelBtn');
+                const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+                const cancelReasonSection = document.getElementById('cancelReasonSection');
+                const finalSubmitCancelBtn = document.getElementById('finalSubmitCancelBtn');
+                const cancelBookingNum = document.getElementById('cancelBookingNum');
+                const modalStatus = document.getElementById('modalStatus');
 
-            const confirmActionModal = new bootstrap.Modal(document.getElementById('confirmActionModal'));
+                const confirmActionModal = new bootstrap.Modal(document.getElementById('confirmActionModal'));
 
-            const cancelReasonSelect = document.getElementById('cancelReasonSelect');
-            const cancelMemo = document.getElementById('cancelMemo');
-            //modal帶入資料
-            const bookingDetailModal = document.getElementById("bookingDetailModal");
+                const cancelReasonSelect = document.getElementById('cancelReasonSelect');
+                const cancelMemo = document.getElementById('cancelMemo');
+                //modal帶入資料
+                const bookingDetailModal = document.getElementById("bookingDetailModal");
 
-            let currentStartDate = null;
-            // 表單開啟時
-            bookingDetailModal.addEventListener("show.bs.modal", function(event) {
-                const button = event.relatedTarget;
+                let currentStartDate = null;
+                // 表單開啟時
+                bookingDetailModal.addEventListener("show.bs.modal", function(event) {
+                    const button = event.relatedTarget;
 
-                const bookingNum = button.getAttribute('data-bookingnum');
-                const name = button.getAttribute('data-name');
-                const roomtype = button.getAttribute('data-roomtype');
-                const bookingStatus = button.getAttribute('data-bookingstatus');
-                const createTime = button.getAttribute('data-createtime');
-                const phone = button.getAttribute('data-phone');
-                const bookingDate = button.getAttribute('data-bookingdate');
-                const startDate = button.getAttribute('data-startdate');
-                const endDate = button.getAttribute('data-enddate');
-                const price = button.getAttribute('data-price');
+                    const bookingNum = button.getAttribute('data-bookingnum');
+                    const name = button.getAttribute('data-name');
+                    const roomtype = button.getAttribute('data-roomtype');
+                    const bookingStatus = button.getAttribute('data-bookingstatus');
+                    const createTime = button.getAttribute('data-createtime');
+                    const phone = button.getAttribute('data-phone');
+                    const bookingDate = button.getAttribute('data-bookingdate');
+                    const startDate = button.getAttribute('data-startdate');
+                    const endDate = button.getAttribute('data-enddate');
+                    const price = button.getAttribute('data-price');
 
-                currentStartDate = startDate;
 
-                document.getElementById('modalBookingNum').textContent = bookingNum;
-                document.getElementById('modalName').textContent = name;
-                document.getElementById('modalRoomtype').textContent = roomtype;
-                document.getElementById('modalStatus').textContent = bookingStatus;
-                document.getElementById('modalBookingDate').textContent = startDate + " - " + endDate;
-                document.getElementById('modalPhone').textContent = phone.slice(0, 4) + "-" + phone.slice(4);
-                document.getElementById('modalCreateTime').textContent = createTime;
-                document.getElementById('modalPrice').textContent = price;
+                    currentStartDate = startDate;
+
+                    document.getElementById('modalBookingNum').textContent = bookingNum;
+                    document.getElementById('modalName').textContent = name;
+                    document.getElementById('modalRoomtype').textContent = roomtype;
+                    document.getElementById('modalStatus').textContent = bookingStatus;
+                    document.getElementById('modalBookingDate').textContent = startDate + " - " + endDate;
+                    document.getElementById('modalPhone').textContent = phone.slice(0, 4) + "-" + phone.slice(4);
+                    document.getElementById('modalCreateTime').textContent = createTime;
+                    document.getElementById('modalPrice').textContent = price;
 
                     
-                if (bookingStatus === "已付款") {
-                    goToCancelBtn.classList.add("btn-outline-danger");
-                    goToCancelBtn.classList.remove("btn-outline-secondary");
-                    goToCancelBtn.disabled = false;
-                }
-                else {
-                    goToCancelBtn.classList.add("btn-outline-secondary");
-                    goToCancelBtn.classList.remove("btn-outline-danger");
-                    goToCancelBtn.disabled = true;
-                }
+                    if (bookingStatus === "已付款") {
+                        goToCancelBtn.classList.add("btn-outline-danger");
+                        goToCancelBtn.classList.remove("btn-outline-secondary");
+                        goToCancelBtn.disabled = false;
+                    }
+                    else {
+                        goToCancelBtn.classList.add("btn-outline-secondary");
+                        goToCancelBtn.classList.remove("btn-outline-danger");
+                        goToCancelBtn.disabled = true;
+                    }
 
                 
-            });
-            // 表單關閉時
-            bookingDetailModal.addEventListener('hidden.bs.modal', function() {
-                // 隱藏取消原因區塊
-                cancelReasonSection.classList.add('d-none');
+                });
+                // 表單關閉時
+                bookingDetailModal.addEventListener('hidden.bs.modal', function() {
+                    // 隱藏取消原因區塊
+                    cancelReasonSection.classList.add('d-none');
 
-                // 恢復按鈕原本的顯示狀態
-                goToCancelBtn.classList.remove('d-none');
-                confirmCancelBtn.classList.add('d-none');
+                    // 恢復按鈕原本的顯示狀態
+                    goToCancelBtn.classList.remove('d-none');
+                    confirmCancelBtn.classList.add('d-none');
 
-                // 恢復警告字樣隱藏
-                overtimeWarn.classList.add("d-none");
-                confirmCancelBtn.disabled = false;
+                    // 恢復警告字樣隱藏
+                    overtimeWarn.classList.add("d-none");
+                    confirmCancelBtn.disabled = false;
 
-                // 清空輸入框
-                cancelReasonSelect.value = "";
-                cancelMemo.value = "";
-            });
-            // 驗證合法輸入
-            searchForm.addEventListener("submit", function(e) {
-                if (keyword.value.trim() == "") {
-                    e.preventDefault();
-                    keyword.classList.add("is-invalid");
-                }
-            })
+                    // 清空輸入框
+                    cancelReasonSelect.value = "請選擇...";
+                    cancelMemo.value = "";
+                });
+                // 驗證合法輸入
+                searchForm.addEventListener("submit", function(e) {
+                    if (keyword.value.trim() == "") {
+                        e.preventDefault();
+                        keyword.classList.add("is-invalid");
+                    }
+                })
 
-            keyword.addEventListener("input", function() {
-                if (keyword.value.trim() != "") {
-                    this.classList.remove("is-invalid");
-                }
-            })
+                keyword.addEventListener("input", function() {
+                    if (keyword.value.trim() != "") {
+                        this.classList.remove("is-invalid");
+                    }
+                })
 
-            goToCancelBtn.addEventListener("click", function() {
-                confirmCancelBtn.classList.remove("d-none");
-                cancelReasonSection.classList.remove("d-none");
-            })
+                goToCancelBtn.addEventListener("click", function() {
+                    confirmCancelBtn.classList.remove("d-none");
+                    cancelReasonSection.classList.remove("d-none");
+                })
 
-            cancelReasonSelect.addEventListener('change', function() {
-                cancelReasonSelect.classList.remove('is-invalid');
+                cancelReasonSelect.addEventListener('change', function() {
+                    cancelReasonSelect.classList.remove('is-invalid');
 
-                overtimeWarn.classList.add("d-none");
-                confirmCancelBtn.disabled = false;
+                    overtimeWarn.classList.add("d-none");
+                    confirmCancelBtn.disabled = false;
 
-                if (cancelReasonSelect.value === "顧客因素") {
-                    const checkInDate = new Date(currentStartDate);
+                    if (cancelReasonSelect.value === "顧客因素") {
+                        const checkInDate = new Date(currentStartDate);
 
-                    const deadline = new Date(checkInDate);
-                    deadline.setDate(deadline.getDate() - 1);
-                    deadline.setHours(23, 59, 59, 999);
+                        const deadline = new Date(checkInDate);
+                        deadline.setDate(deadline.getDate() - 1);
+                        deadline.setHours(23, 59, 59, 999);
 
-                    if (new Date() > deadline) {
+                        if (new Date() > deadline) {
 
-                        overtimeWarn.classList.remove("d-none");
-                        confirmCancelBtn.disabled=true;
+                            overtimeWarn.classList.remove("d-none");
+                            confirmCancelBtn.disabled = true;
+                            return;
+                        }
+                    }
+                })
+                cancelMemo.addEventListener('input', function() {
+                    cancelMemo.classList.remove('is-invalid');
+                })
+
+                confirmCancelBtn.addEventListener('click', function() {
+                    let isValid = true;
+                    if (cancelMemo.value.trim() === "") {
+                        cancelMemo.classList.add('is-invalid');
+                        isValid = false;
+                    }
+                    if (cancelReasonSelect.value === "請選擇..." || cancelReasonSelect.value === "") {
+                        cancelReasonSelect.classList.add('is-invalid');
+                        isValid = false;
+                    }
+                    if (!isValid) {
                         return;
                     }
-                }
+
+                    confirmActionModal.show();
+                })
+
+                finalSubmitCancelBtn.addEventListener('click', function() {
+                    const cancelCause = cancelReasonSelect.value;
+                    const cancelTime = new Date().toLocaleString();
+
+                    //注入aspFrom的值
+                    cancelBookingNum.value = modalBookingNum.textContent;
+                    document.getElementById('cancelCause').value = cancelCause;
+                    document.getElementById('cancelReason').value = cancelMemo.value;
+                    // alert(cancelCause);
+
+                    confirmActionModal.hide();
+                    bootstrap.Modal.getInstance(document.getElementById('bookingDetailModal')).hide();
+                })
             })
-            cancelMemo.addEventListener('input', function() {
-                cancelMemo.classList.remove('is-invalid');
-            })
-
-            confirmCancelBtn.addEventListener('click', function() {
-                let isValid = true;
-                if (cancelMemo.value.trim() === "") {
-                    cancelMemo.classList.add('is-invalid');
-                    isValid = false;
-                }
-                if (cancelReasonSelect.value === "請選擇...") {
-                    cancelReasonSelect.classList.add('is-invalid');
-                    isValid = false;
-                }
-                if (!isValid) {
-                    return;
-                }
-
-                confirmActionModal.show();
-            })
-
-            finalSubmitCancelBtn.addEventListener('click', function() {
-                //傳送資料
-                const cancelCause = cancelReasonSelect.value;
-                const cancelReason = cancelMemo.value;
-                const cancelTime = new Date().toLocaleString();
-                // 操作人員
-                const cancelOperator = '';
-
-                cancelBookingNum.value = modalBookingNum.textContent;
-                alert()
-
-                confirmActionModal.hide();
-                bootstrap.Modal.getInstance(document.getElementById('bookingDetailModal')).hide();
-
-                // 此區送資料邏輯尚未實作
-
-
-                location.reload();
-            })
-        })
 
             
 
 
-        // 日期顯示區
-        let maxRangeDate = new Date();
-        maxRangeDate.setDate(maxRangeDate.getDate() + 60);
-        flatpickr("#dateTime", {
-            mode: "range",
-            maxDate: maxRangeDate,
-            dateFormat: "Y-m-d",
-            altInput: true,
-            altFormat: "Y.m.d",
-            showMonths: 1,
-            locale: {
-                weekdays: {
-                    shorthand: ["日", "一", "二", "三", "四", "五", "六"],
-                    longhand: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"]
-                }, months: {
-                    shorthand: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],
-                    longhand: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"]
+            // 日期顯示區
+            let maxRangeDate = new Date();
+            maxRangeDate.setDate(maxRangeDate.getDate() + 60);
+            flatpickr("#dateTime", {
+                mode: "range",
+                maxDate: maxRangeDate,
+                dateFormat: "Y-m-d",
+                altInput: true,
+                altFormat: "Y.m.d",
+                showMonths: 1,
+                locale: {
+                    weekdays: {
+                        shorthand: ["日", "一", "二", "三", "四", "五", "六"],
+                        longhand: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"]
+                    }, months: {
+                        shorthand: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],
+                        longhand: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"]
+                    },
+                    rangeSeparator: " - ",
                 },
-                rangeSeparator: " - ",
-            },
-            onClose: function(selectedDates, dateStr, instance) {
-                // 如果選了兩個日期，且起訖是同一天
-                if (selectedDates.length === 2 && selectedDates[0].getTime() === selectedDates[1].getTime()) {
-                    let nextDay = new Date(selectedDates[0]);
-                    nextDay.setDate(nextDay.getDate() + 1); // 自動加一天
-                    instance.setDate([selectedDates[0], nextDay], true);
+                onClose: function(selectedDates, dateStr, instance) {
+                    // 如果選了兩個日期，且起訖是同一天
+                    if (selectedDates.length === 2 && selectedDates[0].getTime() === selectedDates[1].getTime()) {
+                        let nextDay = new Date(selectedDates[0]);
+                        nextDay.setDate(nextDay.getDate() + 1); // 自動加一天
+                        instance.setDate([selectedDates[0], nextDay], true);
+                    }
                 }
-            }
-        });
+            });
     </script>
 }
