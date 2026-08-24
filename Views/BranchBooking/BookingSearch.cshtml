@@ -4,7 +4,6 @@
 @model List<HotelManagementSystem.Models.BookingSearchModel.BookingData>
 
 @{
-    string EmployeeNum = "E20260807002";
 
     string BookingStatusStyle(string s)
     {
@@ -15,6 +14,20 @@
         else if (s == "已取消") r = "bg-danger-subtle text-danger";
         else r = "bg-secondary-subtle text-secondary";
         return r;
+    }
+
+    if (ViewBag.VerifyError != null)
+    {
+        <script>
+            alert("@Html.Raw(ViewBag.VerifyError)")
+        window.location.href = '@Url.Action("Login", "Account")';
+        </script>
+    }
+    if (ViewBag.BookingStatusError != null)
+    {
+        <script>
+            alert("@Html.Raw(ViewBag.BookingStatusError)")
+        </script>
     }
 }
 
@@ -87,7 +100,7 @@
     <!-- 查詢結果列表區塊 -->
     <div class="@(Model != null && Model.Any() ? "" : "d-none")">
         <h5>查詢訂單數量：@Model.Count 筆</h5>
-    </di>
+        </div>
     <div id="resultList" class="card border-0 shadow-sm @(Model != null && Model.Any() ? "" : "d-none")">
 
         <div class="card-body p-0">
@@ -245,7 +258,6 @@
 
     <input type="hidden" name="cancelCause" value="" id="cancelCause" />
     <input type="hidden" name="cancelReason" value="" id="cancelReason" />
-    <input type="hidden" name="employeeNum" value="@EmployeeNum" />
 
     <div class="modal fade" id="confirmActionModal" tabindex="-1" aria-labelledby="confirmActionModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-sm">

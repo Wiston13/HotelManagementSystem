@@ -2,6 +2,7 @@
 using HotelManagementSystem.Services;
 using HotelManagementSystem.Models;
 using HotelManagementSystem.Models.BookingSearchModel;
+using Microsoft.EntityFrameworkCore;
 
 
 namespace HotelManagementSystem.Controllers
@@ -60,25 +61,24 @@ namespace HotelManagementSystem.Controllers
             return output;
         }
 
-        public IActionResult Lookup()
-        {
-            List<BookingData> _bookingData = new List<BookingData>();
-
-            return View();
-        }
-
         [HttpGet]
         public async Task<IActionResult> Lookup(string BookingNum,string Phone)
         {
             var model = new BookingData();
 
+            // 檢查bookingNum 和phone的值是否為空
             if (string.IsNullOrWhiteSpace(BookingNum)||string.IsNullOrWhiteSpace(Phone))
             {
                 return View(model);
             }
 
-            var booking = _context.Bookings.FirstOrDefault(b => b.BookingNumber == BookingNum &&b.ContactPhone==Phone);
+            // phone正規化
+            
 
+            // 查詢
+            var booking = await _context.Bookings.AsNoTracking().FirstOrDefaultAsync(b => b.BookingNumber == BookingNum &&b.ContactPhone==Phone);
+
+            // 沒結果吐回空資料及noresult 
             if (booking == null)
             {
                 model.BookingNum = BookingNum;
@@ -87,11 +87,13 @@ namespace HotelManagementSystem.Controllers
                 return View(model);
             }
 
-            var branch = _context.Branches.FirstOrDefault(b => b.BranchId == booking!.BranchId);
+            // 查詢訂單分館
+            var branch = await _context.Branches.AsNoTracking().FirstOrDefaultAsync(b => b.BranchId == booking!.BranchId);
 
+            // 打包結果
             model.BookingNum = booking.BookingNumber;
             model.Phone = booking.ContactPhone;
-            model.BranchName = branch!.BranchName;
+            model.BranchName = branch?.BranchName;
             model.Roomtype = booking.RoomTypeNameSnapshot;
             model.StartDate = new DateTime(booking.CheckInDate.Year, booking.CheckInDate.Month, booking.CheckInDate.Day);
             model.EndDate = new DateTime(booking.CheckOutDate.Year, booking.CheckOutDate.Month, booking.CheckOutDate.Day); 

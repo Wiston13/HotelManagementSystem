@@ -4,6 +4,7 @@ using HotelManagementSystem.Models.BookingSearchModel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using static Microsoft.Extensions.Logging.EventSource.LoggingEventSource;
+using HotelManagementSystem.Models.Entities;
 
 /*
  員工帳號驗證:
@@ -41,6 +42,7 @@ namespace HotelManagementSystem.Controllers
             _Clock = clock;
         }
 
+        // 轉換前端狀態字串和資料庫相同
         private string StatusLanguage(string input)
         {
             string output = "";
@@ -60,28 +62,55 @@ namespace HotelManagementSystem.Controllers
             return output;
         }
 
-        public IActionResult BookingSearch(string keyword, string dateRange, string bookingStatus)
+        //驗證員工ID是否存在
+        private async Task<int?> EmployeeVerify(string EmpNum)
         {
-            int BranchId = 1;//銜接分館判斷
-            ViewBag.Keyword = keyword;
-            ViewBag.DateRange = dateRange;
-            ViewBag.BookingStatus = bookingStatus;
-            if (string.IsNullOrEmpty(keyword))
+             var q= await _context.Employees.AsNoTracking().FirstOrDefaultAsync(x => x.EmployeeNumber == EmpNum);
+             return q?.BranchId;
+        }
+
+        //查詢訂單
+        [HttpGet]
+        public async Task<IActionResult> BookingSearch(string keyword, string dateRange, string bookingStatus)
+        {
+            // 待帳號驗證(session取得 employeenum)
+            string EmployeeNum = "E20260807002";
+
+            //驗證員工ID是否存在
+            int? BranchId = await EmployeeVerify(EmployeeNum);
+            if (BranchId == null)
             {
+                ViewBag.Error = "帳號驗證異常，即將返回登入畫面";
                 return View(new List<BookingData>());
             }
 
+
+            // 送回前端保存查詢欄位用
+            ViewBag.Keyword = keyword;
+            ViewBag.DateRange = dateRange;
+            ViewBag.BookingStatus = bookingStatus;
+
             List<BookingData> _bookingData = new List<BookingData>();
 
+            // 驗證搜尋為空則傳回空資料
+            if (string.IsNullOrEmpty(keyword))
+            {
+                return View(_bookingData);
+            }
+            // phone正規化
+
+
             var allData = _context.Bookings;
-            var query = allData.AsQueryable();
+            var query = allData.AsQueryable().AsNoTracking();
 
-
+            // keyword模糊查詢資料庫 及 分館ID (此處需要驗證員工帳號及帳號所屬分館取得)
             if (!string.IsNullOrEmpty(keyword))
             {
-                query = query.Where(x => (x.BookingNumber!.Contains(keyword) || x.BookerName!.Contains(keyword) || x.ContactPhone!.Contains(keyword)) && x.BranchId == BranchId);
+                query = query.Where(x => x.BranchId == BranchId);
+                query = query.Where(x => x.BookingNumber!.Contains(keyword) || x.BookerName!.Contains(keyword) || x.ContactPhone!.Contains(keyword));
             }
 
+            // dateRange查詢時間範圍 (此處考慮加入前端預設時間 避免訂單結果爆量讀取過久)
             if (!string.IsNullOrEmpty(dateRange))
             {
                 var dates = dateRange.Split(" - ");
@@ -95,11 +124,14 @@ namespace HotelManagementSystem.Controllers
                 }
             }
 
+
+            // bookingstatu查詢訂單狀態
             if (!string.IsNullOrEmpty(bookingStatus))
             {
                 query = query.Where(x => x.BookingStatus == StatusLanguage(bookingStatus));
             }
-
+            // 需要修改成await用法
+            // 將所有查詢結果裝到list
             foreach (var item in query)
             {
                 _bookingData.Add(new BookingData
@@ -112,34 +144,72 @@ namespace HotelManagementSystem.Controllers
                     BookingStatus = StatusLanguage(item.BookingStatus),
                     StartDate = new DateTime(item.CheckInDate.Year, item.CheckInDate.Month, item.CheckInDate.Day) ,
                     EndDate = new DateTime(item.CheckOutDate.Year, item.CheckOutDate.Month, item.CheckOutDate.Day),
-                    Price = "NT$ " + item.NightlyPriceSnapshot.ToString("N0")
+                    Price = "NT$ " + item.TotalAmount.ToString("N0")
                 });
             }
 
-            var result = _bookingData.ToList();
+            var result =  _bookingData.ToList();
 
             return View(result);
         }
 
+        // 取消訂單 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult BookingCancel(string bookingNum, string keyword, string dateRange,
-            string keyStatus, string cancelCause ,string cancelReason, string employeeNum)
+        public async Task<IActionResult> BookingCancel(string bookingNum, string keyword, string dateRange,
+            string keyStatus, string cancelCause ,string cancelReason)
         {
-            var result = _context.Bookings.FirstOrDefault(x => x.BookingNumber == bookingNum);
-            if(result == null ||(cancelCause != "顧客因素" && cancelCause != "飯店因素"))
+            // 待取得分館員工
+            string EmployeeNum = "E20260807002";
+
+            // 員工驗證
+            int? BranchId = await EmployeeVerify(EmployeeNum);
+            if (BranchId == null)
             {
-                return RedirectToAction("BookingSearch", new {  keyword, dateRange, bookingStatus = keyStatus });
+                ViewBag.VerifyError = "帳號驗證異常，即將返回登入畫面";
+                return RedirectToAction("BookingSearch",new List<BookingData>());
             }
 
+            // 缺 錯誤查詢不能savechange()
+            // 顧客因素判斷條件
 
+            // 此處錯誤有解方嗎? 假如訂單狀態錯誤會是什麼情況 在使用者不寫程式的情況可以修好嗎
+            // 查詢訂單
+            var result = _context.Bookings.FirstOrDefault(x => x.BookingNumber == bookingNum);
+            if(result == null || result.BookingStatus!= "Paid"||result.BookingStatus!= "Cancelled")
+            {
+                ViewBag.BookingStatusError = "訂單狀態錯誤，無法取消訂單";
+                return RedirectToAction("BookingSearch", new {  keyword, dateRange, bookingStatus = keyStatus });
+            }
             result.BookingStatus = "Cancelled";
+            //判斷取消因素是否正確
+            if (cancelCause!= "顧客因素"|| cancelCause != "飯店因素")
+            {
+                ViewBag.BookingStatusError = "取消訂單資料錯誤，無法取消訂單";
+                return RedirectToAction("BookingSearch", new { keyword, dateRange, bookingStatus = keyStatus });
+            }
             result.CancellationCause = cancelCause== "顧客因素"? "GuestRequest": "HotelUnableToFulfill";
+
+            if (string.IsNullOrEmpty(cancelReason.Trim()))
+            {
+                ViewBag.BookingStatusError = "取消理由不可為空";
+                return RedirectToAction("BookingSearch", new { keyword, dateRange, bookingStatus = keyStatus });
+            }
             result.CancellationReason = cancelReason;
+
             result.CancelledAt = _Clock.Now;
-            result.CancelledByEmployeeNumber = employeeNum;
+
+            result.CancelledByEmployeeNumber = EmployeeNum;
             //System.Diagnostics.Debug.WriteLine("==================!!!!!=================");
-            _context.SaveChanges();
+            try
+            {
+                _context.SaveChanges();
+            }
+            catch
+            {
+                ViewBag.BookingStatusError = "發生不可避免的錯誤！";
+                return RedirectToAction("BookingSearch", new { keyword, dateRange, bookingStatus = keyStatus });
+            }
 
             return RedirectToAction("BookingSearch", new {keyword, dateRange, bookingStatus = keyStatus });
         }
