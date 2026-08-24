@@ -23,6 +23,12 @@ namespace HotelManagementSystem.Controllers
             var branch = _context.Branches
                 .FirstOrDefault(b => b.BranchId == branchId);
 
+            // 如果找不到分館
+            if (branch == null)
+            {
+                return NotFound("找不到指定的分館。");
+            }
+
             // 查詢該分館 符合所選房型人數 且 啟用 的房型
             var roomTypes = _context.RoomTypes
                 .Include(r => r.Rooms)
@@ -51,7 +57,7 @@ namespace HotelManagementSystem.Controllers
             var model = new RoomSelectionViewModel
             {
                 BranchId = branchId,
-                BranchName = branch?.BranchName ?? "",  //ps. ?? --> 如果左邊是 null，就使用右邊的值(空字串)
+                BranchName = branch.BranchName,
                 CheckInDate = checkIn,
                 CheckOutDate = checkOut,
                 Nights = nights,
@@ -92,13 +98,24 @@ namespace HotelManagementSystem.Controllers
 
 
 
-        public IActionResult Payment(int branchId, DateOnly checkIn, DateOnly checkOut, int roomTypeId)
+        public IActionResult Payment(int branchId, DateOnly checkIn, DateOnly checkOut, int roomTypeId, int guestCount)
         {
             // 根據房型選擇頁傳來的 branchId 找該分館資料
             var branch = _context.Branches.FirstOrDefault(b => b.BranchId == branchId);
 
+            if (branch == null)
+            {
+                return NotFound("找不到指定的分館。");
+            }
+
             // 根據房型選擇頁傳來的 roomTypeId 找該房型資料
             var roomType = _context.RoomTypes.FirstOrDefault(rt => rt.RoomTypeId == roomTypeId);
+
+            // 如果找不到房型
+            if (roomType == null)
+            {
+                return NotFound("找不到指定的房型。");
+            }
 
             // 根據房型選擇頁傳來的 checkIn, checkOut 計算入住晚數
             var nights = checkOut.DayNumber - checkIn.DayNumber;
@@ -119,6 +136,7 @@ namespace HotelManagementSystem.Controllers
                 RoomTypeName = roomType.RoomTypeName,
                 NightlyPrice = roomType.NightlyPrice,
                 TotalPrice = totalPrice,
+                GuestCount = guestCount
             };
 
             return View(model);
@@ -132,10 +150,21 @@ namespace HotelManagementSystem.Controllers
             // 根據付款頁傳來的 branchId 找該分館資料
             var branch = _context.Branches.FirstOrDefault(b => b.BranchId == branchId);
 
+            if (branch == null)
+            {
+                return NotFound("找不到指定的分館。");
+            }
+
             // 根據付款頁傳來的 roomTypeId 找該房型資料，同時載入關聯的Rooms資料
             var roomType = _context.RoomTypes
                 .Include(rt => rt.Rooms)
                 .FirstOrDefault(rt => rt.RoomTypeId == roomTypeId);
+
+            if (roomType == null)
+            {
+                return NotFound("找不到指定的房型。");
+            }
+
 
             // 再次確認剩餘房量：
             // 1.計算可售房量

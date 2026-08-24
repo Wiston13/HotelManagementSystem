@@ -19,4 +19,6 @@ public class PaymentViewModel
     public decimal NightlyPrice { get; set; }
 
     public decimal TotalPrice { get; set; }
+
+    public int GuestCount { get; set; }
 }

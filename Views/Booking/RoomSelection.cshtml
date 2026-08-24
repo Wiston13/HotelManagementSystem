@@ -49,7 +49,14 @@
                                     <div class="d-flex align-items-baseline mb-1">
                                         <h5 class="card-title fw-bold mb-0">@room.RoomTypeName</h5>
                                         <small class="text-secondary ms-2" style="position: relative; top: -1px;">
-                                            ・剩餘 @room.AvailableRooms 間
+                                            @if (room.AvailableRooms > 0)
+                                            {
+                                                <span>・剩餘 @room.AvailableRooms 間</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-danger">・目前無空房</span>
+                                            }
                                         </small>
                                     </div>
 
@@ -79,10 +86,24 @@
                                     NT$ @room.NightlyPrice.ToString("N0")
                                     <small class="fs-6 fw-normal">／晚</small>
                                 </h4>
-                                <button type="button" class="btn btn-outline-primary px-4"
-                                        onclick="selectRoom(@room.RoomTypeId, '@room.RoomTypeName', @room.NightlyPrice)">
+
+                                @* 選擇按鈕 *@
+                                @if (room.AvailableRooms > 0)
+                                {
+                                    <button type="button"
+                                            class="btn btn-outline-primary px-4"
+                                            onclick="selectRoom(@room.RoomTypeId, '@room.RoomTypeName', @room.NightlyPrice)">
                                         選擇
-                                </button>
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button type="button"
+                                            class="btn btn-secondary px-4"
+                                            disabled>
+                                        無空房
+                                    </button>
+                                }
                             </div>
                         </div>
                     </div>
@@ -135,7 +156,7 @@
                     <input type="hidden" name="checkIn" value="@Model.CheckInDate.ToString("yyyy-MM-dd")" />
                     <input type="hidden" name="checkOut" value="@Model.CheckOutDate.ToString("yyyy-MM-dd")" />
                     <input type="hidden" id="inputRoomTypeId" name="roomTypeId" value="" />
-
+                    <input type="hidden" name="guestCount" value="@Model.GuestCount" />
                     <button type="submit" id="btnPay" class="btn btn-primary btn-lg w-100 mt-2" disabled>
                         前往付款
                     </button>

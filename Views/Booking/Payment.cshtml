@@ -19,6 +19,10 @@
 	<!-- 返回房型選擇頁 (後續記得處理返回後資料傳遞等部分) -->
 	<a asp-controller="Booking"
 	   asp-action="RoomSelection"
+	   asp-route-branchId="@Model.BranchId"
+	   asp-route-checkIn="@Model.CheckInDate.ToString("yyyy-MM-dd")"
+	   asp-route-checkOut="@Model.CheckOutDate.ToString("yyyy-MM-dd")"
+	   asp-route-guestCount="@Model.GuestCount"
 	   class="btn btn-link px-0 text-decoration-none mb-2">
 		← 重新選擇房型
 	</a>
