@@ -1,4 +1,6 @@
-﻿@{
+﻿@model IEnumerable<HotelManagementSystem.Models.Entities.RoomType>
+
+@{
     ViewData["Title"] = "房型與固定價格管理";
 }
 
@@ -17,8 +19,13 @@
     <div class="col-md-3">
         <label class="form-label fw-bold small">選擇分館</label>
         <select class="form-select" id="branchFilter" onchange="filterByBranch()">
-            <option value="1" selected>台北館</option>
-            <option value="2">高雄館</option>
+            @if (ViewBag.Branches != null)
+            {
+                foreach (var branch in ViewBag.Branches)
+                {
+                    <option value="@branch.BranchId">@branch.BranchName</option>
+                }
+            }
         </select>
     </div>
 </div>
@@ -37,81 +44,51 @@
                 </tr>
             </thead>
             <tbody id="roomTypeTableBody">
-                <!-- 示範資料列 1 (台北館 BranchId=1) -->
-                <tr data-branch-id="1">
-                    <td class="ps-4 fw-bold">標準雙人房</td>
-                    <td>2 人</td>
-                    <td>一大床</td>
-                    <td>NT$ 2,800</td>
-                    <td><span class="badge bg-success">啟用</span></td>
-                    <td class="text-end pe-4">
-                        <button class="btn btn-link text-primary p-0 text-decoration-none"
-                                data-bs-toggle="modal"
-                                data-bs-target="#roomTypeModal"
-                                data-id="1"
-                                data-branch-id="1"
-                                data-name="標準雙人房"
-                                data-capacity="2"
-                                data-bed="一大床"
-                                data-price="2800"
-                                data-status="true"
-                                data-imageurl="https://example.com/room1.jpg"
-                                data-description="舒適溫馨的雙人空間，適合情侶或商務出差。"
-                                onclick="openRoomTypeModal('edit', this)">
-                            編輯
-                        </button>
-                    </td>
-                </tr>
-                <!-- 示範資料列 2 (台北館 BranchId=1) -->
-                <tr data-branch-id="1">
-                    <td class="ps-4 fw-bold">三床豪華房</td>
-                    <td>3 人</td>
-                    <td>一大床 + 一小床</td>
-                    <td>NT$ 3,800</td>
-                    <td><span class="badge bg-secondary">停用</span></td>
-                    <td class="text-end pe-4">
-                        <button class="btn btn-link text-primary p-0 text-decoration-none"
-                                data-bs-toggle="modal"
-                                data-bs-target="#roomTypeModal"
-                                data-id="2"
-                                data-branch-id="1"
-                                data-name="三床豪華房"
-                                data-capacity="3"
-                                data-bed="一大床 + 一小床"
-                                data-price="3800"
-                                data-status="false"
-                                data-imageurl="https://example.com/room2.jpg"
-                                data-description="空間寬敞，適合家庭與小團體入住。"
-                                onclick="openRoomTypeModal('edit', this)">
-                            編輯
-                        </button>
-                    </td>
-                </tr>
-                <!-- 示範資料列 3 (高雄館 BranchId=2) -->
-                <tr data-branch-id="2" style="display: none;">
-                    <td class="ps-4 fw-bold">海景雙人房</td>
-                    <td>2 人</td>
-                    <td>一大床</td>
-                    <td>NT$ 3,200</td>
-                    <td><span class="badge bg-success">啟用</span></td>
-                    <td class="text-end pe-4">
-                        <button class="btn btn-link text-primary p-0 text-decoration-none"
-                                data-bs-toggle="modal"
-                                data-bs-target="#roomTypeModal"
-                                data-id="3"
-                                data-branch-id="2"
-                                data-name="海景雙人房"
-                                data-capacity="2"
-                                data-bed="一大床"
-                                data-price="3200"
-                                data-status="true"
-                                data-imageurl="https://example.com/room3.jpg"
-                                data-description="採光極佳，可直接遠眺高雄港夜景。"
-                                onclick="openRoomTypeModal('edit', this)">
-                            編輯
-                        </button>
-                    </td>
-                </tr>
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr data-branch-id="@item.BranchId">
+                            <td class="ps-4 fw-bold">@item.RoomTypeName</td>
+                            <td>@item.MaxOccupancy 人</td>
+                            <td>@item.BedType</td>
+                            <td>NT$ @item.NightlyPrice.ToString("N0")</td>
+                            <td>
+                                @if (item.IsActive)
+                                {
+                                    <span class="badge bg-success">啟用</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">停用</span>
+                                }
+                            </td>
+                            <td class="text-end pe-4">
+                                <button class="btn btn-link text-primary p-0 text-decoration-none"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#roomTypeModal"
+                                        data-id="@item.RoomTypeId"
+                                        data-branch-id="@item.BranchId"
+                                        data-name="@item.RoomTypeName"
+                                        data-capacity="@item.MaxOccupancy"
+                                        data-bed="@item.BedType"
+                                        data-price="@item.NightlyPrice"
+                                        data-status="@(item.IsActive.ToString().ToLower())"
+                                        data-imageurl="@item.ImageUrl"
+                                        data-description="@item.Description"
+                                        onclick="openRoomTypeModal('edit', this)">
+                                    編輯
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">目前尚無任何房型資料</td>
+                    </tr>
+                }
             </tbody>
         </table>
     </div>
@@ -127,6 +104,8 @@
             </div>
             <div class="modal-body">
                 <form id="roomTypeForm" asp-controller="RoomType" asp-action="Save" method="post">
+                    @Html.AntiForgeryToken()
+
                     <!-- 隱藏欄位：PK (RoomTypeId) 與 FK (BranchId) -->
                     <input type="hidden" id="roomTypeId" name="RoomTypeId" value="0">
                     <input type="hidden" id="branchId" name="BranchId" value="1">
@@ -179,13 +158,16 @@
     <script>
         let currentMode = 'add';
 
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             filterByBranch();
         });
 
         // 依畫面上方選擇的分館進行表格篩選
         function filterByBranch() {
-            const selectedBranchId = document.getElementById('branchFilter').value;
+            const branchSelect = document.getElementById('branchFilter');
+            if (!branchSelect) return;
+
+            const selectedBranchId = branchSelect.value;
             const rows = document.querySelectorAll('#roomTypeTableBody tr');
 
             rows.forEach(row => {
@@ -238,7 +220,6 @@
             }
 
             const name = document.getElementById('roomTypeName').value;
-            // 抓取上方「選擇分館」下拉選單顯示的名稱（例如：台北館）
             const branchFilter = document.getElementById('branchFilter');
             const branchText = branchFilter.options[branchFilter.selectedIndex].text;
 
