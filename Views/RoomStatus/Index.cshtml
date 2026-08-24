@@ -1,4 +1,6 @@
-@model HotelManagementSystem.Models.ViewModels.RoomStatus.RoomStatusViewModel
+@using HotelManagementSystem.Models.ViewModels.RoomStatus
+@model RoomStatusViewModel
+
 @{
 	ViewData["Title"] = "房間供應與清潔狀態";
 }
@@ -15,7 +17,18 @@
 	var cleaningRooms = Model.Rooms.Where(r => r.CleaningStatus == "NeedsCleaning");
 
 	var disabledRooms = Model.Rooms.Where(r => r.SupplyStatus == "Disabled");
+
+	var roomTabs = new (string Id, IEnumerable<RoomStatusItemViewModel> Rooms, bool IsActive)[]
+	{
+		("all", Model.Rooms, true),
+		("available", availableRooms, false),
+		("reserved", reservedRooms, false),
+		("occupied", occupiedRooms, false),
+		("cleaning", cleaningRooms, false),
+		("disabled", disabledRooms, false)
+	};
 }
+
 
 @section Styles {
 	<link rel="stylesheet" href="~/css/room-status/Index.css" asp-append-version="true" />
@@ -35,70 +48,29 @@
 		</div>
 		<div class="room-floor-filter">
 			<label class="visually-hidden" for="floorFilter">選擇樓層</label>
-			<select class="form-select" id="floorFilter" aria-label="選擇樓層"><option selected>全部樓層</option><option>3 樓</option><option>5 樓</option><option>6 樓</option></select>
+			<select class="form-select" id="floorFilter" aria-label="選擇樓層">
+				<option value="" selected>全部樓層</option>
+				@foreach(var floor in Model.Floors)
+				{
+					<option value="@floor">@floor 樓</option>
+				}
+			</select>
 		</div>
 	</div>
 
 	<div class="tab-content" id="roomStatusTabContent">
-		<div class="tab-pane fade show active"
-			 id="all-pane"
-			 role="tabpanel"
-			 aria-labelledby="all-tab"
-			 tabindex="0">
+		@foreach (var tab in roomTabs)
+		{
+			<div class="tab-pane fade @(tab.IsActive ? "show active" : "")"
+				 id="@(tab.Id)-pane"
+				 role="tabpanel"
+				 aria-labelledby="@(tab.Id)-tab"
+				 tabindex="0">
 
-			<partial name="_RoomCards" model="Model.Rooms" />
-			
-		</div>
+				<partial name="_RoomCards" model="tab.Rooms" />
 
-		<div class="tab-pane fade" 
-			id="available-pane" 
-			role="tabpanel" 
-			aria-labelledby="available-tab" 
-			tabindex="0">
-
-			<partial name="_RoomCards" model="availableRooms" />
-
-		</div>
-
-		<div class="tab-pane fade" 
-			id="reserved-pane" 
-			role="tabpanel" 
-			aria-labelledby="reserved-tab" 
-			tabindex="0">
-
-			<partial name="_RoomCards" model="reservedRooms" />
-
-		</div>
-
-		<div class="tab-pane fade" 
-			id="occupied-pane" 
-			role="tabpanel" 
-			aria-labelledby="occupied-tab" 
-			tabindex="0">
-
-			<partial name="_RoomCards" model="occupiedRooms" />
-
-		</div>
-
-		<div class="tab-pane fade" 
-			id="cleaning-pane" 
-			role="tabpanel" 
-			aria-labelledby="cleaning-tab" 
-			tabindex="0">
-
-			<partial name="_RoomCards" model="cleaningRooms" />
-
-		</div>
-
-		<div class="tab-pane fade" 
-			id="disabled-pane" 
-			role="tabpanel" 
-			aria-labelledby="disabled-tab" 
-			tabindex="0">
-
-			<partial name="_RoomCards" model="disabledRooms" />
-
-		</div>
+			</div>
+		}
 	</div>
 </div>
 
@@ -441,4 +413,37 @@
 			</div>
 		}
 	}
+}
+
+
+@section Scripts {
+	<script>
+		$("#floorFilter").on("change", function() {
+			const selectedFloor = $(this).val();
+
+			// 先篩房間卡片
+			$("[data-floor]").each(function() {
+				const roomFloor = $(this).data("floor");
+
+				if (selectedFloor === "" || roomFloor == selectedFloor) {
+					$(this).show();
+				} else {
+					$(this).hide();
+				}
+			});
+
+			// 再決定房型區塊要不要顯示
+			$(".room-type-group").each(function() {
+				const hasMatchingRoom =
+					selectedFloor === "" ||
+					$(this).find(`[data-floor="${selectedFloor}"]`).length > 0;
+
+				if (hasMatchingRoom) {
+					$(this).show();
+				} else {
+					$(this).hide();
+				}
+			});
+		});
+	</script>
 }
