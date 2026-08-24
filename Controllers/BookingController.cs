@@ -1,6 +1,7 @@
 ﻿using HotelManagementSystem.Models;
 using HotelManagementSystem.Models.Entities;
 using HotelManagementSystem.Models.ViewModels.Booking;
+using HotelManagementSystem.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
@@ -10,9 +11,13 @@ namespace HotelManagementSystem.Controllers
     public class BookingController : Controller
     {
         private readonly HotelManagementContext _context;
-        public BookingController(HotelManagementContext context)
+
+        private readonly TaipeiClock _taipeiClock;
+
+        public BookingController(HotelManagementContext context, TaipeiClock taipeiClock)
         {
             _context = context;
+            _taipeiClock = taipeiClock;
         }
 
 
@@ -145,7 +150,7 @@ namespace HotelManagementSystem.Controllers
 
 
 
-        public IActionResult Success(int branchId, DateOnly checkIn, DateOnly checkOut, int roomTypeId, string bookerName, string contactPhone, string email)
+        public IActionResult Success(int branchId, DateOnly checkIn, DateOnly checkOut, int roomTypeId, string bookerName, string contactPhone, string email, int guestCount)
         {
             // 根據付款頁傳來的 branchId 找該分館資料
             var branch = _context.Branches.FirstOrDefault(b => b.BranchId == branchId);
@@ -181,6 +186,40 @@ namespace HotelManagementSystem.Controllers
             // 3.算剩餘房量
             var remainingCount = availableCount - bookingCount;
 
+            // 房量不足，不建立訂單，回到房型選擇頁重新查詢
+            if (remainingCount < 1)
+            {
+                return RedirectToAction("RoomSelection", new 
+                {
+                    branchId = branchId,
+                    checkIn = checkIn,
+                    checkOut = checkOut,
+                    guestCount = guestCount
+                });
+            }
+
+            // 建立訂單
+            var booking = new Booking
+            {
+                BranchId = branchId,
+                RoomTypeId = roomTypeId,
+
+                BookerName = bookerName,
+                ContactPhone = contactPhone,
+                Email = email,
+
+                CheckInDate = checkIn,
+                CheckOutDate = checkOut,
+
+                RoomTypeNameSnapshot = roomType.RoomTypeName,
+                MaxOccupancySnapshot = roomType.MaxOccupancy,
+                NightlyPriceSnapshot = roomType.NightlyPrice,
+
+                TotalAmount = roomType.NightlyPrice * (checkOut.DayNumber - checkIn.DayNumber),
+
+                BookingStatus = "Paid",
+                CreatedAt = _taipeiClock.Now
+            };
 
 
             // 建立 SuccessViewModel
@@ -193,8 +232,6 @@ namespace HotelManagementSystem.Controllers
                 CheckOutDate = checkOut,
                 Email = email
             };
-
-
             return View(model);
         }
         
