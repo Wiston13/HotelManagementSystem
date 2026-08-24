@@ -1,0 +1,115 @@
+﻿@using HotelManagementSystem.Models.ViewModels.RoomStatus
+@model IEnumerable<RoomStatusItemViewModel>
+
+@foreach (var roomTypeGroup in Model.GroupBy(r => r.RoomTypeName))
+{
+    <section class="room-type-group mb-5">
+        <h2 class="h5 mb-3">@roomTypeGroup.Key</h2>
+
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xxl-4 g-3">
+			@foreach (var room in roomTypeGroup)
+			{
+				var isAvailable =
+					!room.IsOccupied &&
+					room.SupplyStatus == "Open" &&
+					room.CleaningStatus == "Clean";
+
+				var cardClass =
+					room.IsOccupied ? "room-card--occupied" :
+					room.SupplyStatus == "Disabled" ? "room-card--disabled" :
+					room.SupplyStatus == "Reserved" ? "room-card--reserved" :
+					room.CleaningStatus == "NeedsCleaning" ? "room-card--cleaning" :
+					"room-card--available";
+
+				var supplyClass =
+					room.SupplyStatus == "Open" ? "room-state--open" :
+					room.SupplyStatus == "Reserved" ? "room-state--reserved" :
+					"room-state--disabled";
+
+				var supplyText =
+					room.SupplyStatus == "Open" ? "開放販售" :
+					room.SupplyStatus == "Reserved" ? "保留" :
+					"停用";
+
+				var cleaningClass =
+					room.CleaningStatus == "Clean"
+						? "room-state--clean"
+						: "room-state--dirty";
+
+				var cleaningText =
+					room.CleaningStatus == "Clean"
+						? "已清潔"
+						: "待清潔";
+
+				<div class="col"
+					 data-floor="@room.Floor">
+
+					<button type="button"
+							class="room-card @cardClass card h-100 w-100 border-0 shadow-sm p-0"
+							data-bs-toggle="modal"
+							data-bs-target="#room@(room.RoomId)Modal">
+
+						<span class="card-body d-block p-3">
+
+							<span class="room-card__number d-block">
+								@room.RoomNumber
+							</span>
+
+							<span class="room-card__type d-block">
+								@room.RoomTypeName
+							</span>
+
+							<span class="room-card__states d-flex flex-wrap gap-2">
+
+								@if (room.IsOccupied)
+								{
+									<span class="badge room-state room-state--occupied">
+										入住中
+									</span>
+								}
+								else
+								{
+									<span class="badge room-state @supplyClass">
+										@supplyText
+									</span>
+
+									<span class="badge room-state @cleaningClass">
+										@cleaningText
+									</span>
+
+									@if (isAvailable)
+									{
+										<span class="badge room-state room-state--available">
+											可入住
+										</span>
+									}
+								}
+
+							</span>
+
+							@if (room.IsOccupied && room.CheckOutDate.HasValue)
+							{
+								<span class="room-card__meta d-block">
+									退房日 @room.CheckOutDate.Value.ToString("MM/dd")
+								</span>
+							}
+							else if (room.SupplyStatus == "Disabled"
+									 && !string.IsNullOrWhiteSpace(room.DisabledReason))
+							{
+								<span class="room-card__meta d-block">
+									@room.DisabledReason
+								</span>
+							}
+
+						</span>
+
+					</button>
+
+				</div>
+			}
+
+        </div>
+    </section>
+}
+
+
