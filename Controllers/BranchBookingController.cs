@@ -102,15 +102,15 @@ namespace HotelManagementSystem.Controllers
 
             var allData = _context.Bookings;
             var query = allData.AsQueryable().AsNoTracking();
-
+            query = query.Where(x => x.BranchId == BranchId);
             // keyword模糊查詢資料庫 及 分館ID (此處需要驗證員工帳號及帳號所屬分館取得)
             if (!string.IsNullOrEmpty(keyword))
             {
-                query = query.Where(x => x.BranchId == BranchId);
+                
                 query = query.Where(x => x.BookingNumber!.Contains(keyword) || x.BookerName!.Contains(keyword) || x.ContactPhone!.Contains(keyword));
             }
 
-            // dateRange查詢時間範圍 (此處考慮加入前端預設時間 避免訂單結果爆量讀取過久)
+            // dateRange查詢時間範圍 (此處考慮加入前端預設時間段 避免訂單結果爆量讀取過久)
             if (!string.IsNullOrEmpty(dateRange))
             {
                 var dates = dateRange.Split(" - ");
@@ -170,13 +170,11 @@ namespace HotelManagementSystem.Controllers
                 return RedirectToAction("BookingSearch",new List<BookingData>());
             }
 
-            // 缺 錯誤查詢不能savechange()
-            // 顧客因素判斷條件
 
             // 此處錯誤有解方嗎? 假如訂單狀態錯誤會是什麼情況 在使用者不寫程式的情況可以修好嗎
             // 查詢訂單
             var result = _context.Bookings.FirstOrDefault(x => x.BookingNumber == bookingNum);
-            if(result == null || result.BookingStatus!= "Paid"||result.BookingStatus!= "Cancelled")
+            if(result == null || result.BookingStatus!= "Paid")
             {
                 ViewBag.BookingStatusError = "訂單狀態錯誤，無法取消訂單";
                 return RedirectToAction("BookingSearch", new {  keyword, dateRange, bookingStatus = keyStatus });
@@ -213,6 +211,7 @@ namespace HotelManagementSystem.Controllers
 
             return RedirectToAction("BookingSearch", new {keyword, dateRange, bookingStatus = keyStatus });
         }
+
 
     }
 }
