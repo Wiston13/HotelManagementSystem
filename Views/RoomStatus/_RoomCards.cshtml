@@ -9,11 +9,6 @@
         <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xxl-4 g-3">
 			@foreach (var room in roomTypeGroup)
 			{
-				var isAvailable =
-					!room.IsOccupied &&
-					room.SupplyStatus == "Open" &&
-					room.CleaningStatus == "Clean";
-
 				var cardClass =
 					room.IsOccupied ? "room-card--occupied" :
 					room.SupplyStatus == "Disabled" ? "room-card--disabled" :
@@ -77,7 +72,7 @@
 										@cleaningText
 									</span>
 
-									@if (isAvailable)
+									@if (room.IsAvailable)
 									{
 										<span class="badge room-state room-state--available">
 											可入住

@@ -21,5 +21,6 @@
         public DateOnly? CheckInDate { get; set; }
         public DateTime? ActualCheckInAt { get; set; }
         public DateOnly? CheckOutDate { get; set; }
+        public bool IsAvailable => !IsOccupied && SupplyStatus == "Open" && CleaningStatus == "Clean";
     }
 }

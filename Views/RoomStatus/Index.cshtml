@@ -5,10 +5,7 @@
 	ViewData["Title"] = "房間供應與清潔狀態";
 }
 @{
-	var availableRooms = Model.Rooms.Where(r =>
-		!r.IsOccupied &&
-		r.SupplyStatus == "Open" &&
-		r.CleaningStatus == "Clean");
+	var availableRooms = Model.Rooms.Where(r => r.IsAvailable);
 
 	var reservedRooms = Model.Rooms.Where(r => r.SupplyStatus == "Reserved");
 
@@ -18,14 +15,18 @@
 
 	var disabledRooms = Model.Rooms.Where(r => r.SupplyStatus == "Disabled");
 
-	var roomTabs = new (string Id, IEnumerable<RoomStatusItemViewModel> Rooms, bool IsActive)[]
+	var roomTabs = new (
+		string Id,
+		string Label,
+		IEnumerable<RoomStatusItemViewModel> Rooms,
+		bool IsActive)[]
 	{
-		("all", Model.Rooms, true),
-		("available", availableRooms, false),
-		("reserved", reservedRooms, false),
-		("occupied", occupiedRooms, false),
-		("cleaning", cleaningRooms, false),
-		("disabled", disabledRooms, false)
+		("all", "全部", Model.Rooms, true),
+		("available", "可入住", availableRooms, false),
+		("reserved", "保留", reservedRooms, false),
+		("occupied", "入住中", occupiedRooms, false),
+		("cleaning", "待清潔", cleaningRooms, false),
+		("disabled", "停用", disabledRooms, false)
 	};
 }
 
@@ -37,13 +38,26 @@
 <div class="room-status-page">
 	<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3 mb-4">
 		<div class="room-status-tabs-wrapper flex-grow-1">
-			<ul class="nav nav-tabs room-status-tabs" id="roomStatusTabs" role="tablist">
-				<li class="nav-item" role="presentation"><button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all-pane" type="button" role="tab" aria-controls="all-pane" aria-selected="true">全部</button></li>
-				<li class="nav-item" role="presentation"><button class="nav-link" id="available-tab" data-bs-toggle="tab" data-bs-target="#available-pane" type="button" role="tab" aria-controls="available-pane" aria-selected="false">可入住</button></li>
-				<li class="nav-item" role="presentation"><button class="nav-link" id="reserved-tab" data-bs-toggle="tab" data-bs-target="#reserved-pane" type="button" role="tab" aria-controls="reserved-pane" aria-selected="false">保留</button></li>
-				<li class="nav-item" role="presentation"><button class="nav-link" id="occupied-tab" data-bs-toggle="tab" data-bs-target="#occupied-pane" type="button" role="tab" aria-controls="occupied-pane" aria-selected="false">入住中</button></li>
-				<li class="nav-item" role="presentation"><button class="nav-link" id="cleaning-tab" data-bs-toggle="tab" data-bs-target="#cleaning-pane" type="button" role="tab" aria-controls="cleaning-pane" aria-selected="false">待清潔</button></li>
-				<li class="nav-item" role="presentation"><button class="nav-link" id="disabled-tab" data-bs-toggle="tab" data-bs-target="#disabled-pane" type="button" role="tab" aria-controls="disabled-pane" aria-selected="false">停用</button></li>
+			<ul class="nav nav-tabs room-status-tabs"
+				id="roomStatusTabs"
+				role="tablist">
+
+				@foreach (var tab in roomTabs)
+				{
+					<li class="nav-item" role="presentation">
+						<button class="nav-link @(tab.IsActive ? "active" : "")"
+								id="@($"{tab.Id}-tab")"
+								data-bs-toggle="tab"
+								data-bs-target="@($"#{tab.Id}-pane")"
+								type="button"
+								role="tab"
+								aria-controls="@($"{tab.Id}-pane")"
+								aria-selected="@tab.IsActive.ToString().ToLower()">
+
+							@tab.Label
+						</button>
+					</li>
+				}
 			</ul>
 		</div>
 		<div class="room-floor-filter">
