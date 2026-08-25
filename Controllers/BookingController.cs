@@ -21,6 +21,50 @@ namespace HotelManagementSystem.Controllers
         }
 
 
+
+        // 計算最低每晚剩餘房量
+        private int CalculateMinimumRemainingRooms(int roomTypeId, DateOnly checkIn, DateOnly checkOut)
+        {
+            var today = _taipeiClock.Today;
+
+            // 取得開放販售房量
+            var availableCount = _context.Rooms
+                .Count(r => 
+                r.RoomTypeId == roomTypeId && 
+                r.SupplyStatus == "Open");
+
+            // 取得日期重疊範圍內的有效訂單
+            var bookings = _context.Bookings
+                .Where(b => 
+                b.RoomTypeId == roomTypeId &&
+                b.CheckInDate < checkOut && b.CheckOutDate > checkIn &&
+                (b.BookingStatus == "Paid" || b.BookingStatus == "CheckedIn")
+                )
+                .ToList();
+
+
+            // 取最低的每晚剩餘房量
+            var minimumRemaining = int.MaxValue;
+
+            for (var date = checkIn; date < checkOut; date = date.AddDays(1))
+            {
+                var bookingCount = bookings.Count(b =>
+                    b.CheckInDate <= date &&
+                    b.CheckOutDate > date);
+
+                var remaining = availableCount - bookingCount;
+
+                if (remaining < minimumRemaining)
+                {
+                    minimumRemaining = remaining;
+                }
+            }
+
+            return minimumRemaining;
+        }
+
+
+
         [HttpGet]
         public IActionResult RoomSelection(int branchId, DateOnly checkIn, DateOnly checkOut, int guestCount)
         {
@@ -160,10 +204,14 @@ namespace HotelManagementSystem.Controllers
                 return NotFound("找不到指定的分館。");
             }
 
-            // 根據付款頁傳來的 roomTypeId 找該房型資料，同時載入關聯的Rooms資料
-            var roomType = _context.RoomTypes
-                .Include(rt => rt.Rooms)
-                .FirstOrDefault(rt => rt.RoomTypeId == roomTypeId);
+
+            // 交易開始
+            using var transaction = _context.Database.BeginTransaction();
+            var roomType = _context.RoomTypes.FromSqlInterpolated($@"
+                SELECT *
+                FROM RoomTypes WITH (UPDLOCK, HOLDLOCK)
+                WHERE RoomTypeId = {roomTypeId}")
+                .FirstOrDefault();
 
             if (roomType == null)
             {
@@ -173,7 +221,10 @@ namespace HotelManagementSystem.Controllers
 
             // 再次確認剩餘房量：
             // 1.計算可售房量
-            var availableCount = roomType.Rooms.Count(r => r.SupplyStatus == "Open");
+            var availableCount = _context.Rooms
+                .Count(r => 
+                r.RoomTypeId == roomTypeId && 
+                r.SupplyStatus == "Open");
             // 2.查詢日期重疊且未取消的訂單筆數
             var bookingCount = _context.Bookings
                 .Count(b =>
@@ -189,6 +240,8 @@ namespace HotelManagementSystem.Controllers
             // 房量不足，不建立訂單，回到房型選擇頁重新查詢
             if (remainingCount < 1)
             {
+                transaction.Rollback();
+
                 return RedirectToAction("RoomSelection", new 
                 {
                     branchId = branchId,
@@ -197,6 +250,39 @@ namespace HotelManagementSystem.Controllers
                     guestCount = guestCount
                 });
             }
+
+
+            //
+            var now = _taipeiClock.Now;
+
+            var today = now.Date;
+
+            var tomorrow = today.AddDays(1);
+
+            var prefix = $"BK{now:yyMMdd}{roomTypeId:D4}";
+
+            var lastBookingNumber = _context.Bookings
+                .Where(b =>
+                    b.RoomTypeId == roomTypeId &&
+                    b.CreatedAt >= today &&
+                    b.CreatedAt < tomorrow &&
+                    b.BookingNumber.StartsWith(prefix))
+                .OrderByDescending(b => b.BookingNumber)
+                .Select(b => b.BookingNumber)
+                .FirstOrDefault();
+
+            int nextSequence = 1;
+
+            if (lastBookingNumber != null)
+            {
+                var lastSequence = int.Parse(lastBookingNumber.Substring(lastBookingNumber.Length - 4));
+                nextSequence = lastSequence + 1;
+            }
+
+            var bookingNumber = $"{prefix}{nextSequence:D4}";
+
+
+
 
             // 建立訂單
             var booking = new Booking
