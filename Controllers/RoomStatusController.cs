@@ -18,7 +18,7 @@ namespace HotelManagementSystem.Controllers
         }
 
         [HttpGet]
-        public IActionResult Index()
+        public IActionResult Index(int? roomId)
         {
 
             var currentEmployeeNumber = "E20260807002"; // TODO 假設是登入的員工編號，實際應從登入資訊取得"
@@ -58,6 +58,12 @@ namespace HotelManagementSystem.Controllers
                 .Distinct()
                 .OrderBy(f => f)
                 .ToList();
+
+            if (roomId.HasValue &&
+                model.Rooms.Any(r => r.RoomId == roomId.Value))
+            {
+                model.OpenModalRoomId = roomId.Value;
+            }
 
             return View(model);
         }

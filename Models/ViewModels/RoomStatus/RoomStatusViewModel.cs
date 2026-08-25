@@ -4,6 +4,7 @@
     {
         public List<RoomStatusItemViewModel> Rooms { get; set; } = new List<RoomStatusItemViewModel>();
         public List<int> Floors { get; set; } = new List<int>();
+        public int? OpenModalRoomId { get; set; }
     }
     public class RoomStatusItemViewModel
     {

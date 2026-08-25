@@ -619,3 +619,18 @@
 		});
 	</script>
 }
+
+@if (Model.OpenModalRoomId.HasValue)
+{
+	<script>
+		document.addEventListener("DOMContentLoaded", function() {
+			const modalElement =
+				document.getElementById("room@(Model.OpenModalRoomId.Value)Modal");
+
+			if (modalElement) {
+				const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+				modal.show();
+			}
+		});
+	</script>
+}
