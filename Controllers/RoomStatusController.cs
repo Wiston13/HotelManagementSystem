@@ -1,20 +1,26 @@
 ﻿using HotelManagementSystem.Models;
+using HotelManagementSystem.Models.Entities;
 using HotelManagementSystem.Models.ViewModels.RoomStatus;
+using HotelManagementSystem.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace HotelManagementSystem.Controllers
 {
     public class RoomStatusController : Controller
     {
         private readonly HotelManagementContext _context;
-        public RoomStatusController(HotelManagementContext context)
+        private readonly TaipeiClock _taipeiClock;
+        public RoomStatusController(HotelManagementContext context, TaipeiClock taipeiClock)
         {
             _context = context;
+            _taipeiClock = taipeiClock;
         }
 
         [HttpGet]
         public IActionResult Index()
         {
+
             var currentEmployeeNumber = "E20260807002"; // TODO 假設是登入的員工編號，實際應從登入資訊取得"
 
             var staff = _context.Employees
@@ -60,6 +66,7 @@ namespace HotelManagementSystem.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult UpdateCleaningStatus(int roomId, string targetStatus)
         {
+
             var currentEmployeeNumber = "E20260807002"; // TODO 假設是登入的員工編號，實際應從登入資訊取得"
 
             var staff = _context.Employees
@@ -94,7 +101,29 @@ namespace HotelManagementSystem.Controllers
 
             room.CleaningStatus = targetStatus;
 
-            _context.SaveChanges();
+            var operationLog = new OperationLog()
+            {
+                TargetBranchId = room.BranchId,
+                OperatedAt = _taipeiClock.Now,
+                OperatorEmployeeNumber = staff.EmployeeNumber,
+                OperationTypeId = 20,
+                TargetType = "Room",
+                TargetIdentifier = room.RoomNumber,
+                Description = $"將房間 {room.RoomNumber} 標記為 {room.CleaningStatus}。"
+
+            };
+
+            try
+            {
+                _context.OperationLogs.Add(operationLog);
+
+                _context.SaveChanges();
+            }
+            catch (DbUpdateException)
+            {
+                TempData["ErrorMessage"] = "清潔狀態更新失敗，請再試一次";
+                return RedirectToAction(nameof(Index));
+            }
 
             TempData["SuccessMessage"] = "房間清潔狀態已更新。";
 
@@ -105,6 +134,7 @@ namespace HotelManagementSystem.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult UpdateSupplyStatus(int roomId, string targetStatus)
         {
+
             var currentEmployeeNumber = "E20260807002"; // TODO 假設是登入的員工編號，實際應從登入資訊取得"
 
             var staff = _context.Employees
@@ -146,7 +176,29 @@ namespace HotelManagementSystem.Controllers
 
             room.SupplyStatus = targetStatus;
 
-            _context.SaveChanges();
+            var operationLog = new OperationLog()
+            {
+                TargetBranchId = room.BranchId,
+                OperatedAt = _taipeiClock.Now,
+                OperatorEmployeeNumber = staff.EmployeeNumber,
+                OperationTypeId = (room.SupplyStatus == "Reserved") ? 18 : 19,
+                TargetType = "Room",
+                TargetIdentifier = room.RoomNumber,
+                Description = $"將房間 {room.RoomNumber} 供應狀態更新為 {room.SupplyStatus}。"
+
+            };
+
+            try
+            {
+                _context.OperationLogs.Add(operationLog);
+
+                _context.SaveChanges();
+            }
+            catch (DbUpdateException)
+            {
+                TempData["ErrorMessage"] = "供應狀態更新失敗，請再試一次";
+                return RedirectToAction(nameof(Index));
+            }
 
             TempData["SuccessMessage"] = "房間供應狀態已更新。";
 
