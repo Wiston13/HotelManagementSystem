@@ -99,7 +99,7 @@ namespace HotelManagementSystem.Controllers
             model.EndDate = new DateTime(booking.CheckOutDate.Year, booking.CheckOutDate.Month, booking.CheckOutDate.Day); 
             model.BookingDate = booking.CreatedAt;
             model.Name = booking.BookerName;
-            model.Price = booking.NightlyPriceSnapshot.ToString("N0");
+            model.Price = booking.TotalAmount.ToString("N0");
             model.BookingStatus = StatusToChenese(booking.BookingStatus);
             return View(model);
 

@@ -23,7 +23,7 @@
         window.location.href = '@Url.Action("Login", "Account")';
         </script>
     }
-    if (ViewBag.BookingStatusError != null)
+    if (TempData["BookingStatusError"] != null)
     {
         <script>
             alert("@Html.Raw(ViewBag.BookingStatusError)")
