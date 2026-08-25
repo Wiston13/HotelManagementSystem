@@ -1,17 +1,24 @@
 ﻿using HotelManagementSystem.Models;
 using HotelManagementSystem.Models.Entities;
+using Microsoft.AspNetCore.Hosting; // 必須引入以使用 IWebHostEnvironment
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace HotelManagementSystem.Controllers
 {
     public class BranchController : Controller
     {
         private readonly HotelManagementContext _context;
+        private readonly IWebHostEnvironment _environment;
 
-        public BranchController(HotelManagementContext context)
+        // 注入 DbContext 與 IWebHostEnvironment
+        public BranchController(HotelManagementContext context, IWebHostEnvironment environment)
         {
             _context = context;
+            _environment = environment;
         }
 
         // GET: /Branch/
@@ -36,8 +43,22 @@ namespace HotelManagementSystem.Controllers
             if (!ModelState.IsValid)
             {
                 // 如果驗證沒過，重新載入 Index 畫面
-                var branches = await _context.Branches.AsNoTracking().ToListAsync();
+                var branches = await _context.Branches.AsNoTracking().OrderBy(b => b.BranchId).ToListAsync();
                 return View("Index", branches);
+            }
+
+            // 後端第二重防護：若填寫的是本地相對路徑 (/images/...)，檢查 wwwroot 實體檔案是否存在
+            if (!string.IsNullOrEmpty(branch.ImageUrl) && branch.ImageUrl.StartsWith("/"))
+            {
+                string relativePath = branch.ImageUrl.TrimStart('/');
+                string physicalPath = Path.Combine(_environment.WebRootPath, relativePath);
+
+                if (!System.IO.File.Exists(physicalPath))
+                {
+                    ModelState.AddModelError("ImageUrl", "伺服器的 wwwroot 目錄中找不到該圖片檔案！");
+                    var branches = await _context.Branches.AsNoTracking().OrderBy(b => b.BranchId).ToListAsync();
+                    return View("Index", branches);
+                }
             }
 
             if (branch.BranchId == 0)

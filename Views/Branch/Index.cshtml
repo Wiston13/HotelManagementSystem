@@ -128,8 +128,10 @@
                             <input type="text" class="form-control" id="address" name="Address" required placeholder="完整通訊地址">
                         </div>
                         <div class="col-12">
-                            <label class="form-label fw-bold">圖片網址 (ImageUrl)</label>
-                            <input type="url" class="form-control" id="imageUrl" name="ImageUrl" placeholder="https://example.com/image.jpg">
+                            <label class="form-label fw-bold">圖片網址 / 相對路徑</label>
+                            <!-- 將 type 改為 text，支援 /images/... 路徑與外部網址 -->
+                            <input type="text" class="form-control" id="imageUrl" name="ImageUrl" placeholder="例如：/images/branch1.jpg 或 https://example.com/image.jpg">
+                            <div class="form-text">可填寫本地相對路徑（如：/images/branch1.jpg）或公開網路圖片網址。</div>
                         </div>
                         <div class="col-12">
                             <label class="form-label fw-bold">分館簡介</label>
@@ -178,11 +180,36 @@
             }
         }
 
-        function confirmAndSubmit() {
+        // 非同步驗證圖片路徑/網址是否真實可讀取
+        function validateImageUrl(url) {
+            return new Promise((resolve) => {
+                // 如果未填寫，視為通過（因為圖片非必填）
+                if (!url || url.trim() === '') {
+                    resolve(true);
+                    return;
+                }
+
+                const img = new Image();
+                img.onload = () => resolve(true);   // 圖片成功載入
+                img.onerror = () => resolve(false); // 圖片載入失敗 (檔案不存在或網址無效)
+                img.src = url.trim();
+            });
+        }
+
+        async function confirmAndSubmit() {
             const form = document.getElementById('branchForm');
 
             if (!form.checkValidity()) {
                 form.reportValidity();
+                return;
+            }
+
+            const imgUrl = document.getElementById('imageUrl').value.trim();
+
+            // 執行圖片路徑/網址驗證
+            const isValidImg = await validateImageUrl(imgUrl);
+            if (!isValidImg) {
+                alert('【圖片路徑/網址無效】\n無法讀取此圖片！請確認 wwwroot 資料夾下是否有此檔案，或確認網路圖片網址是否正確。');
                 return;
             }
 
@@ -202,7 +229,8 @@
                     `• 區域：${region}\n` +
                     `• 聯絡電話：${phone}\n` +
                     `• 分館地址：${address}\n` +
-                    `• 訂房設定：${accepts}`;
+                    `• 訂房設定：${accepts}\n` +
+                    `• 圖片路徑：${imgUrl || '未設定'}`;
             } else {
                 message = `【確認修改分館】\n\n` +
                     `確定要儲存【${name}】的變更嗎？\n` +
@@ -210,7 +238,8 @@
                     `• 區域：${region}\n` +
                     `• 聯絡電話：${phone}\n` +
                     `• 分館地址：${address}\n` +
-                    `• 訂房設定：${accepts}`;
+                    `• 訂房設定：${accepts}\n` +
+                    `• 圖片路徑：${imgUrl || '未設定'}`;
             }
 
             if (confirm(message)) {

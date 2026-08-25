@@ -135,9 +135,10 @@
                             </select>
                         </div>
                         <div class="col-12">
-                            <label class="form-label fw-bold">圖片網址 <span class="text-danger">*</span></label>
-                            <input type="url" class="form-control" id="imageUrl" name="ImageUrl" placeholder="https://example.com/image.jpg" required>
-                            <div class="form-text">供顧客房型搜尋與選擇頁顯示預覽圖片。</div>
+                            <label class="form-label fw-bold">圖片網址 / 相對路徑 <span class="text-danger">*</span></label>
+                            <!-- 改為 type="text" 以支援 /images/... 路徑 -->
+                            <input type="text" class="form-control" id="imageUrl" name="ImageUrl" placeholder="例如：/images/room1.jpg 或 https://example.com/image.jpg" required>
+                            <div class="form-text">可填寫本地相對路徑（如：/images/room1.jpg）或公開網路圖片網址。</div>
                         </div>
                         <div class="col-12">
                             <label class="form-label fw-bold">房型描述</label>
@@ -158,7 +159,7 @@
     <script>
         let currentMode = 'add';
 
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             filterByBranch();
         });
 
@@ -211,7 +212,22 @@
             }
         }
 
-        function confirmAndSubmit() {
+        // 驗證圖片路徑/網址是否真實可載入
+        function validateImageUrl(url) {
+            return new Promise((resolve) => {
+                if (!url || url.trim() === '') {
+                    resolve(false);
+                    return;
+                }
+
+                const img = new Image();
+                img.onload = () => resolve(true);   // 圖片載入成功
+                img.onerror = () => resolve(false); // 圖片載入失敗 (檔案不存在或網址失效)
+                img.src = url.trim();
+            });
+        }
+
+        async function confirmAndSubmit() {
             const form = document.getElementById('roomTypeForm');
 
             if (!form.checkValidity()) {
@@ -219,18 +235,24 @@
                 return;
             }
 
+            const imgUrl = document.getElementById('imageUrl').value.trim();
+
+            // 執行非同步圖片載入測試
+            const isValidImg = await validateImageUrl(imgUrl);
+            if (!isValidImg) {
+                alert('【圖片路徑/網址無效】\n無法讀取此圖片！請確認 wwwroot 資料夾下是否有此檔案，或確認網路圖片網址是否正確。');
+                return;
+            }
+
             const name = document.getElementById('roomTypeName').value;
             const branchFilter = document.getElementById('branchFilter');
             const branchText = branchFilter.options[branchFilter.selectedIndex].text;
-
             const capacity = document.getElementById('maxOccupancy').value;
             const bed = document.getElementById('bedType').value;
             const price = document.getElementById('nightlyPrice').value;
             const status = document.getElementById('isActive').value === 'true' ? '啟用' : '停用';
-            const img = document.getElementById('imageUrl').value;
 
             let message = '';
-
             if (currentMode === 'add') {
                 message = `【確認新增房型】\n\n` +
                     `確定要新增以下房型資料嗎？\n` +
@@ -240,7 +262,7 @@
                     `• 床型說明：${bed}\n` +
                     `• 每晚價格：NT$ ${price}\n` +
                     `• 狀態：${status}\n` +
-                    `• 圖片網址：${img}`;
+                    `• 圖片路徑：${imgUrl}`;
             } else {
                 message = `【確認修改房型】\n\n` +
                     `確定要儲存【${name}】的變更嗎？\n` +
@@ -250,7 +272,7 @@
                     `• 床型說明：${bed}\n` +
                     `• 每晚價格：NT$ ${price}\n` +
                     `• 狀態：${status}\n` +
-                    `• 圖片網址：${img}`;
+                    `• 圖片路徑：${imgUrl}`;
             }
 
             if (confirm(message)) {

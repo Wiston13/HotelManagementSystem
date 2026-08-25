@@ -1,5 +1,15 @@
-﻿@{
+﻿@model HotelManagementSystem.Models.ViewModels.RoomIndexViewModel
+
+@{
     ViewData["Title"] = "房間管理";
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -17,8 +27,17 @@
     <div class="col-md-3">
         <label class="form-label fw-bold small">選擇分館</label>
         <select class="form-select" id="branchFilter" onchange="onBranchFilterChange()">
-            <option value="1" selected>台北館</option>
-            <option value="2">高雄館</option>
+            @if (Model.Branches != null && Model.Branches.Any())
+            {
+                foreach (var branch in Model.Branches)
+                {
+                    <option value="@branch.BranchId">@branch.BranchName</option>
+                }
+            }
+            else
+            {
+                <option value="0">尚無分館資料</option>
+            }
         </select>
     </div>
     <div class="col-md-3">
@@ -42,72 +61,56 @@
                 </tr>
             </thead>
             <tbody id="roomTableBody">
-                <!-- 示範資料列 1 -->
-                <tr data-branch-id="1" data-roomtype-id="1">
-                    <td class="ps-4 fw-bold">301</td>
-                    <td>標準雙人房</td>
-                    <td>3</td>
-                    <td><span class="badge bg-success">開放販售</span></td>
-                    <td class="text-end pe-4">
-                        <button class="btn btn-link text-primary p-0 text-decoration-none"
-                                data-bs-toggle="modal"
-                                data-bs-target="#roomModal"
-                                data-id="1"
-                                data-branch-id="1"
-                                data-roomtype-id="1"
-                                data-number="301"
-                                data-floor="3"
-                                data-supply="Open"
-                                data-disabled-reason=""
-                                onclick="openRoomModal('edit', this)">
-                            編輯
-                        </button>
-                    </td>
-                </tr>
-                <!-- 示範資料列 2 -->
-                <tr data-branch-id="1" data-roomtype-id="2">
-                    <td class="ps-4 fw-bold">502</td>
-                    <td>三床豪華房</td>
-                    <td>5</td>
-                    <td><span class="badge bg-danger">停用</span></td>
-                    <td class="text-end pe-4">
-                        <button class="btn btn-link text-primary p-0 text-decoration-none"
-                                data-bs-toggle="modal"
-                                data-bs-target="#roomModal"
-                                data-id="2"
-                                data-branch-id="1"
-                                data-roomtype-id="2"
-                                data-number="502"
-                                data-floor="5"
-                                data-supply="Disabled"
-                                data-disabled-reason="空調設備故障修繕中"
-                                onclick="openRoomModal('edit', this)">
-                            編輯
-                        </button>
-                    </td>
-                </tr>
-                <!-- 示範資料列 3（現場保留房，列表支援呈現） -->
-                <tr data-branch-id="2" data-roomtype-id="3" style="display: none;">
-                    <td class="ps-4 fw-bold">801</td>
-                    <td>海景雙人房</td>
-                    <td>8</td>
-                    <td><span class="badge bg-warning text-dark">保留</span></td>
-                    <td class="text-end pe-4">
-                        <button class="btn btn-link text-primary p-0 text-decoration-none"
-                                data-bs-toggle="modal"
-                                data-bs-target="#roomModal"
-                                data-id="3"
-                                data-branch-id="2"
-                                data-roomtype-id="3"
-                                data-number="801"
-                                data-floor="8"
-                                data-supply="Reserved"
-                                data-disabled-reason=""
-                                onclick="openRoomModal('edit', this)">
-                            編輯
-                        </button>
-                    </td>
-                </tr>
+                @if (Model.Rooms != null && Model.Rooms.Any())
+                {
+                    foreach (var room in Model.Rooms)
+                    {
+                        <tr data-branch-id="@room.BranchId" data-roomtype-id="@room.RoomTypeId">
+                            <td class="ps-4 fw-bold">@room.RoomNumber</td>
+                            <td>@(room.RoomType?.RoomTypeName ?? "未指定")</td>
+                            <td>@room.Floor</td>
+                            <td>
+                                @if (room.SupplyStatus == "Open")
+                                {
+                                    <span class="badge bg-success">開放販售</span>
+                                }
+                                else if (room.SupplyStatus == "Disabled")
+                                {
+                                    <span class="badge bg-danger" title="原因：@room.DisabledReason">停用</span>
+                                }
+                                else if (room.SupplyStatus == "Reserved")
+                                {
+                                    <span class="badge bg-warning text-dark">保留</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">@room.SupplyStatus</span>
+                                }
+                            </td>
+                            <td class="text-end pe-4">
+                                <button class="btn btn-link text-primary p-0 text-decoration-none"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#roomModal"
+                                        data-id="@room.RoomId"
+                                        data-branch-id="@room.BranchId"
+                                        data-roomtype-id="@room.RoomTypeId"
+                                        data-number="@room.RoomNumber"
+                                        data-floor="@room.Floor"
+                                        data-supply="@room.SupplyStatus"
+                                        data-disabled-reason="@room.DisabledReason"
+                                        onclick="openRoomModal('edit', this)">
+                                    編輯
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="5" class="text-center py-4 text-muted">目前尚無任何房間資料</td>
+                    </tr>
+                }
             </tbody>
         </table>
     </div>
@@ -123,9 +126,10 @@
             </div>
             <div class="modal-body">
                 <form id="roomForm" asp-controller="Room" asp-action="Save" method="post">
+                    @Html.AntiForgeryToken()
                     <input type="hidden" id="roomId" name="RoomId" value="0">
-                    <input type="hidden" id="branchId" name="BranchId" value="1">
-                    <!-- 當 supplyStatus 為 disabled 時，由此 Hidden input 負責 POST 送出 SupplyStatus -->
+                    <input type="hidden" id="branchId" name="BranchId" value="0">
+                    <!-- 當 supplyStatus 為 disabled/reserved 時，由此 Hidden input 負責 POST 送出 SupplyStatus -->
                     <input type="hidden" id="supplyStatusHidden" name="SupplyStatus" value="Open" disabled>
 
                     <div class="row g-3">
@@ -167,18 +171,25 @@
 </div>
 
 @section Scripts {
+    @{
+        // 先用三元運算子確認集合非 null，再進行 GroupBy 與 Serialize
+        var rawData = Model.RoomTypes != null
+            ? Model.RoomTypes
+                .GroupBy(rt => rt.BranchId)
+                .ToDictionary(
+                    g => g.Key.ToString(),
+                    g => g.Select(rt => new { id = rt.RoomTypeId, name = rt.RoomTypeName })
+                )
+            : new object();
+
+        var roomTypeJson = System.Text.Json.JsonSerializer.Serialize(rawData);
+    }
+
     <script>
         let currentMode = 'add';
 
-        const roomTypeData = {
-            "1": [
-                { id: "1", name: "標準雙人房" },
-                { id: "2", name: "三床豪華房" }
-            ],
-            "2": [
-                { id: "3", name: "海景雙人房" }
-            ]
-        };
+        // 從後端 C# 序列化結果直接讀取 JSON
+        const roomTypeData = @Html.Raw(roomTypeJson);
 
         document.addEventListener('DOMContentLoaded', function() {
             onBranchFilterChange();
@@ -206,6 +217,8 @@
                 const rowBranch = row.getAttribute('data-branch-id');
                 const rowType = row.getAttribute('data-roomtype-id');
 
+                if (!rowBranch) return; // 跳過無資料列提示
+
                 const branchMatch = (rowBranch === selectedBranchId);
                 const typeMatch = (selectedRoomTypeId === "0" || rowType === selectedRoomTypeId);
 
@@ -221,11 +234,13 @@
             const modalRoomTypeSelect = document.getElementById('roomTypeId');
             modalRoomTypeSelect.innerHTML = '';
 
-            if (roomTypeData[branchId]) {
+            if (roomTypeData[branchId] && roomTypeData[branchId].length > 0) {
                 roomTypeData[branchId].forEach(rt => {
-                    const selected = (selectedRoomTypeId && rt.id === selectedRoomTypeId) ? 'selected' : '';
+                    const selected = (selectedRoomTypeId && rt.id.toString() === selectedRoomTypeId.toString()) ? 'selected' : '';
                     modalRoomTypeSelect.innerHTML += `<option value="${rt.id}" ${selected}>${rt.name}</option>`;
                 });
+            } else {
+                modalRoomTypeSelect.innerHTML = '<option value="">該分館無可用房型</option>';
             }
         }
 
@@ -256,9 +271,9 @@
 
             // 重置供應狀態選單為預設（只保留 Open / Disabled）
             supplySelect.innerHTML = `
-                        <option value="Open">開放販售</option>
-                        <option value="Disabled">停用</option>
-                    `;
+                <option value="Open">開放販售</option>
+                <option value="Disabled">停用</option>
+            `;
             supplySelect.disabled = false;
             supplySelect.name = "SupplyStatus";
             supplyHidden.disabled = true;
@@ -318,15 +333,15 @@
 
             const roomNumber = document.getElementById('roomNumber').value;
             const branchFilter = document.getElementById('branchFilter');
-            const branchText = branchFilter.options[branchFilter.selectedIndex].text;
+            const branchText = branchFilter.options[branchFilter.selectedIndex] ? branchFilter.options[branchFilter.selectedIndex].text : '';
 
             const roomTypeSelect = document.getElementById('roomTypeId');
-            const roomTypeText = roomTypeSelect.options[roomTypeSelect.selectedIndex].text;
+            const roomTypeText = roomTypeSelect.options[roomTypeSelect.selectedIndex] ? roomTypeSelect.options[roomTypeSelect.selectedIndex].text : '';
 
             const floor = document.getElementById('floor').value;
 
             const supplySelect = document.getElementById('supplyStatus');
-            const supplyText = supplySelect.options[supplySelect.selectedIndex].text;
+            const supplyText = supplySelect.options[supplySelect.selectedIndex] ? supplySelect.options[supplySelect.selectedIndex].text : '';
             const disabledReason = document.getElementById('disabledReason').value;
 
             let message = '';
