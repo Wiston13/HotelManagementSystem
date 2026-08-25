@@ -277,10 +277,36 @@
 								&& !string.IsNullOrWhiteSpace(room.DisabledReason))
 							{
 								<div class="col-12">
-									<dt>停用原因</dt>
-									<dd class="room-note">
-										@room.DisabledReason
-									</dd>
+									<form asp-action="UpdateDisabledReason"
+										  method="post"
+										  id="disabledReasonForm@(room.RoomId)">
+
+										<input type="hidden"
+											   name="roomId"
+											   value="@room.RoomId" />
+
+										<div class="d-flex justify-content-between align-items-center mb-2">
+											<label for="disabledReason@(room.RoomId)" class="form-label mb-0">
+												停用原因
+											</label>
+
+											<button type="button"
+													class="btn btn-sm btn-outline-secondary edit-disabled-reason-btn"
+													data-room-id="@room.RoomId">
+												修改
+											</button>
+										</div>
+
+										<textarea id="disabledReason@(room.RoomId)"
+												  name="disabledReason"
+												  class="form-control"
+												  rows="3"
+												  readonly>@room.DisabledReason</textarea>
+
+										<div class="invalid-feedback">
+											請填寫停用原因。
+										</div>
+									</form>
 								</div>
 							}
 
@@ -336,10 +362,15 @@
 								}
 								else if (room.SupplyStatus == "Disabled")
 								{
-									<button type="button"
-											class="btn btn-outline-primary">
-										恢復開放販售
-									</button>
+									<form asp-action="UpdateDisabledStatus" method="post">
+										<input type="hidden" name="roomId" value="@room.RoomId" />
+										<input type="hidden" name="targetStatus" value="Open" />
+
+										<button type="submit"
+												class="btn btn-outline-primary">
+											恢復開放販售
+										</button>
+									</form>
 								}
 
 							</div>
@@ -504,6 +535,63 @@
 					$(this).show();
 				} else {
 					$(this).hide();
+				}
+			});
+		});
+
+
+		$(".edit-disabled-reason-btn").on("click", function() {
+			const roomId = $(this).data("room-id");
+			const textarea = $(`#disabledReason${roomId}`);
+			const form = $(`#disabledReasonForm${roomId}`);
+			const button = $(this);
+
+			// 第一次按：進入編輯模式
+			if (textarea.prop("readonly")) {
+				textarea.prop("readonly", false);
+				textarea.focus();
+
+				button.text("儲存");
+				button
+					.removeClass("btn-outline-secondary")
+					.addClass("btn-primary");
+
+				return;
+			}
+
+			// 第二次按：準備儲存
+			const newReason = textarea.val().trim();
+
+			// 前端驗證
+			if (newReason === "") {
+				textarea.addClass("is-invalid");
+				textarea.focus();
+				return;
+			}
+
+			textarea.removeClass("is-invalid");
+
+			// AJAX POST
+			$.ajax({
+				url: form.attr("action"),
+				type: "POST",
+				data: form.serialize(),
+
+				success: function(response) {
+					textarea.val(response.disabledReason);
+					textarea.prop("readonly", true);
+
+					button.text("修改");
+					button
+						.removeClass("btn-primary")
+						.addClass("btn-outline-secondary");
+
+					$(`.disabled-reason-meta[data-room-id="${roomId}"]`)
+						.text(response.disabledReason);
+				},
+
+				error: function() {
+					window.location.reload();
 				}
 			});
 		});

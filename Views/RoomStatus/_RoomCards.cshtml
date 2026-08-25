@@ -91,7 +91,8 @@
 							else if (room.SupplyStatus == "Disabled"
 									 && !string.IsNullOrWhiteSpace(room.DisabledReason))
 							{
-								<span class="room-card__meta d-block">
+								<span class="room-card__meta d-block disabled-reason-meta"
+									  data-room-id="@room.RoomId">
 									@room.DisabledReason
 								</span>
 							}
