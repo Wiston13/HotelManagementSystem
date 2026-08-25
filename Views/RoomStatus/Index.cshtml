@@ -301,6 +301,7 @@
 												  name="disabledReason"
 												  class="form-control"
 												  rows="3"
+												  data-saved-value="@room.DisabledReason"
 												  readonly>@room.DisabledReason</textarea>
 
 										<div class="invalid-feedback">
@@ -579,6 +580,7 @@
 
 				success: function(response) {
 					textarea.val(response.disabledReason);
+					textarea.attr("data-saved-value", response.disabledReason);
 					textarea.prop("readonly", true);
 
 					button.text("修改");
@@ -594,6 +596,26 @@
 					window.location.reload();
 				}
 			});
+		});
+
+		$(".modal").on("hidden.bs.modal", function() {
+			const textarea = $(this).find('textarea[name="disabledReason"]');
+			const button = $(this).find(".edit-disabled-reason-btn");
+
+			if (textarea.length === 0 || button.length === 0) {
+				return;
+			}
+
+			const savedValue = textarea.attr("data-saved-value");
+
+			textarea.val(savedValue);
+			textarea.prop("readonly", true);
+			textarea.removeClass("is-invalid");
+
+			button.text("修改");
+			button
+				.removeClass("btn-primary")
+				.addClass("btn-outline-secondary");
 		});
 	</script>
 }

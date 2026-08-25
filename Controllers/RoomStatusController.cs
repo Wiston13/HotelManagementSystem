@@ -99,6 +99,12 @@ namespace HotelManagementSystem.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
+            if (room.CleaningStatus == targetStatus)
+            {
+                TempData["SuccessMessage"] = "房間清潔狀態已是最新狀態。";
+                return RedirectToAction(nameof(Index));
+            }
+
             room.CleaningStatus = targetStatus;
 
             var operationLog = new OperationLog()
@@ -164,6 +170,12 @@ namespace HotelManagementSystem.Controllers
             if (isOccupied)
             {
                 TempData["ErrorMessage"] = "入住中的房間無法修改供應狀態。";
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (room.SupplyStatus == targetStatus)
+            {
+                TempData["SuccessMessage"] = "房間供應狀態已是最新狀態。";
                 return RedirectToAction(nameof(Index));
             }
 
@@ -321,17 +333,29 @@ namespace HotelManagementSystem.Controllers
             var room = _context.Rooms.FirstOrDefault(r => r.RoomId == roomId && r.BranchId == staff.BranchId);
             if (room == null)
             {
+                TempData["ErrorMessage"] = "房間資料異常，請重新整理後再試一次。";
                 return BadRequest();
             }
 
-            var isOccupied = _context.StayRecords.Any(s => s.RoomId == roomId && s.ActualCheckOutAt == null);
-            if (room.SupplyStatus != "Disabled" || isOccupied)
+            if (room.SupplyStatus != "Disabled")
             {
+                TempData["ErrorMessage"] = "房間目前已不是停用狀態，頁面將重新整理。";
+                return BadRequest();
+            }
+
+            var isOccupied = _context.StayRecords
+                .Any(s => s.RoomId == roomId &&
+                          s.ActualCheckOutAt == null);
+
+            if (isOccupied)
+            {
+                TempData["ErrorMessage"] = "入住中的房間無法修改停用原因。";
                 return BadRequest();
             }
 
             if (string.IsNullOrWhiteSpace(disabledReason))
             {
+                TempData["ErrorMessage"] = "請填寫停用原因。";
                 return BadRequest();
             }
 
