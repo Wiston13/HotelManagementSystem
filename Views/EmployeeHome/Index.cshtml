@@ -105,7 +105,7 @@
                 <div class="table-responsive">
                     @if (Model.PendingCheckIns.Count == 0)
                     {
-                        <div class="alert alert-danger mt-4">目前沒有待入住訂單</div>
+                        <div class="alert alert-secondary mt-4">目前沒有待入住訂單</div>
                     }
                     else
                     {
@@ -128,7 +128,7 @@
                                         <td>@item.BookerName</td>
                                         <td>@item.ContactPhone</td>
                                         <td>@item.RoomTypeName</td>
-                                        <td>@item.CheckInDate</td>
+                                        <td>@item.CheckInDate.ToString("yyyy/MM/dd")</td>
                                         <td class="text-end">
                                             <form method="get" asp-controller="Stay" asp-action="CheckIn">
                                                 <input name="bookingNumber" value="@item.BookingNumber" type="hidden" />
@@ -147,7 +147,7 @@
                 <div class="table-responsive">
                     @if (Model.ActiveStays.Count == 0)
                     {
-                        <div class="alert alert-danger mt-4">目前沒有入住中的訂單</div>
+                        <div class="alert alert-secondary mt-4">目前沒有入住中的訂單</div>
                     }
                     else
                     {
@@ -168,8 +168,8 @@
                                         <td class="item-code">@item.BookingNumber</td>
                                         <td>@item.RoomNumber</td>
                                         <td>@item.PrimaryGuestName</td>
-                                        <td>@item.ActualCheckInAt</td>
-                                        <td>@item.CheckOutDate</td>
+                                        <td>@item.ActualCheckInAt.ToString("yyyy/MM/dd HH:mm")</td>
+                                        <td>@item.CheckOutDate.ToString("yyyy/MM/dd")</td>
                                     </tr>
                                 }
                             </tbody>
@@ -182,7 +182,7 @@
                 <div class="table-responsive">
                     @if (Model.PendingCheckOuts.Count == 0)
                     {
-                        <div class="alert alert-danger mt-4">目前沒有待退房訂單</div>
+                        <div class="alert alert-secondary mt-4">目前沒有待退房訂單</div>
                     }
                     else
                     {
@@ -203,7 +203,7 @@
                                         <td class="item-code">@item.BookingNumber</td>
                                         <td>@item.RoomNumber</td>
                                         <td>@item.PrimaryGuestName</td>
-                                        <td>@item.CheckOutDate</td>
+                                        <td>@item.CheckOutDate.ToString("yyyy/MM/dd")</td>
                                         <td class="text-end">
                                             <form method="get" asp-controller="Stay" asp-action="CheckOut">
                                                 <input name="searchValue" value="@item.BookingNumber" type="hidden" />
@@ -224,7 +224,7 @@
                 <div class="table-responsive">
                     @if (Model.RoomsToClean.Count == 0)
                     {
-                        <div class="alert alert-danger mt-4">目前沒有待清潔房間</div>
+                        <div class="alert alert-secondary mt-4">目前沒有待清潔房間</div>
                     }
                     else
                     {
