@@ -231,26 +231,6 @@
 		}
 
 
-		// 清空並隱藏結果區塊
-		function clearResult() {
-			const result = document.getElementById("orderResult");
-			const noResult = document.getElementById("noResult");
-
-			// 隱藏查詢成功和查無資料區塊
-			// result.classList.add("d-none");
-			// noResult.classList.add("d-none");
-
-			// 清空上一次查詢結果內容
-			document.getElementById("resultOrderNo").textContent = "";
-			document.getElementById("resultStatus").textContent = "";
-			document.getElementById("resultRoom").textContent = "";
-			document.getElementById("resultDate").textContent = "";
-			document.getElementById("resultCustomer").textContent = "";
-			document.getElementById("resultPhone").textContent = "";
-			document.getElementById("resultTotal").textContent = "";
-		}
-
-
 		// 查詢按鈕點擊事件
 		document.getElementById("btnSearch").addEventListener("click", function(e) {
 
@@ -269,7 +249,6 @@
 			// 如果任一個欄位驗證失敗
 			if (!isValid) {
 				e.preventDefault(); // 防止表單送出後重新整理頁面
-				clearResult();  // 清空並隱藏結果區塊
 				return;
 			}
 

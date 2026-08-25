@@ -3,7 +3,6 @@ using HotelManagementSystem.Services;
 using HotelManagementSystem.Models.BookingSearchModel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using static Microsoft.Extensions.Logging.EventSource.LoggingEventSource;
 using HotelManagementSystem.Models.Entities;
 
 /*
@@ -103,9 +102,6 @@ namespace HotelManagementSystem.Controllers
                 return View(_bookingData);
             }
 
-            // phone正規化 考慮中
-
-
             var query = _context.Bookings.AsNoTracking();
             query = query.Where(x => x.BranchId == BranchId);
             // keyword模糊查詢資料庫 及 分館ID (此處需要驗證員工帳號及帳號所屬分館取得)
@@ -123,7 +119,7 @@ namespace HotelManagementSystem.Controllers
                     if (DateTime.TryParse(dates[0], out DateTime startDate) && DateTime.TryParse(dates[1], out DateTime endDate))
                     {
                         query = query.Where(x => x.CheckInDate >= DateOnly.FromDateTime(startDate)
-                        && x.CheckOutDate <= DateOnly.FromDateTime(endDate));
+                        && x.CheckInDate <= DateOnly.FromDateTime(endDate));
                     }
                 }
             }
@@ -134,7 +130,7 @@ namespace HotelManagementSystem.Controllers
             {
                 query = query.Where(x => x.BookingStatus == StatusLanguage(bookingStatus));
             }
-            // 需要修改成await用法
+
 
             _bookingData =await query.Select(x => new BookingData
             {
@@ -190,9 +186,18 @@ namespace HotelManagementSystem.Controllers
 
             // 判斷顧客因素+是否超過取消時間
 
-            if (cancelCause == "顧客因素" && DateOnly.FromDateTime(_Clock.Now) >= result.CheckInDate)
+            if (cancelCause == "顧客因素" && DateOnly.FromDateTime(now) >= result.CheckInDate)
             {
                 TempData["BookingStatusError"] = "超過顧客取消時間，無法取消訂單";
+                return RedirectToAction("BookingSearch", new { keyword, dateRange, bookingStatus = keyStatus });
+            }
+
+            // 飯店因素取消原因：
+            //*客人來checkin時，飯店無法提供房間            
+            //*第一版暫不讓顧客入住後取消訂單
+            if (cancelCause=="飯店因素" && (result.BookingStatus == "CheckedIn" || now >= result.CheckInDate.ToDateTime(new TimeOnly(16, 0))) )
+            {
+                TempData["BookingStatusError"] = "已超過Checkin時間或已入住中，無法取消訂單";
                 return RedirectToAction("BookingSearch", new { keyword, dateRange, bookingStatus = keyStatus });
             }
 
