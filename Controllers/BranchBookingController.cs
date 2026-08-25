@@ -36,10 +36,12 @@ namespace HotelManagementSystem.Controllers
     {
         private readonly TaipeiClock _Clock;        
         private readonly HotelManagementContext _context;
-        public BranchBookingController(HotelManagementContext context, TaipeiClock clock)
+        private readonly NoShowService _noShowService;
+        public BranchBookingController(HotelManagementContext context, TaipeiClock clock ,NoShowService noShowService)
         {
             _context = context;
             _Clock = clock;
+            _noShowService = noShowService;
         }
 
         // 轉換前端狀態字串和資料庫相同
@@ -85,6 +87,8 @@ namespace HotelManagementSystem.Controllers
                 return View(new List<BookingData>());
             }
 
+            // 刷新 noshow
+           await _noShowService.UpdateNoShowsAsync();
 
             // 送回前端保存查詢欄位用
             ViewBag.Keyword = keyword;
@@ -132,21 +136,25 @@ namespace HotelManagementSystem.Controllers
             }
             // 需要修改成await用法
 
-            var result = query.Select(x => new BookingData
+            _bookingData =await query.Select(x => new BookingData
             {
                 BookingNum = x.BookingNumber,
                 BookingDate = x.CreatedAt,
                 Name = x.BookerName,
                 Phone = x.ContactPhone,
                 Roomtype = x.RoomTypeNameSnapshot,
-                BookingStatus = StatusLanguage(x.BookingStatus),
+                BookingStatus = x.BookingStatus,
                 StartDate = new DateTime(x.CheckInDate.Year, x.CheckInDate.Month, x.CheckInDate.Day),
                 EndDate = new DateTime(x.CheckOutDate.Year, x.CheckOutDate.Month, x.CheckOutDate.Day),
                 Price = "NT$ " + x.TotalAmount.ToString("N0")
             }).ToListAsync();
             
+            foreach(var b in _bookingData)
+            {
+                b.BookingStatus = StatusLanguage(b.BookingStatus);
+            }
 
-            return View(result);
+            return View(_bookingData);
         }
 
         // 取消訂單 
@@ -166,13 +174,13 @@ namespace HotelManagementSystem.Controllers
                 return View("BookingSearch",new List<BookingData>());
             }
 
+            await _noShowService.UpdateNoShowsAsync();
 
-            // 此處錯誤有解方嗎? 假如訂單狀態錯誤會是什麼情況 在使用者不寫程式的情況可以修好嗎
             // 查詢訂單
-            var result = _context.Bookings.FirstOrDefault(x => x.BookingNumber == bookingNum);
+            var result = _context.Bookings.FirstOrDefault(x => x.BookingNumber == bookingNum && x.BranchId == BranchId &&x.StayRecord==null);
             if(result == null || result.BookingStatus!= "Paid")
             {
-                TempData["BookingStatusError"] = "訂單狀態錯誤，無法取消訂單";
+                TempData["BookingStatusError"] = "訂單狀態錯誤，目前無法取消訂單";
                 return RedirectToAction("BookingSearch", new {  keyword, dateRange, bookingStatus = keyStatus });
             }
 
@@ -184,11 +192,18 @@ namespace HotelManagementSystem.Controllers
             }
             result.CancellationCause = cancelCause== "顧客因素"? "GuestRequest": "HotelUnableToFulfill";
 
-            if (string.IsNullOrWhiteSpace(cancelReason.Trim()))
+            // 限制500字
+            if (string.IsNullOrWhiteSpace(cancelReason))
             {
                 TempData["BookingStatusError"] = "取消理由不可為空";
                 return RedirectToAction("BookingSearch", new { keyword, dateRange, bookingStatus = keyStatus });
             }
+            if (cancelReason.Length > 500)
+            {
+                TempData["BookingStatusError"] = "取消理由超過500字";
+                return RedirectToAction("BookingSearch", new { keyword, dateRange, bookingStatus = keyStatus });
+            }
+
             result.CancellationReason = cancelReason;
 
             result.CancelledAt = _Clock.Now;

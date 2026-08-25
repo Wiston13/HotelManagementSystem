@@ -26,7 +26,7 @@
     if (TempData["BookingStatusError"] != null)
     {
         <script>
-            alert("@Html.Raw(ViewBag.BookingStatusError)")
+            alert("@Html.Raw(TempData["BookingStatusError"])")
         </script>
     }
 }
@@ -230,6 +230,9 @@
                             已超過顧客因素取消期限。
                             顧客因素取消須於入住日前一日 23:59 前完成。
                         </div>
+                        <div id="overInputWarnning" class="text-danger mt-1 me-1 d-none">
+                            取消理由不能超過500個字。
+                    </div>
                         <button type="button" id="confirmCancelBtn" class="btn btn-danger btn-sm d-none px-3">
                             確認取消訂單
                         </button>
@@ -312,6 +315,7 @@
                 const finalSubmitCancelBtn = document.getElementById('finalSubmitCancelBtn');
                 const cancelBookingNum = document.getElementById('cancelBookingNum');
                 const modalStatus = document.getElementById('modalStatus');
+                const overInputWarnning = document.getElementById('overInputWarnning');
 
                 const confirmActionModal = new bootstrap.Modal(document.getElementById('confirmActionModal'));
 
@@ -419,12 +423,28 @@
                         }
                     }
                 })
+                // 取消理由超過500字驗證
                 cancelMemo.addEventListener('input', function() {
+                if (cancelMemo.value.length > 500) {
+                    cancelMemo.value = cancelMemo.value.slice(0, 500);
+                    cancelMemo.classList.add('is-invalid');
+                    overInputWarnning.classList.remove('d-none');
+                }
+                else{
                     cancelMemo.classList.remove('is-invalid');
+                    overInputWarnning.classList.add('d-none');
+                }
+                })
+
+                cancelMemo.addEventListener('click',function(){
+                    cancelMemo.classList.remove('is-invalid');
+                    overInputWarnning.classList.add('d-none');
+
                 })
 
                 confirmCancelBtn.addEventListener('click', function() {
                     let isValid = true;
+                    
                     if (cancelMemo.value.trim() === "") {
                         cancelMemo.classList.add('is-invalid');
                         isValid = false;
@@ -453,6 +473,8 @@
                     confirmActionModal.hide();
                     bootstrap.Modal.getInstance(document.getElementById('bookingDetailModal')).hide();
                 })
+
+                
             })
 
             
