@@ -13,6 +13,7 @@ builder.Services.AddDbContext<HotelManagementContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("HMSDBConnection")));
 
 builder.Services.AddScoped<NoShowService>();
+builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options => {
     options.IdleTimeout = TimeSpan.FromHours(2); // 登入有效時限 2 小時
     options.Cookie.HttpOnly = true;
@@ -32,6 +33,7 @@ app.UseHttpsRedirection();
 app.UseRouting();
 
 app.UseAuthorization();
+app.UseSession();
 
 app.MapStaticAssets();
 
@@ -40,5 +42,5 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
 
-app.UseSession();
+
 app.Run();
