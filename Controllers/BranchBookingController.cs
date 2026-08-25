@@ -103,7 +103,7 @@ namespace HotelManagementSystem.Controllers
                 return View(_bookingData);
             }
 
-            // phone正規化
+            // phone正規化 考慮中
 
 
             var query = _context.Bookings.AsNoTracking();
@@ -223,7 +223,7 @@ namespace HotelManagementSystem.Controllers
                 return RedirectToAction("BookingSearch", new { keyword, dateRange, bookingStatus = keyStatus });
             }
 
-            return RedirectToAction("BookingSearch", new {keyword, dateRange, bookingStatus = keyStatus });
+            return RedirectToAction("BookingSearch", new {keyword=bookingNum, dateRange, bookingStatus = "" });
         }
 
 

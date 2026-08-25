@@ -3,6 +3,7 @@ using HotelManagementSystem.Services;
 using HotelManagementSystem.Models;
 using HotelManagementSystem.Models.BookingSearchModel;
 using Microsoft.EntityFrameworkCore;
+using System.Text.RegularExpressions;
 
 
 namespace HotelManagementSystem.Controllers
@@ -66,14 +67,15 @@ namespace HotelManagementSystem.Controllers
         {
             var model = new BookingData();
 
+            BookingNum = BookingNum.Trim();
+
             // 檢查bookingNum 和phone的值是否為空
             if (string.IsNullOrWhiteSpace(BookingNum)||string.IsNullOrWhiteSpace(Phone))
             {
                 return View(model);
             }
 
-            // phone正規化
-            
+            Phone = Regex.Replace(Phone, @"\D", "");
 
             // 查詢
             var booking = await _context.Bookings.AsNoTracking().FirstOrDefaultAsync(b => b.BookingNumber == BookingNum &&b.ContactPhone==Phone);
