@@ -35,6 +35,32 @@
 	<link rel="stylesheet" href="~/css/room-status/Index.css" asp-append-version="true" />
 }
 
+@if (TempData["ErrorMessage"] != null)
+{
+	<div class="alert alert-danger alert-dismissible fade show" role="alert">
+		@TempData["ErrorMessage"]
+
+		<button type="button"
+				class="btn-close"
+				data-bs-dismiss="alert"
+				aria-label="關閉">
+		</button>
+	</div>
+}
+
+@if (TempData["SuccessMessage"] != null)
+{
+	<div class="alert alert-success alert-dismissible fade show" role="alert">
+		@TempData["SuccessMessage"]
+
+		<button type="button"
+				class="btn-close"
+				data-bs-dismiss="alert"
+				aria-label="關閉">
+		</button>
+	</div>
+}
+
 <div class="room-status-page">
 	<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3 mb-4">
 		<div class="room-status-tabs-wrapper flex-grow-1">
@@ -329,17 +355,21 @@
 
 							@if (room.CleaningStatus == "Clean")
 							{
-								<button type="button"
-										class="btn btn-outline-primary">
-									標記為待清潔
-								</button>
+								<form asp-action="UpdateCleaningStatus" method="post">
+									<input type="hidden" name="roomId" value="@room.RoomId" />
+									<input type="hidden" name="targetStatus" value="NeedsCleaning" />
+
+									<button type="submit" class="btn btn-outline-primary">標記為待清潔</button>
+								</form>
 							}
 							else
 							{
-								<button type="button"
-										class="btn btn-primary">
-									標記為已清潔
-								</button>
+								<form asp-action="UpdateCleaningStatus" method="post">
+									<input type="hidden" name="roomId" value="@room.RoomId" />
+									<input type="hidden" name="targetStatus" value="Clean" />
+
+									<button type="submit" class="btn btn-outline-primary">標記為已清潔</button>
+								</form>
 							}
 
 						</div>
