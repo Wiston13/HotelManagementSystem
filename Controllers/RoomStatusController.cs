@@ -401,5 +401,37 @@ namespace HotelManagementSystem.Controllers
                 disabledReason = newReason
             });
         }
+
+        private bool CanRemoveOpenRoom(Room room)
+        {
+            //CanRemoveOpenRoom(room)
+            //    │
+            //    ├─ 這間目前不是 Open
+            //    │      → true
+            //    │
+            //    └─ 這間目前是 Open
+            //           ↓
+            //       假設 Open 數量 - 1
+            //           ↓
+            //       檢查 Today～Today + 60 每一天
+            //           ↓
+            //       Paid / CheckedIn 日期重疊需求
+            //       +
+            //       已超過原退房日但仍未退房的住房
+            //           ↓
+            //       是否有任一天：
+            //       Demand > RemainingOpenRooms
+            //           │
+            //           ├─ 有 → false
+            //           └─ 無 → true
+            if (room.SupplyStatus != "Open")
+            {
+                return true;
+            }
+
+
+
+            return false;
+        }
     }
 }
