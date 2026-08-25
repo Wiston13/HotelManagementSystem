@@ -402,36 +402,22 @@ namespace HotelManagementSystem.Controllers
             });
         }
 
-        private bool CanRemoveOpenRoom(Room room)
-        {
-            //CanRemoveOpenRoom(room)
-            //    │
-            //    ├─ 這間目前不是 Open
-            //    │      → true
-            //    │
-            //    └─ 這間目前是 Open
-            //           ↓
-            //       假設 Open 數量 - 1
-            //           ↓
-            //       檢查 Today～Today + 60 每一天
-            //           ↓
-            //       Paid / CheckedIn 日期重疊需求
-            //       +
-            //       已超過原退房日但仍未退房的住房
-            //           ↓
-            //       是否有任一天：
-            //       Demand > RemainingOpenRooms
-            //           │
-            //           ├─ 有 → false
-            //           └─ 無 → true
-            if (room.SupplyStatus != "Open")
-            {
-                return true;
-            }
+        //TODO:
+        //Open → Reserved / Disabled 前，
+        //整合共用房量 Service 檢查未來容量缺口；
+        //若存在缺口，顯示警告並要求再次確認。
 
-
-
-            return false;
-        }
+        //Open → Reserved / Disabled
+        //          ↓
+        //    呼叫共用房量計算
+        //          ↓
+        //    有沒有未來容量缺口？
+        //    ↓              ↓
+        //   沒有            有
+        // 直接異動       顯示日期/缺額
+        //                   ↓
+        //              使用者再次確認
+        //                   ↓
+        //                仍可異動
     }
 }
