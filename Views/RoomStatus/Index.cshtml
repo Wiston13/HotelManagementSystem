@@ -425,20 +425,33 @@
 
 						<div class="modal-body">
 
-							<p>房號：@room.RoomNumber</p>
+							<form asp-action="UpdateDisabledStatus"
+								  method="post"
+								  id="updateDisabledStatusForm@(room.RoomId)">
 
-							<label for="disableReason@(room.RoomId)"
-								   class="form-label">
-								停用原因
-								<span class="text-danger">*</span>
-							</label>
+								<input type="hidden"
+									   name="roomId"
+									   value="@room.RoomId" />
 
-							<textarea id="disableReason@(room.RoomId)"
-									  class="form-control"
-									  rows="3"
-									  required
-									  aria-required="true"></textarea>
+								<input type="hidden"
+									   name="targetStatus"
+									   value="Disabled" />
 
+								<p>房號：@room.RoomNumber</p>
+
+								<label for="disableReason@(room.RoomId)"
+									   class="form-label">
+									停用原因
+									<span class="text-danger">*</span>
+								</label>
+
+								<textarea id="disableReason@(room.RoomId)"
+										  name="disabledReason"
+										  class="form-control"
+										  rows="3"
+										  required
+										  aria-required="true"></textarea>
+							</form>
 						</div>
 
 						<div class="modal-footer">
@@ -449,8 +462,9 @@
 								取消
 							</button>
 
-							<button type="button"
-									class="btn btn-danger">
+							<button type="submit"
+									class="btn btn-danger"
+									form="updateDisabledStatusForm@(room.RoomId)">
 								確認停用
 							</button>
 
