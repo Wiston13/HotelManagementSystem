@@ -166,6 +166,7 @@ namespace HotelManagementSystem.Controllers
         {
             // 待取得分館員工
             string EmployeeNum = "E20260807002";
+            var now = _Clock.Now;
 
             // 員工驗證
             int? BranchId = await EmployeeVerify(EmployeeNum);
@@ -217,7 +218,7 @@ namespace HotelManagementSystem.Controllers
 
             result.CancellationReason = cancelReason;
 
-            result.CancelledAt = _Clock.Now;
+            result.CancelledAt = now;
 
             result.CancelledByEmployeeNumber = EmployeeNum;
 
@@ -228,12 +229,12 @@ namespace HotelManagementSystem.Controllers
             var operationLog = new OperationLog
             {
                 TargetBranchId = result.BranchId,
-                OperatedAt = _Clock.Now,
+                OperatedAt = now,
                 OperatorEmployeeNumber = EmployeeNum,
                 OperationTypeId = 21,
                 TargetType = "Booking",
                 TargetIdentifier = result.BookingNumber,
-                Description = $"因{cancelCause}取消訂單 {result.BookingNumber}。 這是測試資料"
+                Description = $"因{cancelCause}取消訂單 {result.BookingNumber}。"
             };
              _context.OperationLogs.Add(operationLog);
 
