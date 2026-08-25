@@ -67,14 +67,13 @@ namespace HotelManagementSystem.Controllers
         {
             var model = new BookingData();
 
-            BookingNum = BookingNum.Trim();
-
             // 檢查bookingNum 和phone的值是否為空
             if (string.IsNullOrWhiteSpace(BookingNum)||string.IsNullOrWhiteSpace(Phone))
             {
                 return View(model);
             }
 
+            BookingNum = BookingNum.Trim();
             Phone = Regex.Replace(Phone, @"\D", "");
 
             // 查詢

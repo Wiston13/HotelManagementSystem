@@ -83,7 +83,7 @@ namespace HotelManagementSystem.Controllers
             int? BranchId = await EmployeeVerify(EmployeeNum);
             if (BranchId == null)
             {
-                ViewBag.Error = "帳號驗證異常，即將返回登入畫面";
+                ViewBag.VerifyError = "帳號驗證異常，即將返回登入畫面";
                 return View(new List<BookingData>());
             }
 
@@ -98,7 +98,7 @@ namespace HotelManagementSystem.Controllers
             List<BookingData> _bookingData = new List<BookingData>();
 
             // 驗證搜尋為空則傳回空資料
-            if (string.IsNullOrEmpty(keyword))
+            if (string.IsNullOrEmpty(keyword)||string.IsNullOrWhiteSpace(keyword))
             {
                 return View(_bookingData);
             }
@@ -157,6 +157,7 @@ namespace HotelManagementSystem.Controllers
             return View(_bookingData);
         }
 
+        // 加入operationLog
         // 取消訂單 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -174,6 +175,8 @@ namespace HotelManagementSystem.Controllers
                 return View("BookingSearch",new List<BookingData>());
             }
 
+            
+
             await _noShowService.UpdateNoShowsAsync();
 
             // 查詢訂單
@@ -182,6 +185,14 @@ namespace HotelManagementSystem.Controllers
             {
                 TempData["BookingStatusError"] = "訂單狀態錯誤，目前無法取消訂單";
                 return RedirectToAction("BookingSearch", new {  keyword, dateRange, bookingStatus = keyStatus });
+            }
+
+            // 判斷顧客因素+是否超過取消時間
+
+            if (cancelCause == "顧客因素" && DateOnly.FromDateTime(_Clock.Now) >= result.CheckInDate)
+            {
+                TempData["BookingStatusError"] = "超過顧客取消時間，無法取消訂單";
+                return RedirectToAction("BookingSearch", new { keyword, dateRange, bookingStatus = keyStatus });
             }
 
             //判斷取消因素是否正確
@@ -211,15 +222,28 @@ namespace HotelManagementSystem.Controllers
             result.CancelledByEmployeeNumber = EmployeeNum;
 
             result.BookingStatus = "Cancelled";
-            
-            //System.Diagnostics.Debug.WriteLine("==================!!!!!=================");
+
+
+            // 新增操作紀錄
+            var operationLog = new OperationLog
+            {
+                TargetBranchId = result.BranchId,
+                OperatedAt = _Clock.Now,
+                OperatorEmployeeNumber = EmployeeNum,
+                OperationTypeId = 21,
+                TargetType = "Booking",
+                TargetIdentifier = result.BookingNumber,
+                Description = $"因{cancelCause}取消訂單 {result.BookingNumber}。 這是測試資料"
+            };
+             _context.OperationLogs.Add(operationLog);
+
             try
             {
                 await _context.SaveChangesAsync();
             }
             catch(DbUpdateException)
             {
-                TempData["BookingStatusError"] = "發生不可避免的錯誤！";
+                TempData["BookingStatusError"] = "發生不可避免的錯誤，請重新操作訂單。";
                 return RedirectToAction("BookingSearch", new { keyword, dateRange, bookingStatus = keyStatus });
             }
 
