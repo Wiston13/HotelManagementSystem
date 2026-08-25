@@ -22,8 +22,6 @@
         public string RoomTypeName { get; set; } = null!;
 
         public DateOnly CheckInDate { get; set; }
-
-        public string BookingStatus { get; set; } = null!;
     }
 
     public class StayItemViewModel
@@ -32,15 +30,11 @@
 
         public string PrimaryGuestName { get; set; } = null!;
 
-        public string ContactPhone { get; set; } = null!;
-
         public string RoomNumber { get; set; } = null!;
 
         public DateTime ActualCheckInAt { get; set; }
 
         public DateOnly CheckOutDate { get; set; }
-
-        public string BookingStatus { get; set; } = null!;
     }
 
     public class RoomCleaningItemViewModel
@@ -52,7 +46,5 @@
         public string RoomTypeName { get; set; } = null!;
 
         public short Floor { get; set; }
-
-        public string CleaningStatus { get; set; } = null!;
     }
 }

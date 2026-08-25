@@ -47,7 +47,6 @@ namespace HotelManagementSystem.Controllers
                         ContactPhone = b.ContactPhone,
                         RoomTypeName = b.RoomTypeNameSnapshot,
                         CheckInDate = b.CheckInDate,
-                        BookingStatus = b.BookingStatus
                     }).ToList(),
 
                 ActiveStays = _context.StayRecords.Where(s => s.BookingNumberNavigation.BranchId == staff.BranchId
@@ -57,11 +56,9 @@ namespace HotelManagementSystem.Controllers
                     {
                         BookingNumber = s.BookingNumber,
                         PrimaryGuestName = s.PrimaryGuestName,
-                        ContactPhone = s.BookingNumberNavigation.ContactPhone,
                         RoomNumber = s.RoomNumberSnapshot,
                         ActualCheckInAt = s.ActualCheckInAt,
                         CheckOutDate = s.BookingNumberNavigation.CheckOutDate,
-                        BookingStatus = s.BookingNumberNavigation.BookingStatus
                     }).ToList(),
 
                 PendingCheckOuts = _context.StayRecords.Where(s => s.BookingNumberNavigation.BranchId == staff.BranchId
@@ -72,27 +69,22 @@ namespace HotelManagementSystem.Controllers
                     {
                         BookingNumber = s.BookingNumber,
                         PrimaryGuestName = s.PrimaryGuestName,
-                        ContactPhone = s.BookingNumberNavigation.ContactPhone,
                         RoomNumber = s.RoomNumberSnapshot,
                         ActualCheckInAt = s.ActualCheckInAt,
                         CheckOutDate = s.BookingNumberNavigation.CheckOutDate,
-                        BookingStatus = s.BookingNumberNavigation.BookingStatus
                     }).ToList(),
 
                 RoomsToClean = _context.Rooms.Where(r => r.BranchId == staff.BranchId
-                                                      && r.CleaningStatus == "NeedsCleaning"
-                                                      && !r.StayRecords.Any(s => s.ActualCheckOutAt == null))
+                                      && r.CleaningStatus == "NeedsCleaning"
+                                      && !r.StayRecords.Any(s => s.ActualCheckOutAt == null))
                     .Select(r => new RoomCleaningItemViewModel
                     {
                         RoomId = r.RoomId,
                         RoomNumber = r.RoomNumber,
                         RoomTypeName = r.RoomType.RoomTypeName,
                         Floor = r.Floor,
-                        CleaningStatus = r.CleaningStatus
                     }).ToList()
             };
-
-
 
             return View(model);
         }
