@@ -38,6 +38,14 @@
 	</p>
 
 
+	@if (TempData["PaymentError"] != null)
+	{
+		<div class="alert alert-danger mb-4" role="alert">
+			@TempData["PaymentError"]
+		</div>
+	}
+
+
 	<!-- 表單開始：使用 ASP.NET Core 標準 Tag Helper 確保標籤完美解析 -->
 	<form id="paymentForm" asp-controller="Booking" asp-action="Success" method="post" class="needs-validation" novalidate>
 		
@@ -111,7 +119,7 @@
 											<path d="M2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm13 2v1.5H1V4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1M1 7.5h14V12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1z" />
 										</svg>
 									</span>
-									<input class="form-control" type="text" id="txtCardNumber" required placeholder="4242 4242 4242 4242" maxlength="19" data-error-target="#cardError">
+									<input class="form-control" type="text" id="txtCardNumber" name="cardNumber" required placeholder="4242 4242 4242 4242" maxlength="19" data-error-target="#cardError">
 								</div>
 								<div id="cardError" class="text-danger small mt-1 d-none">此卡號無效。</div>
 							</div>

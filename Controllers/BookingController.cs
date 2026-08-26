@@ -100,8 +100,41 @@ namespace HotelManagementSystem.Controllers
         }
 
 
+
+        private PaymentViewModel? GetPaymentViewModel(int branchId, DateOnly checkIn, DateOnly checkOut, int roomTypeId, int guestCount) 
+        {
+            // 根據房型選擇頁傳來的 branchId 找該分館資料
+            var branch = _context.Branches.FirstOrDefault(b => b.BranchId == branchId);
+            // 根據房型選擇頁傳來的 roomTypeId 找該房型資料
+            var roomType = _context.RoomTypes.FirstOrDefault(rt => rt.RoomTypeId == roomTypeId);
+
+            if (branch == null || roomType == null)
+            {
+                return null;
+            }
+
+            // 根據房型選擇頁傳來的 checkIn, checkOut 計算入住晚數
+            var nights = checkOut.DayNumber - checkIn.DayNumber;
+
+            // 建立 PaymentViewModel
+            return new PaymentViewModel
+            {
+                BranchId = branchId,
+                BranchName = branch.BranchName,
+                CheckInDate = checkIn,
+                CheckOutDate = checkOut,
+                Nights = nights,
+                RoomTypeId = roomTypeId,
+                RoomTypeName = roomType.RoomTypeName,
+                NightlyPrice = roomType.NightlyPrice,
+                TotalPrice = roomType.NightlyPrice * nights,
+                GuestCount = guestCount
+            };
+        }
+
         [HttpPost]
-        public IActionResult Payment(int branchId, DateOnly checkIn, DateOnly checkOut, int roomTypeId, int guestCount)
+        [ActionName("Payment")]
+        public IActionResult PaymentPost(int branchId, DateOnly checkIn, DateOnly checkOut, int roomTypeId, int guestCount)
         {
             // 日期後端驗證
             var today = _taipeiClock.Today;
@@ -113,44 +146,36 @@ namespace HotelManagementSystem.Controllers
                 return BadRequest("入住或退房日期不符合可預訂範圍。");
             }
 
-            // 根據房型選擇頁傳來的 branchId 找該分館資料
-            var branch = _context.Branches.FirstOrDefault(b => b.BranchId == branchId);
+            var model = GetPaymentViewModel(branchId, checkIn, checkOut, roomTypeId, guestCount);
 
-            if (branch == null)
+            if (model == null)
             {
-                return NotFound("找不到指定的分館。");
+                return NotFound("找不到指定的分館或房型。");
             }
 
-            // 根據房型選擇頁傳來的 roomTypeId 找該房型資料
-            var roomType = _context.RoomTypes.FirstOrDefault(rt => rt.RoomTypeId == roomTypeId);
+            return View(model);
+        }
 
-            // 如果找不到房型
-            if (roomType == null)
+        [HttpGet]
+        [ActionName("Payment")]
+        public IActionResult PaymentGet(int branchId, DateOnly checkIn, DateOnly checkOut, int roomTypeId, int guestCount)
+        {
+            // 日期後端驗證
+            var today = _taipeiClock.Today;
+            var maxBookingDate = today.AddDays(60);
+            if (checkIn < today ||
+                checkOut <= checkIn ||
+                checkOut > maxBookingDate)
             {
-                return NotFound("找不到指定的房型。");
+                return BadRequest("入住或退房日期不符合可預訂範圍。");
             }
 
-            // 根據房型選擇頁傳來的 checkIn, checkOut 計算入住晚數
-            var nights = checkOut.DayNumber - checkIn.DayNumber;
+            var model = GetPaymentViewModel(branchId, checkIn, checkOut, roomTypeId, guestCount);
 
-            // 計算總金額
-            var totalPrice = roomType.NightlyPrice * nights;
-
-
-            // 建立 PaymentViewModel
-            var model = new PaymentViewModel
+            if (model == null)
             {
-                BranchId = branchId,
-                BranchName = branch.BranchName,
-                CheckInDate = checkIn,
-                CheckOutDate = checkOut,
-                Nights = nights,
-                RoomTypeId = roomTypeId,
-                RoomTypeName = roomType.RoomTypeName,
-                NightlyPrice = roomType.NightlyPrice,
-                TotalPrice = totalPrice,
-                GuestCount = guestCount
-            };
+                return NotFound("找不到指定的分館或房型。");
+            }
 
             return View(model);
         }
@@ -158,7 +183,7 @@ namespace HotelManagementSystem.Controllers
 
 
         [HttpPost]
-        public IActionResult Success(int branchId, DateOnly checkIn, DateOnly checkOut, int roomTypeId, string bookerName, string contactPhone, string email, int guestCount)
+        public IActionResult Success(int branchId, DateOnly checkIn, DateOnly checkOut, int roomTypeId, string bookerName, string contactPhone, string email, int guestCount, string cardNumber)
         {
             // 電話號碼正規化：去除空白與 -
             var normalizedPhone = contactPhone.Replace(" ", "").Replace("-", "");
@@ -222,6 +247,26 @@ namespace HotelManagementSystem.Controllers
                         guestCount = guestCount
                     });
                 }
+
+
+                // 模擬付款：去除卡號空白
+                var normalizedCardNumber = cardNumber.Replace(" ", "");
+
+                // 指定測試卡號模擬付款失敗
+                if (normalizedCardNumber == "4000000000000002")
+                {
+                    TempData["PaymentError"] =
+                        "付款失敗，訂單尚未建立，請確認付款資訊後重新嘗試。";
+                    return RedirectToAction("Payment", new
+                    {
+                        branchId,
+                        checkIn,
+                        checkOut,
+                        roomTypeId,
+                        guestCount
+                    });
+                }
+
 
                 // 產生訂單編號
                 var now = _taipeiClock.Now;
