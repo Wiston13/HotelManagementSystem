@@ -212,12 +212,16 @@ namespace HotelManagementSystem.Controllers
             var roomType = _context.RoomTypes.FromSqlInterpolated($@"
                 SELECT *
                 FROM RoomTypes WITH (UPDLOCK, HOLDLOCK)
-                WHERE RoomTypeId = {roomTypeId}")
+                WHERE RoomTypeId = {roomTypeId} AND BranchId = {branchId} AND IsActive = 1")
                 .FirstOrDefault();
 
             if (roomType == null)
             {
                 return NotFound("找不到指定的房型。");
+            }
+            if (roomType.MaxOccupancy != guestCount)
+            {
+                return BadRequest("房型入住人數與訂房人數不符。");
             }
 
 
