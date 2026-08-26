@@ -67,26 +67,43 @@ namespace HotelManagementSystem.Controllers
                 return View("Index", await _context.RoomTypes.ToListAsync());
             }
 
+
+            var query = await _context.RoomTypes.FindAsync(model.RoomTypeId);
+            if (query == null)
+            {
+                TempData["ErrorMessage"] = "找不到該房型資料。";
+                return RedirectToAction(nameof(Index));
+            }
+            RoomType res = new RoomType()
+            {
+                RoomTypeName = model.RoomTypeName,
+                MaxOccupancy = model.MaxOccupancy,
+                BedType = model.BedType,
+                NightlyPrice = model.NightlyPrice,
+                IsActive = model.IsActive,
+                ImageUrl = model.ImageUrl,
+                Description = model.Description,
+            };
             //  4. 資料庫存取與例外處理
             try
             {
-                if (model.RoomTypeId == 0)
+                if (res.RoomTypeId == 0)
                 {
-                    _context.RoomTypes.Add(model);
+                    _context.RoomTypes.Add(res);
                     TempData["SuccessMessage"] = "新增房型成功！";
                 }
                 else
                 {
-                    _context.RoomTypes.Update(model);
+                    _context.RoomTypes.Update(res);
                     TempData["SuccessMessage"] = "修改房型成功！";
                 }
 
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                TempData["ErrorMessage"] = "資料庫儲存失敗：" + ex.Message;
+                TempData["ErrorMessage"] = "資料庫儲存失敗";
                 ViewBag.Branches = await _context.Branches.ToListAsync();
                 return View("Index", await _context.RoomTypes.ToListAsync());
             }
