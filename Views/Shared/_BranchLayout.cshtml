@@ -11,18 +11,18 @@
 
     // TODO: 登入功能完成後，改由登入身分資料提供分館與員工資訊。
     // 🎯 1. 精準撈出 Session 資料
-    var sUserRole = Context.Session.GetString("UserRole");
-    var sBranchId = Context.Session.GetString("BranchId");
-    var sUserName = Context.Session.GetString("UserName");
+    // var sUserRole = Context.Session.GetString("UserRole");
+    // var sBranchId = Context.Session.GetString("BranchId");
+    // var sUserName = Context.Session.GetString("UserName");
 
     // 🎯 2. 百分之百精準對齊妳們資料庫（SQL）的真實分館名稱！
-    if (sBranchId == "1") { branchName = "台北中山商旅"; }
-    else if (sBranchId == "2") { branchName = "台北信義商旅"; }
-    else if (sBranchId == "3") { branchName = "台中草悟商旅"; }
-    else if (sBranchId == "4") { branchName = "台南安平商旅"; }
-    else if (sBranchId == "5") { branchName = "高雄港灣商旅"; }
-    else if (sBranchId == "6") { branchName = "花蓮站前商旅"; }
-    else { branchName = "未知分館"; }
+    // if (sBranchId == "1") { branchName = "台北中山商旅"; }
+    // else if (sBranchId == "2") { branchName = "台北信義商旅"; }
+    // else if (sBranchId == "3") { branchName = "台中草悟商旅"; }
+    // else if (sBranchId == "4") { branchName = "台南安平商旅"; }
+    // else if (sBranchId == "5") { branchName = "高雄港灣商旅"; }
+    // else if (sBranchId == "6") { branchName = "花蓮站前商旅"; }
+    // else { branchName = "未知分館"; }
 
 
     var isEmployeeHome = currentController == "EmployeeHome" && currentAction == "Index";
@@ -126,9 +126,9 @@
                 <div class="backoffice-layout__header d-flex justify-content-between align-items-center pb-3 mb-4 border-bottom">
                     <h2 class="h4 mb-0 fw-bold">@pageTitle</h2>
                     <div class="text-secondary small">
-                        <i class="bi bi-person-circle me-1"></i> @branchName @if (!string.IsNullOrWhiteSpace(sUserName))
+                        <i class="bi bi-person-circle me-1"></i> @branchName 
                         {
-                            <text>・<span class="fw-bold text-dark">@sUserName</span></text>
+                            <text>・<span class="fw-bold text-dark"> </span></text>
                         }
                     </div>
                 </div>

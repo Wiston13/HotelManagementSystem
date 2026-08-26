@@ -5,9 +5,9 @@ namespace HotelManagementSystem.Models
     public class LoginModel
     {
         [Required(ErrorMessage = "請輸入員工編號")]
-        public string Username { get; set; }
+        public string Username { get; set; } = null!;
 
         [Required(ErrorMessage = "請輸入密碼")]
-        public string Password { get; set; }
+        public string Password { get; set; } = null!;
     }
 }
