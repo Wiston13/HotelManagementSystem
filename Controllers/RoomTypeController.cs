@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Hosting; // 必須引入此命名空間以使用 IWebHostEnvironment
+﻿using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
-using HotelManagementSystem.Models; // 請替換為專案正確的 DbContext 命名空間
-using HotelManagementSystem.Models.Entities; // 請替換為實體類別命名空間
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using HotelManagementSystem.Models;
+using HotelManagementSystem.Models.Entities;
 
 namespace HotelManagementSystem.Controllers
 {
@@ -13,7 +15,6 @@ namespace HotelManagementSystem.Controllers
         private readonly HotelManagementContext _context;
         private readonly IWebHostEnvironment _environment;
 
-        // 注入 DbContext 與 IWebHostEnvironment
         public RoomTypeController(HotelManagementContext context, IWebHostEnvironment environment)
         {
             _context = context;
@@ -35,40 +36,60 @@ namespace HotelManagementSystem.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Save(RoomType model)
         {
+            //  1. 清除 EF Core 導覽屬性的驗證錯誤（解決 ModelState 永遠無效的主因）
+            ModelState.Remove("Branch");
+            ModelState.Remove("Rooms");
+            ModelState.Remove("Bookings");
+
+            //  2. 彈性檢查本地圖片檔案是否存在（若為相對路徑）
+            if (!string.IsNullOrEmpty(model.ImageUrl) && !model.ImageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            {
+                // 清理路徑開頭的 '~', '/', '\'
+                string cleanPath = model.ImageUrl.TrimStart('~', '/', '\\');
+                string physicalPath = Path.Combine(_environment.WebRootPath, cleanPath);
+
+                if (!System.IO.File.Exists(physicalPath))
+                {
+                    ModelState.AddModelError("ImageUrl", $"伺服器找不到圖片檔案：wwwroot/{cleanPath}");
+                }
+            }
+
+            //  3. 模型驗證未通過處理
             if (!ModelState.IsValid)
             {
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage);
+
+                TempData["ErrorMessage"] = "儲存失敗：" + string.Join(" | ", errors);
+
                 ViewBag.Branches = await _context.Branches.ToListAsync();
                 return View("Index", await _context.RoomTypes.ToListAsync());
             }
 
-            // 後端第二重防護：若為本地相對路徑 (/images/...)，檢查 wwwroot 實體檔案是否存在
-            if (!string.IsNullOrEmpty(model.ImageUrl) && model.ImageUrl.StartsWith("/"))
+            //  4. 資料庫存取與例外處理
+            try
             {
-                string relativePath = model.ImageUrl.TrimStart('/');
-                string physicalPath = Path.Combine(_environment.WebRootPath, relativePath);
-
-                if (!System.IO.File.Exists(physicalPath))
+                if (model.RoomTypeId == 0)
                 {
-                    // 若伺服器找不到檔案，可記錄或阻擋（前端已做過第一層防護，這裡做雙重保險）
-                    ModelState.AddModelError("ImageUrl", "伺服器的 wwwroot 目錄中找不到該圖片檔案！");
-                    ViewBag.Branches = await _context.Branches.ToListAsync();
-                    return View("Index", await _context.RoomTypes.ToListAsync());
+                    _context.RoomTypes.Add(model);
+                    TempData["SuccessMessage"] = "新增房型成功！";
                 }
-            }
+                else
+                {
+                    _context.RoomTypes.Update(model);
+                    TempData["SuccessMessage"] = "修改房型成功！";
+                }
 
-            if (model.RoomTypeId == 0)
-            {
-                // 新增房型
-                _context.RoomTypes.Add(model);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
             }
-            else
+            catch (Exception ex)
             {
-                // 修改房型
-                _context.RoomTypes.Update(model);
+                TempData["ErrorMessage"] = "資料庫儲存失敗：" + ex.Message;
+                ViewBag.Branches = await _context.Branches.ToListAsync();
+                return View("Index", await _context.RoomTypes.ToListAsync());
             }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
         }
     }
 }

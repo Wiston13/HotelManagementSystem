@@ -4,6 +4,23 @@
     ViewData["Title"] = "分館管理";
 }
 
+<!--  成功或失敗訊息提示 Alert 區塊 -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show shadow-sm mb-3" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-3" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <p class="text-muted small mb-0">管理員可查詢、新增及修改分館必要資料（設定接受或停止新訂房）</p>
@@ -98,11 +115,10 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label fw-bold">分館名稱 <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="branchName" name="BranchName" required placeholder="例如：台北館">
+                            <input type="text" class="form-control" id="branchName" name="BranchName" required placeholder="例如：台北中山商旅">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">區域 <span class="text-danger">*</span></label>
-                            <!-- 下拉選單：北部、中部、南部、東部、離島 -->
                             <select class="form-select" id="region" name="Region" required>
                                 <option value="" disabled selected>請選擇區域</option>
                                 <option value="北部">北部</option>
@@ -129,7 +145,6 @@
                         </div>
                         <div class="col-12">
                             <label class="form-label fw-bold">圖片網址 / 相對路徑</label>
-                            <!-- 將 type 改為 text，支援 /images/... 路徑與外部網址 -->
                             <input type="text" class="form-control" id="imageUrl" name="ImageUrl" placeholder="例如：/images/branch1.jpg 或 https://example.com/image.jpg">
                             <div class="form-text">可填寫本地相對路徑（如：/images/branch1.jpg）或公開網路圖片網址。</div>
                         </div>
@@ -163,7 +178,7 @@
                 saveBtn.textContent = '新增分館';
                 form.reset();
                 document.getElementById('branchId').value = '0';
-                document.getElementById('region').value = ''; // 歸零恢復為請選擇
+                document.getElementById('region').value = '';
                 document.getElementById('acceptsNewBookings').value = 'true';
             } else if (mode === 'edit' && btnElement) {
                 modalTitle.textContent = '編輯分館資料';
@@ -180,18 +195,16 @@
             }
         }
 
-        // 非同步驗證圖片路徑/網址是否真實可讀取
         function validateImageUrl(url) {
             return new Promise((resolve) => {
-                // 如果未填寫，視為通過（因為圖片非必填）
                 if (!url || url.trim() === '') {
                     resolve(true);
                     return;
                 }
 
                 const img = new Image();
-                img.onload = () => resolve(true);   // 圖片成功載入
-                img.onerror = () => resolve(false); // 圖片載入失敗 (檔案不存在或網址無效)
+                img.onload = () => resolve(true);
+                img.onerror = () => resolve(false);
                 img.src = url.trim();
             });
         }
@@ -206,7 +219,6 @@
 
             const imgUrl = document.getElementById('imageUrl').value.trim();
 
-            // 執行圖片路徑/網址驗證
             const isValidImg = await validateImageUrl(imgUrl);
             if (!isValidImg) {
                 alert('【圖片路徑/網址無效】\n無法讀取此圖片！請確認 wwwroot 資料夾下是否有此檔案，或確認網路圖片網址是否正確。');
