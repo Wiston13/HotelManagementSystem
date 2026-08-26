@@ -1,257 +1,253 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using HotelManagementSystem.Models;
+using HotelManagementSystem.Services;
+using HotelManagementSystem.Models.BookingSearchModel;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using HotelManagementSystem.Models.Entities;
 
-//到時候改成從資料庫抓
-public class BookingData
-{
-    public string? BookingNum { get; set; }
-    public DateTime BookingDate { get; set; }
-    public string? Name { get; set; }
-    public string? Phone { get; set; }
-    public string? Roomtype { get; set; }
-    public string? BookingStatus { get; set; }
-    public DateTime StartDate { get; set; }
-    public DateTime EndDate { get; set; }
-    public string? Price { get; set; }
-}
+/*
+ 員工帳號驗證:
+ 每個ACTION都要驗證員工身分，員工身分怎麼驗證?
+ employeeNum  用session抓  但session週期只有一次轉跳
+ 有filter做驗證 或更好做法
+ 但有同時需要branchID 和 employeeNum嗎?
+ 只要有employeeNum就可以抓資料庫判斷分館了
+ 那這樣會有危險嗎?
+ 例如轉跳action帶的employee是假的 又或者裝到_layout或哪裡的Model 或viewdata tempdata
+ viewdata和viewbag->轉跳一次請求消失 tempdata轉跳存成session 
+ 
+ 每步操作要驗證資料庫正確性:
+ 更新時加入判斷資料庫的資料是否有誤 例如paid->cancelled 確定是不是已經是cancelled 訂單資料是否一樣
+
+ 可優化:
+*訂單讀取時間
+*前端取消的訂單 有取消理由
+*取消後單獨顯示取消的訂單?或更好的做法
+*即時更改選單刷新訂單
+*訂單類別排序
+
+ 
+ */
 
 namespace HotelManagementSystem.Controllers
 {
-    /*
-    
-    */
-
-
     public class BranchBookingController : Controller
     {
-        private List<BookingData> GetMockData()
+        private readonly TaipeiClock _Clock;        
+        private readonly HotelManagementContext _context;
+        private readonly NoShowService _noShowService;
+        public BranchBookingController(HotelManagementContext context, TaipeiClock clock ,NoShowService noShowService)
         {
-                return new List<BookingData>()
-    {
-        new BookingData
-    {
-        BookingNum = "BK20260808001",
-        BookingDate = new DateTime(2026, 7, 25, 14, 30, 0),
-        Name = "王小明",
-        Phone = "0912345678",
-        Roomtype = "標準雙人房",
-        BookingStatus = "已完成",
-        StartDate = new DateTime(2026, 8, 8),
-        EndDate = new DateTime(2026, 8, 10),
-        Price = "NT$ 4,800"
-    },
-    new BookingData
-    {
-        BookingNum = "BK20260808002",
-        BookingDate = new DateTime(2026, 7, 26, 10, 15, 0),
-        Name = "林雅雯",
-        Phone = "0922123456",
-        Roomtype = "精緻雙床房",
-        BookingStatus = "已完成",
-        StartDate = new DateTime(2026, 8, 8),
-        EndDate = new DateTime(2026, 8, 9),
-        Price = "NT$ 5,600"
-    },
-    new BookingData
-    {
-        BookingNum = "BK20260809003",
-        BookingDate = new DateTime(2026, 7, 27, 16, 40, 0),
-        Name = "張家豪",
-        Phone = "0933555888",
-        Roomtype = "豪華雙人房",
-        BookingStatus = "已完成",
-        StartDate = new DateTime(2026, 8, 9),
-        EndDate = new DateTime(2026, 8, 11),
-        Price = "NT$ 6,800"
-    },
-    new BookingData
-    {
-        BookingNum = "BK20260809004",
-        BookingDate = new DateTime(2026, 7, 28, 11, 00, 0),
-        Name = "陳美玲",
-        Phone = "0944777999",
-        Roomtype = "標準單人房",
-        BookingStatus = "已完成",
-        StartDate = new DateTime(2026, 8, 9),
-        EndDate = new DateTime(2026, 8, 10),
-        Price = "NT$ 3,200"
-    },
-    new BookingData
-    {
-        BookingNum = "BK20260810018",
-        BookingDate = new DateTime(2026, 7, 29, 19, 10, 0),
-        Name = "李志豪",
-        Phone = "0955111222",
-        Roomtype = "標準雙人房",
-        BookingStatus = "已完成",
-        StartDate = new DateTime(2026, 8, 10),
-        EndDate = new DateTime(2026, 8, 12),
-        Price = "NT$ 4,800"
-    },
-    new BookingData
-    {
-        BookingNum = "BK20260810019",
-        BookingDate = new DateTime(2026, 7, 29, 20, 30, 0),
-        Name = "黃淑芬",
-        Phone = "0966333444",
-        Roomtype = "家庭四人房",
-        BookingStatus = "已完成",
-        StartDate = new DateTime(2026, 8, 10),
-        EndDate = new DateTime(2026, 8, 13),
-        Price = "NT$ 8,800"
-    },
-    new BookingData
-    {
-        BookingNum = "BK20260810020",
-        BookingDate = new DateTime(2026, 7, 30, 09, 20, 0),
-        Name = "趙建國",
-        Phone = "0977888777",
-        Roomtype = "精緻雙床房",
-        BookingStatus = "已取消",
-        StartDate = new DateTime(2026, 8, 10),
-        EndDate = new DateTime(2026, 8, 11),
-        Price = "NT$ 5,600"
-    },
-    new BookingData
-    {
-        BookingNum = "BK20260811021",
-        BookingDate = new DateTime(2026, 7, 30, 14, 00, 0),
-        Name = "周怡君",
-        Phone = "0988222333",
-        Roomtype = "標準雙人房",
-        BookingStatus = "已完成",
-        StartDate = new DateTime(2026, 8, 11),
-        EndDate = new DateTime(2026, 8, 13),
-        Price = "NT$ 4,800"
-    },
-    new BookingData
-    {
-        BookingNum = "BK20260811022",
-        BookingDate = new DateTime(2026, 7, 31, 15, 45, 0),
-        Name = "吳冠宇",
-        Phone = "0999666555",
-        Roomtype = "豪華雙人房",
-        BookingStatus = "逾期未入住",
-        StartDate = new DateTime(2026, 8, 11),
-        EndDate = new DateTime(2026, 8, 12),
-        Price = "NT$ 6,800"
-    },
-    new BookingData
-    {
-        BookingNum = "BK20260812023",
-        BookingDate = new DateTime(2026, 8, 1, 11, 10, 0),
-        Name = "蔡依婷",
-        Phone = "0911223344",
-        Roomtype = "標準單人房",
-        BookingStatus = "已完成",
-        StartDate = new DateTime(2026, 8, 12),
-        EndDate = new DateTime(2026, 8, 14),
-        Price = "NT$ 6,400"
-    },
-    new BookingData
-    {
-        BookingNum = "BK20260812024",
-        BookingDate = new DateTime(2026, 8, 1, 13, 20, 0),
-        Name = "楊宗翰",
-        Phone = "0922334455",
-        Roomtype = "標準雙人房",
-        BookingStatus = "已完成",
-        StartDate = new DateTime(2026, 8, 11),
-        EndDate = new DateTime(2026, 8, 14),
-        Price = "NT$ 7,200"
-    },
-    new BookingData
-    {
-        BookingNum = "BK20260813025",
-        BookingDate = new DateTime(2026, 8, 2, 10, 05, 0),
-        Name = "許雅婷",
-        Phone = "0933445566",
-        Roomtype = "家庭四人房",
-        BookingStatus = "入住中",
-        StartDate = new DateTime(2026, 8, 13),
-        EndDate = new DateTime(2026, 8, 16),
-        Price = "NT$ 11,200"
-    },
-    new BookingData
-    {
-        BookingNum = "BK20260813026",
-        BookingDate = new DateTime(2026, 8, 2, 17, 50, 0),
-        Name = "鄭文傑",
-        Phone = "0944556677",
-        Roomtype = "精緻雙床房",
-        BookingStatus = "已取消",
-        StartDate = new DateTime(2026, 8, 13),
-        EndDate = new DateTime(2026, 8, 14),
-        Price = "NT$ 5,600"
-    },
-    new BookingData
-    {
-        BookingNum = "BK20260814027",
-        BookingDate = new DateTime(2026, 8, 3, 12, 30, 0),
-        Name = "謝佩如",
-        Phone = "0955667788",
-        Roomtype = "標準雙人房",
-        BookingStatus = "已付款",
-        StartDate = new DateTime(2026, 8, 15),
-        EndDate = new DateTime(2026, 8, 17),
-        Price = "NT$ 4,800"
-    },
-    new BookingData
-    {
-        BookingNum = "BK20260815028",
-        BookingDate = new DateTime(2026, 8, 4, 15, 00, 0),
-        Name = "郭家宏",
-        Phone = "0966778899",
-        Roomtype = "豪華雙人房",
-        BookingStatus = "已付款", 
-        StartDate = new DateTime(2026, 8, 15),
-        EndDate = new DateTime(2026, 8, 18),
-        Price = "NT$ 15,800"
-    }
-    };            
+            _context = context;
+            _Clock = clock;
+            _noShowService = noShowService;
         }
 
-        public IActionResult BookingSearch(string keyword,string dateRange, string bookingStatus)
+        // 轉換前端狀態字串和資料庫相同
+        private string StatusLanguage(string input)
         {
-            var allData = GetMockData();
-            var query = allData.AsQueryable();
-
-            if(string.IsNullOrEmpty(keyword) && string.IsNullOrEmpty(bookingStatus))
+            string output = "";
+            switch (input)
             {
+                case "Completed": output = "已完成"; break;
+                case "CheckedIn": output = "入住中"; break;
+                case "Cancelled": output = "已取消"; break;
+                case "NoShow": output = "逾期未入住"; break;
+                case "Paid": output = "已付款"; break;
+                case "已完成": output = "Completed"; break;
+                case "入住中": output = "CheckedIn"; break;
+                case "已取消": output = "Cancelled"; break;
+                case "逾期未入住": output = "NoShow"; break;
+                case "已付款": output = "Paid"; break;
+            }
+            return output;
+        }
+
+        //驗證員工ID是否存在
+        private async Task<int?> EmployeeVerify(string EmpNum)
+        {
+             var q= await _context.Employees.AsNoTracking().FirstOrDefaultAsync(x => x.EmployeeNumber == EmpNum);
+             return q?.BranchId;
+            // 未來調整回傳值
+        }
+
+        //查詢訂單
+        [HttpGet]
+        public async Task<IActionResult> BookingSearch(string keyword, string dateRange, string bookingStatus)
+        {
+            // 待帳號驗證(session取得 employeenum)
+            string EmployeeNum = "E20260807002";
+
+            //驗證員工ID是否存在
+            int? BranchId = await EmployeeVerify(EmployeeNum);
+            if (BranchId == null)
+            {
+                ViewBag.VerifyError = "帳號驗證異常，即將返回登入畫面";
                 return View(new List<BookingData>());
             }
 
+            // 刷新 noshow
+           await _noShowService.UpdateNoShowsAsync();
 
-            if (!string.IsNullOrEmpty(keyword))
+            // 送回前端保存查詢欄位用
+            ViewBag.Keyword = keyword;
+            ViewBag.DateRange = dateRange;
+            ViewBag.BookingStatus = bookingStatus;
+
+            List<BookingData> _bookingData = new List<BookingData>();
+
+            // 驗證搜尋為空則傳回空資料
+            if (string.IsNullOrEmpty(keyword)||string.IsNullOrWhiteSpace(keyword))
             {
-                query = query.Where(x => x.BookingNum!.Contains(keyword) || x.Name!.Contains(keyword) || x.Phone!.Contains(keyword));
+                return View(_bookingData);
             }
 
-            if (!string.IsNullOrEmpty(dateRange))
+            var query = _context.Bookings.AsNoTracking();
+            query = query.Where(x => x.BranchId == BranchId);
+            // keyword模糊查詢資料庫 及 分館ID (此處需要驗證員工帳號及帳號所屬分館取得)
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {                
+                query = query.Where(x => x.BookingNumber!.Contains(keyword) || x.BookerName!.Contains(keyword) || x.ContactPhone!.Contains(keyword));
+            }
+
+            // dateRange查詢時間範圍 (此處考慮加入前端預設時間段 避免訂單結果爆量讀取過久)
+            if (!string.IsNullOrWhiteSpace(dateRange))
             {
                 var dates = dateRange.Split(" - ");
                 if (dates.Length == 2)
                 {
                     if (DateTime.TryParse(dates[0], out DateTime startDate) && DateTime.TryParse(dates[1], out DateTime endDate))
                     {
-                        query = query.Where(x => x.StartDate >= startDate && x.StartDate <= endDate);
+                        query = query.Where(x => x.CheckInDate >= DateOnly.FromDateTime(startDate)
+                        && x.CheckInDate <= DateOnly.FromDateTime(endDate));
                     }
                 }
             }
 
-            if (!string.IsNullOrEmpty(bookingStatus))
+
+            // bookingstatu查詢訂單狀態
+            if (!string.IsNullOrWhiteSpace(bookingStatus))
             {
-                query=query.Where(x=>x.BookingStatus == bookingStatus);
+                query = query.Where(x => x.BookingStatus == StatusLanguage(bookingStatus));
             }
 
-            var result = query.ToList();
 
-            ViewBag.Keyword = keyword;
-            ViewBag.DateRange = dateRange;
-            ViewBag.BookingStatus = bookingStatus;
+            _bookingData =await query.Select(x => new BookingData
+            {
+                BookingNum = x.BookingNumber,
+                BookingDate = x.CreatedAt,
+                Name = x.BookerName,
+                Phone = x.ContactPhone,
+                Roomtype = x.RoomTypeNameSnapshot,
+                BookingStatus = x.BookingStatus,
+                StartDate = new DateTime(x.CheckInDate.Year, x.CheckInDate.Month, x.CheckInDate.Day),
+                EndDate = new DateTime(x.CheckOutDate.Year, x.CheckOutDate.Month, x.CheckOutDate.Day),
+                Price = "NT$ " + x.TotalAmount.ToString("N0")
+            }).ToListAsync();
+            
+            foreach(var b in _bookingData)
+            {
+                b.BookingStatus = StatusLanguage(b.BookingStatus);
+            }
 
-
-            return View(result);
+            return View(_bookingData);
         }
-        
+
+        // 加入operationLog
+        // 取消訂單 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> BookingCancel(string bookingNum, string keyword, string dateRange,
+            string keyStatus, string cancelCause ,string cancelReason)
+        {
+            // 待取得分館員工
+            string EmployeeNum = "E20260807002";
+            var now = _Clock.Now;
+
+            // 員工驗證
+            int? BranchId = await EmployeeVerify(EmployeeNum);
+            if (BranchId == null)
+            {
+                ViewBag.VerifyError = "帳號驗證異常，即將返回登入畫面";
+                return View("BookingSearch",new List<BookingData>());
+            }
+
+            
+
+            await _noShowService.UpdateNoShowsAsync();
+
+            // 查詢訂單
+            var result = _context.Bookings.FirstOrDefault(x => x.BookingNumber == bookingNum && x.BranchId == BranchId &&x.StayRecord==null);
+            if(result == null || result.BookingStatus!= "Paid")
+            {
+                TempData["BookingStatusError"] = "訂單狀態錯誤，目前無法取消訂單";
+                return RedirectToAction("BookingSearch", new {  keyword, dateRange, bookingStatus = keyStatus });
+            }
+
+            // 判斷顧客因素+是否超過取消時間
+
+            if (cancelCause == "顧客因素" && DateOnly.FromDateTime(now) >= result.CheckInDate)
+            {
+                TempData["BookingStatusError"] = "超過顧客取消時間，無法取消訂單";
+                return RedirectToAction("BookingSearch", new { keyword, dateRange, bookingStatus = keyStatus });
+            }
+
+            
+            //判斷取消因素是否正確
+            if (cancelCause!= "顧客因素" && cancelCause != "飯店因素")
+            {
+                TempData["BookingStatusError"] = "取消訂單資料錯誤，無法取消訂單";
+                return RedirectToAction("BookingSearch", new { keyword, dateRange, bookingStatus = keyStatus });
+            }
+            result.CancellationCause = cancelCause== "顧客因素"? "GuestRequest": "HotelUnableToFulfill";
+
+            // 限制500字
+            if (string.IsNullOrWhiteSpace(cancelReason))
+            {
+                TempData["BookingStatusError"] = "取消理由不可為空";
+                return RedirectToAction("BookingSearch", new { keyword, dateRange, bookingStatus = keyStatus });
+            }
+            if (cancelReason.Length > 500)
+            {
+                TempData["BookingStatusError"] = "取消理由超過500字";
+                return RedirectToAction("BookingSearch", new { keyword, dateRange, bookingStatus = keyStatus });
+            }
+
+            result.CancellationReason = cancelReason;
+
+            result.CancelledAt = now;
+
+            result.CancelledByEmployeeNumber = EmployeeNum;
+
+            result.BookingStatus = "Cancelled";
+
+
+            // 新增操作紀錄
+            var operationLog = new OperationLog
+            {
+                TargetBranchId = result.BranchId,
+                OperatedAt = now,
+                OperatorEmployeeNumber = EmployeeNum,
+                OperationTypeId = 21,
+                TargetType = "Booking",
+                TargetIdentifier = result.BookingNumber,
+                Description = $"因{cancelCause}取消訂單 {result.BookingNumber}。"
+            };
+             _context.OperationLogs.Add(operationLog);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch(DbUpdateException)
+            {
+                TempData["BookingStatusError"] = "發生不可避免的錯誤，請重新操作訂單。";
+                return RedirectToAction("BookingSearch", new { keyword, dateRange, bookingStatus = keyStatus });
+            }
+
+            return RedirectToAction("BookingSearch", new {keyword=bookingNum, dateRange, bookingStatus = "" });
+        }
+
+
     }
 }
