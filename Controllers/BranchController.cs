@@ -172,10 +172,6 @@ namespace HotelManagementSystem.Controllers
                             bookingStatusLog.Description = $"修改{branch.BranchName}商旅資料";//考慮加入修改細節
                             _context.Add(bookingStatusLog);
                         }
-                    
-                   
-                       
-                    
                 }
                 if (isBookingOpenOrStopped != 0)
                 {
