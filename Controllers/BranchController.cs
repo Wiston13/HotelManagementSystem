@@ -80,6 +80,16 @@ namespace HotelManagementSystem.Controllers
                 }
                 else
                 {
+                    // branch.Phone 正規化
+                    string phone = branch.Phone.Trim();
+                    phone = phone.Replace(" ", "");
+                    phone = phone.Replace("-", "");
+                    if(phone.All(char.IsDigit))
+                    {
+                        TempData["ErrorMessage"] = "電話只能包含數字、空白或半形連字號，修改失敗！";
+                        return RedirectToAction(nameof(Index));
+                    }
+
                     // 【修改分館】
                     var existingBranch = await _context.Branches.FindAsync(branch.BranchId);
                     if (existingBranch != null)
