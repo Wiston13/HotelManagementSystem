@@ -76,7 +76,7 @@
 					</div>
 					<div class="check-in-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
 						<p class="detail-label text-secondary mb-0">訂單狀態</p>
-						<p class="detail-value booking-status fw-semibold text-end mb-0">@Model.BookingStatus</p>
+						<p class="detail-value booking-status fw-semibold text-end mb-0">@StatusDisplayHelper.GetBookingStatusText(Model.BookingStatus)</p>
 					</div>
 				</div>
 			</section>

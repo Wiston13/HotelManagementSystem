@@ -78,7 +78,7 @@
                         </div>
                         <div class="check-out-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
                             <p class="detail-label text-secondary mb-0">住房狀態</p>
-                            <p class="detail-value stay-status fw-semibold text-end mb-0">@Model.BookingStatus</p>
+                            <p class="detail-value stay-status fw-semibold text-end mb-0">@StatusDisplayHelper.GetBookingStatusText(Model.BookingStatus)</p>
                         </div>
                     </div>
 
