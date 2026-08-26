@@ -39,7 +39,7 @@
 
 
 	<!-- 表單開始：使用 ASP.NET Core 標準 Tag Helper 確保標籤完美解析 -->
-	<form id="paymentForm" asp-controller="Booking" asp-action="Success" class="needs-validation" novalidate>
+	<form id="paymentForm" asp-controller="Booking" asp-action="Success" method="post" class="needs-validation" novalidate>
 		
 		<!-- 透過表單將資料送到下一頁 (Success) -->
 		<input type="hidden" name="branchId" value="@Model.BranchId" />

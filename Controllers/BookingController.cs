@@ -3,6 +3,7 @@ using HotelManagementSystem.Models.Entities;
 using HotelManagementSystem.Models.ViewModels.Booking;
 using HotelManagementSystem.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing.Constraints;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 
@@ -47,8 +48,7 @@ namespace HotelManagementSystem.Controllers
                     b.RoomTypeId == roomTypeId &&
                     b.CheckInDate < checkOut && b.CheckOutDate > checkIn &&
                     (b.BookingStatus == "Paid" || b.BookingStatus == "CheckedIn")
-                ).ToList();
-
+                ).ToList(); 
             
 
             // 逐晚計算，取整段住宿期間最低剩餘房量
@@ -78,7 +78,7 @@ namespace HotelManagementSystem.Controllers
                 }
 
                 // 取整段住宿期間的最低剩餘房量
-                minimumRemaining = Math.Min(minimumRemaining, remaining);                
+                minimumRemaining = Math.Min(minimumRemaining, remaining);
             }
 
             return minimumRemaining;
@@ -92,12 +92,12 @@ namespace HotelManagementSystem.Controllers
         {
             // 根據首頁傳來的 branchId 查詢分館
             var branch = _context.Branches
-                .FirstOrDefault(b => b.BranchId == branchId);
+                .FirstOrDefault(b => b.BranchId == branchId && b.AcceptsNewBookings);
 
             // 如果找不到分館
             if (branch == null)
             {
-                return NotFound("找不到指定的分館。");
+                return NotFound("找不到指定的分館，或該分館目前不開放訂房。");
             }
 
             // 查詢該分館 符合所選房型人數 且 啟用 的房型
@@ -195,15 +195,15 @@ namespace HotelManagementSystem.Controllers
 
 
 
-
+        [HttpPost]
         public IActionResult Success(int branchId, DateOnly checkIn, DateOnly checkOut, int roomTypeId, string bookerName, string contactPhone, string email, int guestCount)
         {
             // 根據付款頁傳來的 branchId 找該分館資料
-            var branch = _context.Branches.FirstOrDefault(b => b.BranchId == branchId);
+            var branch = _context.Branches.FirstOrDefault(b => b.BranchId == branchId && b.AcceptsNewBookings);
 
             if (branch == null)
             {
-                return NotFound("找不到指定的分館。");
+                return NotFound("找不到指定的分館，或該分館目前不開放訂房。");
             }
 
 
@@ -240,11 +240,9 @@ namespace HotelManagementSystem.Controllers
             }
 
 
-            //
+            // 產生訂單編號
             var now = _taipeiClock.Now;
-
             var today = now.Date;
-
             var tomorrow = today.AddDays(1);
 
             var prefix = $"BK{now:yyMMdd}{roomTypeId:D4}";
@@ -260,7 +258,6 @@ namespace HotelManagementSystem.Controllers
                 .FirstOrDefault();
 
             int nextSequence = 1;
-
             if (lastBookingNumber != null)
             {
                 var lastSequence = int.Parse(lastBookingNumber.Substring(lastBookingNumber.Length - 4));
@@ -269,9 +266,12 @@ namespace HotelManagementSystem.Controllers
 
             var bookingNumber = $"{prefix}{nextSequence:D4}";
 
+
             // 建立訂單
             var booking = new Booking
             {
+                BookingNumber = bookingNumber,
+
                 BranchId = branchId,
                 RoomTypeId = roomTypeId,
 
@@ -292,11 +292,20 @@ namespace HotelManagementSystem.Controllers
                 CreatedAt = _taipeiClock.Now
             };
 
+            // 加入 DbContext
+            _context.Bookings.Add(booking);
+
+            // 寫入資料庫
+            _context.SaveChanges();
+
+            // 交易完成
+            transaction.Commit();
+
 
             // 建立 SuccessViewModel
             var model = new SuccessViewModel
             {
-                BookingNumber = "",
+                BookingNumber = bookingNumber,
                 BranchName = branch.BranchName,
                 RoomTypeName = roomType.RoomTypeName,
                 CheckInDate = checkIn,
