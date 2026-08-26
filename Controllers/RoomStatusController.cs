@@ -4,6 +4,7 @@ using HotelManagementSystem.Models.ViewModels.RoomStatus;
 using HotelManagementSystem.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace HotelManagementSystem.Controllers
 {
@@ -11,10 +12,15 @@ namespace HotelManagementSystem.Controllers
     {
         private readonly HotelManagementContext _context;
         private readonly TaipeiClock _taipeiClock;
-        public RoomStatusController(HotelManagementContext context, TaipeiClock taipeiClock)
+        private readonly RoomAvailabilityService _roomAvailabilityService;
+        public RoomStatusController(
+            HotelManagementContext context,
+            TaipeiClock taipeiClock,
+            RoomAvailabilityService roomAvailabilityService)
         {
             _context = context;
             _taipeiClock = taipeiClock;
+            _roomAvailabilityService = roomAvailabilityService;
         }
 
         [HttpGet]
@@ -59,7 +65,14 @@ namespace HotelManagementSystem.Controllers
                 .OrderBy(f => f)
                 .ToList();
 
+            if (TempData["CapacityRiskWarning"] is string capacityRiskJson)
+            {
+                model.CapacityRisk =
+                    JsonSerializer.Deserialize<CapacityRiskConfirmationViewModel>(capacityRiskJson);
+            }
+
             if (roomId.HasValue &&
+                model.CapacityRisk == null &&
                 model.Rooms.Any(r => r.RoomId == roomId.Value))
             {
                 model.OpenModalRoomId = roomId.Value;
@@ -144,7 +157,7 @@ namespace HotelManagementSystem.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult UpdateSupplyStatus(int roomId, string targetStatus)
+        public IActionResult UpdateSupplyStatus(int roomId, string targetStatus, bool confirmed = false)
         {
 
             var currentEmployeeNumber = "E20260807002"; // TODO 假設是登入的員工編號，實際應從登入資訊取得"
@@ -179,6 +192,13 @@ namespace HotelManagementSystem.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
+            if (confirmed &&
+                (targetStatus != "Reserved" || room.SupplyStatus != "Open"))
+            {
+                TempData["ErrorMessage"] = "房間供應狀態已變更，請重新確認後再操作。";
+                return RedirectToAction(nameof(Index), new { roomId });
+            }
+
             if (room.SupplyStatus == targetStatus)
             {
                 TempData["SuccessMessage"] = "房間供應狀態已是最新狀態。";
@@ -189,6 +209,37 @@ namespace HotelManagementSystem.Controllers
             {
                 TempData["ErrorMessage"] = "停用中的房間無法修改供應狀態。";
                 return RedirectToAction(nameof(Index));
+            }
+
+            if (room.SupplyStatus == "Open" && targetStatus == "Reserved")
+            {
+                var today = _taipeiClock.Today;
+                var shortages = _roomAvailabilityService.FindCapacityShortages(
+                    room.RoomTypeId,
+                    today,
+                    today.AddDays(60),
+                    1);
+
+                if (shortages.Count > 0 && !confirmed)
+                {
+                    var capacityRisk = new CapacityRiskConfirmationViewModel
+                    {
+                        RoomId = room.RoomId,
+                        RoomNumber = room.RoomNumber,
+                        TargetStatus = targetStatus,
+                        Shortages = shortages
+                            .OrderBy(shortage => shortage.Key)
+                            .Select(shortage => new CapacityShortageViewModel
+                            {
+                                Date = shortage.Key,
+                                ShortageCount = shortage.Value
+                            })
+                            .ToList()
+                    };
+
+                    TempData["CapacityRiskWarning"] = JsonSerializer.Serialize(capacityRisk);
+                    return RedirectToAction(nameof(Index), new { roomId });
+                }
             }
 
 
@@ -225,7 +276,11 @@ namespace HotelManagementSystem.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult UpdateDisabledStatus(int roomId, string targetStatus, string? disabledReason)
+        public IActionResult UpdateDisabledStatus(
+            int roomId,
+            string targetStatus,
+            string? disabledReason,
+            bool confirmed = false)
         {
 
             var currentEmployeeNumber = "E20260807002"; // TODO 假設是登入的員工編號，實際應從登入資訊取得"
@@ -262,6 +317,12 @@ namespace HotelManagementSystem.Controllers
 
             if (targetStatus == "Disabled")
             {
+                if (confirmed && room.SupplyStatus != "Open")
+                {
+                    TempData["ErrorMessage"] = "房間供應狀態已變更，請重新確認後再操作。";
+                    return RedirectToAction(nameof(Index), new { roomId });
+                }
+
                 if (room.SupplyStatus == "Disabled")
                 {
                     TempData["ErrorMessage"] = "房間目前已是停用狀態。";
@@ -272,6 +333,38 @@ namespace HotelManagementSystem.Controllers
                 {
                     TempData["ErrorMessage"] = "請填寫停用原因。";
                     return RedirectToAction(nameof(Index));
+                }
+
+                if (room.SupplyStatus == "Open")
+                {
+                    var today = _taipeiClock.Today;
+                    var shortages = _roomAvailabilityService.FindCapacityShortages(
+                        room.RoomTypeId,
+                        today,
+                        today.AddDays(60),
+                        1);
+
+                    if (shortages.Count > 0 && !confirmed)
+                    {
+                        var capacityRisk = new CapacityRiskConfirmationViewModel
+                        {
+                            RoomId = room.RoomId,
+                            RoomNumber = room.RoomNumber,
+                            TargetStatus = targetStatus,
+                            DisabledReason = disabledReason.Trim(),
+                            Shortages = shortages
+                                .OrderBy(shortage => shortage.Key)
+                                .Select(shortage => new CapacityShortageViewModel
+                                {
+                                    Date = shortage.Key,
+                                    ShortageCount = shortage.Value
+                                })
+                                .ToList()
+                        };
+
+                        TempData["CapacityRiskWarning"] = JsonSerializer.Serialize(capacityRisk);
+                        return RedirectToAction(nameof(Index), new { roomId });
+                    }
                 }
 
                 room.SupplyStatus = "Disabled";
@@ -408,22 +501,5 @@ namespace HotelManagementSystem.Controllers
             });
         }
 
-        //TODO:
-        //Open → Reserved / Disabled 前，
-        //整合共用房量 Service 檢查未來容量缺口；
-        //若存在缺口，顯示警告並要求再次確認。
-
-        //Open → Reserved / Disabled
-        //          ↓
-        //    呼叫共用房量計算
-        //          ↓
-        //    有沒有未來容量缺口？
-        //    ↓              ↓
-        //   沒有            有
-        // 直接異動       顯示日期/缺額
-        //                   ↓
-        //              使用者再次確認
-        //                   ↓
-        //                仍可異動
     }
 }

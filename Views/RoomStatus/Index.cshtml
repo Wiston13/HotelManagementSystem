@@ -61,6 +61,79 @@
 	</div>
 }
 
+@if (Model.CapacityRisk != null)
+{
+	var confirmationAction = Model.CapacityRisk.TargetStatus == "Disabled"
+		? "UpdateDisabledStatus"
+		: "UpdateSupplyStatus";
+
+	<div class="modal fade"
+		 id="capacityRiskModal"
+		 tabindex="-1"
+		 aria-labelledby="capacityRiskModalTitle"
+		 aria-hidden="true">
+
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h2 class="modal-title fs-5" id="capacityRiskModalTitle">
+						未來可售房量風險確認
+					</h2>
+
+					<button type="button"
+							class="btn-close"
+							data-bs-dismiss="modal"
+							aria-label="關閉">
+					</button>
+				</div>
+
+				<div class="modal-body">
+					<p>
+						將房間 @Model.CapacityRisk.RoomNumber
+						@(Model.CapacityRisk.TargetStatus == "Disabled" ? "停用" : "設為保留")
+						會降低未來可售房量，並造成下列容量缺口：
+					</p>
+
+					<ul class="list-group mb-0">
+						@foreach (var shortage in Model.CapacityRisk.Shortages)
+						{
+							<li class="list-group-item d-flex justify-content-between align-items-center">
+								<span>@shortage.Date.ToString("yyyy/MM/dd")</span>
+								<span class="badge text-bg-danger rounded-pill">
+									短缺 @shortage.ShortageCount 間
+								</span>
+							</li>
+						}
+					</ul>
+
+					<form asp-action="@confirmationAction"
+						  method="post"
+						  id="capacityRiskConfirmationForm">
+						<input type="hidden" name="roomId" value="@Model.CapacityRisk.RoomId" />
+						<input type="hidden" name="targetStatus" value="@Model.CapacityRisk.TargetStatus" />
+						<input type="hidden" name="disabledReason" value="@Model.CapacityRisk.DisabledReason" />
+						<input type="hidden" name="confirmed" value="true" />
+					</form>
+				</div>
+
+				<div class="modal-footer">
+					<button type="button"
+							class="btn btn-outline-secondary"
+							data-bs-dismiss="modal">
+						取消
+					</button>
+
+					<button type="submit"
+							class="btn btn-danger"
+							form="capacityRiskConfirmationForm">
+						仍要繼續
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
 <div class="room-status-page">
 	<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3 mb-4">
 		<div class="room-status-tabs-wrapper flex-grow-1">
@@ -616,6 +689,20 @@
 			button
 				.removeClass("btn-primary")
 				.addClass("btn-outline-secondary");
+		});
+	</script>
+}
+
+@if (Model.CapacityRisk != null)
+{
+	<script>
+		document.addEventListener("DOMContentLoaded", function() {
+			const modalElement = document.getElementById("capacityRiskModal");
+
+			if (modalElement) {
+				const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+				modal.show();
+			}
 		});
 	</script>
 }

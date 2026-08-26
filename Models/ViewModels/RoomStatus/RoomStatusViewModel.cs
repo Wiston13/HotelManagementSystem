@@ -5,6 +5,7 @@
         public List<RoomStatusItemViewModel> Rooms { get; set; } = new List<RoomStatusItemViewModel>();
         public List<int> Floors { get; set; } = new List<int>();
         public int? OpenModalRoomId { get; set; }
+        public CapacityRiskConfirmationViewModel? CapacityRisk { get; set; }
     }
     public class RoomStatusItemViewModel
     {
@@ -23,5 +24,20 @@
         public DateTime? ActualCheckInAt { get; set; }
         public DateOnly? CheckOutDate { get; set; }
         public bool IsAvailable => !IsOccupied && SupplyStatus == "Open" && CleaningStatus == "Clean";
+    }
+
+    public class CapacityRiskConfirmationViewModel
+    {
+        public int RoomId { get; set; }
+        public string RoomNumber { get; set; } = null!;
+        public string TargetStatus { get; set; } = null!;
+        public string? DisabledReason { get; set; }
+        public List<CapacityShortageViewModel> Shortages { get; set; } = new List<CapacityShortageViewModel>();
+    }
+
+    public class CapacityShortageViewModel
+    {
+        public DateOnly Date { get; set; }
+        public int ShortageCount { get; set; }
     }
 }
