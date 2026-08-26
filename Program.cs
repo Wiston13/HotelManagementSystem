@@ -14,6 +14,8 @@ builder.Services.AddDbContext<HotelManagementContext>(options =>
 
 builder.Services.AddScoped<NoShowService>();
 
+builder.Services.AddScoped<RoomAvailabilityService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
