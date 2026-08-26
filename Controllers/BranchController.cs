@@ -110,18 +110,25 @@ namespace HotelManagementSystem.Controllers
                     _context.Add(bookingStatusLog);
                 }
                 else
-                {                   
+                {
 
                     // 【修改分館】
                     var existingBranch = await _context.Branches.FindAsync(branch.BranchId);
-                    bool hasGeneralChanges =
-    existingBranch.BranchName != branch.BranchName ||
-    existingBranch.Region != branch.Region ||
-    existingBranch.Phone != branch.Phone ||
-    existingBranch.Address != branch.Address ||
-    existingBranch.ImageUrl != branch.ImageUrl ||
-    existingBranch.Description != branch.Description;
 
+                    if (existingBranch == null)
+                    {
+                        TempData["ErrorMessage"] = "找不到該分館資料，修改失敗！";
+                        return RedirectToAction(nameof(Index));
+                    }
+
+                    bool hasGeneralChanges =
+                    existingBranch.BranchName != branch.BranchName ||
+                    existingBranch.Region != branch.Region ||
+                    existingBranch.Phone != branch.Phone ||
+                    existingBranch.Address != branch.Address ||
+                    existingBranch.ImageUrl != branch.ImageUrl ||
+                    existingBranch.Description != branch.Description;
+                    bool bookingStatusChanged = existingBranch.AcceptsNewBookings != branch.AcceptsNewBookings;
                     if (existingBranch != null)
                     {
                         existingBranch.BranchName = branch.BranchName;
@@ -129,9 +136,9 @@ namespace HotelManagementSystem.Controllers
                         existingBranch.Phone = branch.Phone;
                         existingBranch.Address = branch.Address;
                         // 如果更改開放訂房狀態
-                        if(existingBranch.AcceptsNewBookings!= branch.AcceptsNewBookings)
+                        if (bookingStatusChanged)
                         {
-                            if(existingBranch.AcceptsNewBookings == false)
+                            if (existingBranch.AcceptsNewBookings == false)
                             {
                                 //開放新訂房
                                 isBookingOpenOrStopped = 3;
@@ -142,17 +149,18 @@ namespace HotelManagementSystem.Controllers
                                 isBookingOpenOrStopped = 4;
                             }
                         }
+                        else existingBranch.AcceptsNewBookings = branch.AcceptsNewBookings;
 
                         // 如果名稱、電話、地址、區域、介紹、圖片有更改
                         if (hasGeneralChanges)
                         {
-                            existingBranch.AcceptsNewBookings = branch.AcceptsNewBookings;
-                        existingBranch.ImageUrl = branch.ImageUrl;
-                        existingBranch.Description = branch.Description;
+                            
+                            existingBranch.ImageUrl = branch.ImageUrl;
+                            existingBranch.Description = branch.Description;
 
-                        TempData["SuccessMessage"] = $"修改分館【{branch.BranchName}】成功！";
-                        await _context.SaveChangesAsync();
-                        
+                            TempData["SuccessMessage"] = $"修改分館【{branch.BranchName}】成功！";
+                            await _context.SaveChangesAsync();
+
                             bookingStatusLog.TargetBranchId = branch.BranchId;
                             bookingStatusLog.OperatedAt = _Clock.Now;
                             bookingStatusLog.OperatorEmployeeNumber = EmployeeId;
@@ -160,8 +168,8 @@ namespace HotelManagementSystem.Controllers
                             bookingStatusLog.TargetType = "Branch";
                             bookingStatusLog.TargetIdentifier = branch.BranchId.ToString();
                             bookingStatusLog.Description = $"修改{branch.BranchName}商旅資料";//考慮加入修改細節
-                        }        
                             _context.Add(bookingStatusLog);
+                        }
                     }
                     else
                     {
@@ -195,7 +203,7 @@ namespace HotelManagementSystem.Controllers
                 var branches = await _context.Branches.AsNoTracking().OrderBy(b => b.BranchId).ToListAsync();
                 return View("Index", branches);
             }
-            
+
         }
     }
 }
