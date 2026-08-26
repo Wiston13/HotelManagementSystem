@@ -33,6 +33,16 @@ namespace HotelManagementSystem.Controllers
         [HttpGet]
         public IActionResult RoomSelection(int branchId, DateOnly checkIn, DateOnly checkOut, int guestCount)
         {
+            // 日期後端驗證
+            var today = _taipeiClock.Today;
+            var maxBookingDate = today.AddDays(60);
+            if (checkIn < today ||
+                checkOut <= checkIn ||
+                checkOut > maxBookingDate)
+            {
+                return BadRequest("入住或退房日期不符合可預訂範圍。");
+            }
+
             // 根據首頁傳來的 branchId 查詢分館
             var branch = _context.Branches
                 .FirstOrDefault(b => b.BranchId == branchId && b.AcceptsNewBookings);
@@ -93,6 +103,16 @@ namespace HotelManagementSystem.Controllers
         [HttpPost]
         public IActionResult Payment(int branchId, DateOnly checkIn, DateOnly checkOut, int roomTypeId, int guestCount)
         {
+            // 日期後端驗證
+            var today = _taipeiClock.Today;
+            var maxBookingDate = today.AddDays(60);
+            if (checkIn < today ||
+                checkOut <= checkIn ||
+                checkOut > maxBookingDate)
+            {
+                return BadRequest("入住或退房日期不符合可預訂範圍。");
+            }
+
             // 根據房型選擇頁傳來的 branchId 找該分館資料
             var branch = _context.Branches.FirstOrDefault(b => b.BranchId == branchId);
 
@@ -140,9 +160,28 @@ namespace HotelManagementSystem.Controllers
         [HttpPost]
         public IActionResult Success(int branchId, DateOnly checkIn, DateOnly checkOut, int roomTypeId, string bookerName, string contactPhone, string email, int guestCount)
         {
+            // 電話號碼正規化：去除空白與 -
+            var normalizedPhone = contactPhone.Replace(" ", "").Replace("-", "");
+
+            // 後端再次驗證正規化後是否為純數字
+            if (string.IsNullOrWhiteSpace(normalizedPhone) ||
+                !normalizedPhone.All(char.IsDigit))
+            {
+                return BadRequest("聯絡電話格式不正確。");
+            }
+
+            // 日期後端驗證
+            var today = _taipeiClock.Today;
+            var maxBookingDate = today.AddDays(60);
+            if (checkIn < today ||
+                checkOut <= checkIn ||
+                checkOut > maxBookingDate)
+            {
+                return BadRequest("入住或退房日期不符合可預訂範圍。");
+            }
+
             // 根據付款頁傳來的 branchId 找該分館資料
             var branch = _context.Branches.FirstOrDefault(b => b.BranchId == branchId && b.AcceptsNewBookings);
-
             if (branch == null)
             {
                 return NotFound("找不到指定的分館，或該分館目前不開放訂房。");
@@ -151,7 +190,6 @@ namespace HotelManagementSystem.Controllers
 
             // 交易開始
             using var transaction = _context.Database.BeginTransaction();
-
             try
             {
                 var roomType = _context.RoomTypes.FromSqlInterpolated($@"
@@ -187,16 +225,16 @@ namespace HotelManagementSystem.Controllers
 
                 // 產生訂單編號
                 var now = _taipeiClock.Now;
-                var today = now.Date;
-                var tomorrow = today.AddDays(1);
+                var todayStartTime = now.Date;
+                var tomorrowStartTime = todayStartTime.AddDays(1);
 
                 var prefix = $"BK{now:yyMMdd}{roomTypeId:D4}";
 
                 var lastBookingNumber = _context.Bookings
                     .Where(b =>
                         b.RoomTypeId == roomTypeId &&
-                        b.CreatedAt >= today &&
-                        b.CreatedAt < tomorrow &&
+                        b.CreatedAt >= todayStartTime &&
+                        b.CreatedAt < tomorrowStartTime &&
                         b.BookingNumber.StartsWith(prefix))
                     .OrderByDescending(b => b.BookingNumber)
                     .Select(b => b.BookingNumber)
@@ -211,7 +249,6 @@ namespace HotelManagementSystem.Controllers
 
                 var bookingNumber = $"{prefix}{nextSequence:D4}";
 
-
                 // 建立訂單
                 var booking = new Booking
                 {
@@ -221,7 +258,7 @@ namespace HotelManagementSystem.Controllers
                     RoomTypeId = roomTypeId,
 
                     BookerName = bookerName,
-                    ContactPhone = contactPhone,
+                    ContactPhone = normalizedPhone,
                     Email = email,
 
                     CheckInDate = checkIn,
@@ -246,22 +283,18 @@ namespace HotelManagementSystem.Controllers
                 // 交易完成
                 transaction.Commit();
 
-
                 // Redirect 到 GET Success，避免重新整理時重複 POST
                 return RedirectToAction(nameof(Success), new
                 {
                     bookingNumber = bookingNumber
                 });
-
             }
             catch 
             {
                 transaction.Rollback();
                 throw;
-            }
-            
+            }            
         }
-
 
         [HttpGet]
         public IActionResult Success(string bookingNumber)
