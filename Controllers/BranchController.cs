@@ -129,8 +129,9 @@ namespace HotelManagementSystem.Controllers
                     existingBranch.ImageUrl != branch.ImageUrl ||
                     existingBranch.Description != branch.Description;
                     bool bookingStatusChanged = existingBranch.AcceptsNewBookings != branch.AcceptsNewBookings;
-                    if (existingBranch != null)
-                    {
+
+
+                   
                         existingBranch.BranchName = branch.BranchName;
                         existingBranch.Region = branch.Region;
                         existingBranch.Phone = branch.Phone;
@@ -149,7 +150,8 @@ namespace HotelManagementSystem.Controllers
                                 isBookingOpenOrStopped = 4;
                             }
                         }
-                        else existingBranch.AcceptsNewBookings = branch.AcceptsNewBookings;
+
+                        existingBranch.AcceptsNewBookings = branch.AcceptsNewBookings;
 
                         // 如果名稱、電話、地址、區域、介紹、圖片有更改
                         if (hasGeneralChanges)
@@ -170,12 +172,10 @@ namespace HotelManagementSystem.Controllers
                             bookingStatusLog.Description = $"修改{branch.BranchName}商旅資料";//考慮加入修改細節
                             _context.Add(bookingStatusLog);
                         }
-                    }
-                    else
-                    {
-                        TempData["ErrorMessage"] = "找不到該分館資料，修改失敗！";
-                        return RedirectToAction(nameof(Index));
-                    }
+                    
+                   
+                       
+                    
                 }
                 if (isBookingOpenOrStopped != 0)
                 {
