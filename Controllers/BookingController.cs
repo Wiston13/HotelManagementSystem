@@ -11,12 +11,10 @@ namespace HotelManagementSystem.Controllers
     public class BookingController : Controller
     {
         private readonly HotelManagementContext _context;
-        private readonly TaipeiClock _Clock;
         private readonly NoShowService _noShowService;
-        public BookingController(HotelManagementContext context,TaipeiClock clock, NoShowService noShowService)
+        public BookingController(HotelManagementContext context, NoShowService noShowService)
         {
             _context = context;
-            _Clock = clock;
             _noShowService = noShowService;
         }
         
@@ -80,6 +78,7 @@ namespace HotelManagementSystem.Controllers
 
             //前端phone正規化
             Phone = Phone.Trim();
+            Phone = Regex.Replace(Phone, " ", "");
             Phone = Regex.Replace(Phone, "-", "");
             if (!Phone.All(char.IsDigit))
             {
@@ -97,8 +96,6 @@ namespace HotelManagementSystem.Controllers
                 ViewBag.NoResult = true;
                 return View(model);
             }
-
-            NoShowService _noshow = new NoShowService(_Clock, _context);
 
             // 查詢訂單分館
             var branch = await _context.Branches.AsNoTracking().FirstOrDefaultAsync(b => b.BranchId == booking!.BranchId);

@@ -192,15 +192,7 @@ namespace HotelManagementSystem.Controllers
                 return RedirectToAction("BookingSearch", new { keyword, dateRange, bookingStatus = keyStatus });
             }
 
-            // 飯店因素取消原因：
-            //*客人來checkin時，飯店無法提供房間            
-            //*第一版暫不讓顧客入住後取消訂單
-            if (cancelCause=="飯店因素" && (result.BookingStatus == "CheckedIn" || now >= result.CheckInDate.ToDateTime(new TimeOnly(16, 0))) )
-            {
-                TempData["BookingStatusError"] = "已超過Checkin時間或已入住中，無法取消訂單";
-                return RedirectToAction("BookingSearch", new { keyword, dateRange, bookingStatus = keyStatus });
-            }
-
+            
             //判斷取消因素是否正確
             if (cancelCause!= "顧客因素" && cancelCause != "飯店因素")
             {
