@@ -397,6 +397,7 @@
 
 <!--     Javascript     -->
 <script>
+    
 
     const regionContainer = document.getElementById('regionContainer');
     const scrollLeftBtn = document.getElementById('scrollLeftBtn');
@@ -564,6 +565,19 @@
         if (currentExpandedCard !== null) {
             currentExpandedCard.style.display = 'block';
             currentExpandedCard = null;
+        }
+    });
+    // 處理上一頁回來首頁時欄位不會自動刷新
+    window.addEventListener("pageshow", function(event) {
+        const navigation =
+            performance.getEntriesByType("navigation")[0];
+
+        const isBackForward =
+            event.persisted ||
+            navigation?.type === "back_forward";
+
+        if (isBackForward) {
+            window.location.reload();
         }
     });
 
