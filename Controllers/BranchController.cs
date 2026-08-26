@@ -69,6 +69,17 @@ namespace HotelManagementSystem.Controllers
                 return View("Index", branches);
             }
 
+            // branch.Phone 正規化
+            string phone = branch.Phone.Trim();
+            phone = phone.Replace(" ", "");
+            phone = phone.Replace("-", "");
+            if (string.IsNullOrEmpty(phone) || !phone.All(char.IsDigit))
+            {
+                TempData["ErrorMessage"] = "電話只能包含數字、空白或半形連字號，修改失敗！";
+                return RedirectToAction(nameof(Index));
+            }
+            branch.Phone = phone;
+
             // 💡 4. 資料庫存取與 TempData 提示訊息
             try
             {
@@ -79,16 +90,7 @@ namespace HotelManagementSystem.Controllers
                     TempData["SuccessMessage"] = $"新增分館【{branch.BranchName}】成功！";
                 }
                 else
-                {
-                    // branch.Phone 正規化
-                    string phone = branch.Phone.Trim();
-                    phone = phone.Replace(" ", "");
-                    phone = phone.Replace("-", "");
-                    if(phone.All(char.IsDigit))
-                    {
-                        TempData["ErrorMessage"] = "電話只能包含數字、空白或半形連字號，修改失敗！";
-                        return RedirectToAction(nameof(Index));
-                    }
+                {                   
 
                     // 【修改分館】
                     var existingBranch = await _context.Branches.FindAsync(branch.BranchId);
@@ -114,9 +116,9 @@ namespace HotelManagementSystem.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                TempData["ErrorMessage"] = "資料庫儲存失敗：" + ex.Message;
+                TempData["ErrorMessage"] = "資料庫儲存失敗，請稍後再試。";
                 var branches = await _context.Branches.AsNoTracking().OrderBy(b => b.BranchId).ToListAsync();
                 return View("Index", branches);
             }
