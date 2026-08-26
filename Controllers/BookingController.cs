@@ -90,7 +90,7 @@ namespace HotelManagementSystem.Controllers
         }
 
 
-
+        [HttpPost]
         public IActionResult Payment(int branchId, DateOnly checkIn, DateOnly checkOut, int roomTypeId, int guestCount)
         {
             // 根據房型選擇頁傳來的 branchId 找該分館資料
@@ -247,17 +247,11 @@ namespace HotelManagementSystem.Controllers
                 transaction.Commit();
 
 
-                // 建立 SuccessViewModel
-                var model = new SuccessViewModel
+                // Redirect 到 GET Success，避免重新整理時重複 POST
+                return RedirectToAction(nameof(Success), new
                 {
-                    BookingNumber = bookingNumber,
-                    BranchName = branch.BranchName,
-                    RoomTypeName = roomType.RoomTypeName,
-                    CheckInDate = checkIn,
-                    CheckOutDate = checkOut,
-                    Email = email
-                };
-                return View(model);
+                    bookingNumber = bookingNumber
+                });
 
             }
             catch 
@@ -267,9 +261,37 @@ namespace HotelManagementSystem.Controllers
             }
             
         }
-        
 
-        
+
+        [HttpGet]
+        public IActionResult Success(string bookingNumber)
+        {
+            var booking = _context.Bookings.FirstOrDefault(b => b.BookingNumber == bookingNumber);
+            if (booking == null)
+            {
+                return NotFound("找不到指定的訂單。");
+            }
+
+            var branch = _context.Branches.FirstOrDefault(b => b.BranchId == booking.BranchId);
+            if (branch == null)
+            {
+                return NotFound("找不到指定的分館。");
+            }
+            
+
+            var model = new SuccessViewModel
+            {
+                BookingNumber = booking.BookingNumber,
+                BranchName = branch.BranchName,
+                RoomTypeName = booking.RoomTypeNameSnapshot,
+                CheckInDate = booking.CheckInDate,
+                CheckOutDate = booking.CheckOutDate,
+                Email = booking.Email
+            };
+
+            return View(model);
+        }
+
 
 
 
