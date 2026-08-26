@@ -12,6 +12,14 @@
     </div>
 }
 
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <p class="text-muted small mb-0">依分館與房型查詢房間列表，維護房號、樓層與銷售供應狀態。</p>
@@ -129,7 +137,6 @@
                     @Html.AntiForgeryToken()
                     <input type="hidden" id="roomId" name="RoomId" value="0">
                     <input type="hidden" id="branchId" name="BranchId" value="0">
-                    <!-- 當 supplyStatus 為 disabled/reserved 時，由此 Hidden input 負責 POST 送出 SupplyStatus -->
                     <input type="hidden" id="supplyStatusHidden" name="SupplyStatus" value="Open" disabled>
 
                     <div class="row g-3">
@@ -172,7 +179,6 @@
 
 @section Scripts {
     @{
-        // 先用三元運算子確認集合非 null，再進行 GroupBy 與 Serialize
         var rawData = Model.RoomTypes != null
             ? Model.RoomTypes
                 .GroupBy(rt => rt.BranchId)
@@ -187,8 +193,6 @@
 
     <script>
         let currentMode = 'add';
-
-        // 從後端 C# 序列化結果直接讀取 JSON
         const roomTypeData = @Html.Raw(roomTypeJson);
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -217,7 +221,7 @@
                 const rowBranch = row.getAttribute('data-branch-id');
                 const rowType = row.getAttribute('data-roomtype-id');
 
-                if (!rowBranch) return; // 跳過無資料列提示
+                if (!rowBranch) return;
 
                 const branchMatch = (rowBranch === selectedBranchId);
                 const typeMatch = (selectedRoomTypeId === "0" || rowType === selectedRoomTypeId);
@@ -269,11 +273,10 @@
 
             const currentBranchId = document.getElementById('branchFilter').value;
 
-            // 重置供應狀態選單為預設（只保留 Open / Disabled）
             supplySelect.innerHTML = `
-                <option value="Open">開放販售</option>
-                <option value="Disabled">停用</option>
-            `;
+                        <option value="Open">開放販售</option>
+                        <option value="Disabled">停用</option>
+                    `;
             supplySelect.disabled = false;
             supplySelect.name = "SupplyStatus";
             supplyHidden.disabled = true;
@@ -306,7 +309,6 @@
                 document.getElementById('disabledReason').value = disabledReason;
 
                 if (rawSupply === 'Reserved') {
-                    // 若為保留房，動態加入選項並禁用下拉選單，啟用隱藏欄位傳值
                     supplySelect.innerHTML += `<option value="Reserved">保留（由分館員工管理）</option>`;
                     supplySelect.value = 'Reserved';
                     supplySelect.disabled = true;
@@ -334,12 +336,9 @@
             const roomNumber = document.getElementById('roomNumber').value;
             const branchFilter = document.getElementById('branchFilter');
             const branchText = branchFilter.options[branchFilter.selectedIndex] ? branchFilter.options[branchFilter.selectedIndex].text : '';
-
             const roomTypeSelect = document.getElementById('roomTypeId');
             const roomTypeText = roomTypeSelect.options[roomTypeSelect.selectedIndex] ? roomTypeSelect.options[roomTypeSelect.selectedIndex].text : '';
-
             const floor = document.getElementById('floor').value;
-
             const supplySelect = document.getElementById('supplyStatus');
             const supplyText = supplySelect.options[supplySelect.selectedIndex] ? supplySelect.options[supplySelect.selectedIndex].text : '';
             const disabledReason = document.getElementById('disabledReason').value;
@@ -366,7 +365,22 @@
             }
 
             if (confirm(message)) {
-                form.submit();
+                $.ajax({
+                    type: 'POST',
+                    url: $(form).attr('action') || '/Room/Save',
+                    data: $(form).serialize(),
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    success: function(response) {
+                        window.location.reload();
+                    },
+                    error: function(xhr) {
+                        // 攔截後端回傳的 HTTP 400 錯誤訊息，跳出警示視窗
+                        alert(xhr.responseText || '儲存失敗：指定的分館或房型不存在！');
+                        window.location.reload();
+                    }
+                });
             }
         }
     </script>

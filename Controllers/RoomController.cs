@@ -1,10 +1,8 @@
-﻿using HotelManagementSystem.Models;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using HotelManagementSystem.Models;
 using HotelManagementSystem.Models.Entities;
 using HotelManagementSystem.Models.ViewModels;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace HotelManagementSystem.Controllers
 {
@@ -17,103 +15,137 @@ namespace HotelManagementSystem.Controllers
             _context = context;
         }
 
-        // GET: /Room/
-        [HttpGet]
+        // GET: Room/Index
         public async Task<IActionResult> Index()
         {
             var viewModel = new RoomIndexViewModel
             {
-                Branches = await _context.Branches
-                    .AsNoTracking()
-                    .OrderBy(b => b.BranchId)
-                    .ToListAsync(),
-
-                RoomTypes = await _context.RoomTypes
-                    .AsNoTracking()
-                    .OrderBy(rt => rt.RoomTypeId)
-                    .ToListAsync(),
-
+                Branches = await _context.Branches.AsNoTracking().ToListAsync(),
+                RoomTypes = await _context.RoomTypes.AsNoTracking().ToListAsync(),
                 Rooms = await _context.Rooms
-                    .Include(r => r.RoomType) // 僅保留實體中存在的 RoomType 導覽屬性
+                    .Include(r => r.RoomType)
                     .AsNoTracking()
-                    .OrderBy(r => r.BranchId)
-                    .ThenBy(r => r.RoomNumber)
                     .ToListAsync()
             };
 
             return View(viewModel);
         }
 
-        // POST: /Room/Save
+        // POST: Room/Save
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Save(
-            int RoomId,
-            int BranchId,
-            string RoomNumber,
-            int RoomTypeId,
-            short Floor, // 配合 Room.cs 型別調整為 short
-            string SupplyStatus,
-            string? DisabledReason)
+        public async Task<IActionResult> Save(Room model)
         {
-            // 防呆檢查：基本必填
-            if (string.IsNullOrWhiteSpace(RoomNumber) || RoomTypeId <= 0 || BranchId <= 0)
+            // 基本 Model 驗證（防空值或型態不符）
+            if (!ModelState.IsValid)
             {
-                TempData["ErrorMessage"] = "請填寫所有必填欄位！";
+                string errorMsg = "資料驗證失敗，請檢查輸入欄位。";
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return BadRequest(errorMsg);
+                }
+                TempData["ErrorMessage"] = errorMsg;
                 return RedirectToAction(nameof(Index));
             }
 
-            // 防呆檢查：如果選停用，必須有理由
-            if (SupplyStatus == "Disabled" && string.IsNullOrWhiteSpace(DisabledReason))
+            // ==========================================
+            // 情況一：新增房間 (RoomId == 0)
+            // ==========================================
+            if (model.RoomId == 0)
             {
-                TempData["ErrorMessage"] = "停用房間時必須填寫停用原因！";
-                return RedirectToAction(nameof(Index));
-            }
+                // 1. 驗證傳入的分館是否存在
+                bool branchExists = await _context.Branches.AnyAsync(b => b.BranchId == model.BranchId);
+                if (!branchExists)
+                {
+                    string errorMsg = $"新增失敗：指定的分館 ID ({model.BranchId}) 不存在！";
+                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    {
+                        return BadRequest(errorMsg);
+                    }
+                    TempData["ErrorMessage"] = errorMsg;
+                    return RedirectToAction(nameof(Index));
+                }
 
-            // 防呆檢查：同分館內房號不能重複 (忽略自己的 RoomId)
-            bool isDuplicate = await _context.Rooms.AnyAsync(r =>
-                r.BranchId == BranchId &&
-                r.RoomNumber == RoomNumber.Trim() &&
-                r.RoomId != RoomId);
+                // 2. 驗證 RoomTypeId 是否屬於該指定分館
+                var roomType = await _context.RoomTypes
+                    .FirstOrDefaultAsync(rt => rt.RoomTypeId == model.RoomTypeId && rt.BranchId == model.BranchId);
 
-            if (isDuplicate)
-            {
-                TempData["ErrorMessage"] = $"該分館內已有房號【{RoomNumber}】，請勿重複新增/修改！";
-                return RedirectToAction(nameof(Index));
-            }
+                if (roomType == null)
+                {
+                    string errorMsg = "新增失敗：所選房型不屬於指定分館！";
+                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    {
+                        return BadRequest(errorMsg);
+                    }
+                    TempData["ErrorMessage"] = errorMsg;
+                    return RedirectToAction(nameof(Index));
+                }
 
-            if (RoomId == 0)
-            {
-                // 【新增房間】
+                // 3. 通過驗證，新增房間
                 var newRoom = new Room
                 {
-                    BranchId = BranchId,
-                    RoomNumber = RoomNumber.Trim(),
-                    RoomTypeId = RoomTypeId,
-                    Floor = Floor,
-                    SupplyStatus = SupplyStatus,
-                    CleaningStatus = "Clean", // 給予 CleaningStatus 預設值，避免 DB non-null 限制
-                    DisabledReason = (SupplyStatus == "Disabled") ? DisabledReason?.Trim() : null
+                    BranchId = model.BranchId,
+                    RoomTypeId = model.RoomTypeId,
+                    RoomNumber = model.RoomNumber,
+                    Floor = model.Floor,
+                    SupplyStatus = model.SupplyStatus ?? "Open",
+                    DisabledReason = model.SupplyStatus == "Disabled" ? model.DisabledReason : null
                 };
 
                 _context.Rooms.Add(newRoom);
+                TempData["SuccessMessage"] = $"新增房間【{model.RoomNumber}】成功！";
             }
+            // ==========================================
+            // 情況二：編輯房間 (RoomId > 0)
+            // ==========================================
             else
             {
-                // 【修改房間】
-                var existingRoom = await _context.Rooms.FindAsync(RoomId);
-                if (existingRoom != null)
+                // 1. 尋找既有房間資料
+                var existingRoom = await _context.Rooms.FindAsync(model.RoomId);
+                if (existingRoom == null)
                 {
-                    existingRoom.BranchId = BranchId;
-                    existingRoom.RoomNumber = RoomNumber.Trim();
-                    existingRoom.RoomTypeId = RoomTypeId;
-                    existingRoom.Floor = Floor;
-                    existingRoom.SupplyStatus = SupplyStatus;
-                    existingRoom.DisabledReason = (SupplyStatus == "Disabled") ? DisabledReason?.Trim() : null;
+                    string errorMsg = "找不到欲更新的房間資料！";
+                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    {
+                        return BadRequest(errorMsg);
+                    }
+                    TempData["ErrorMessage"] = errorMsg;
+                    return RedirectToAction(nameof(Index));
                 }
+
+                // 2. 不使用 POST 傳入的 BranchId，改用資料庫現有的 existingRoom.BranchId 檢查 RoomType
+                var targetRoomType = await _context.RoomTypes
+                    .FirstOrDefaultAsync(rt => rt.RoomTypeId == model.RoomTypeId && rt.BranchId == existingRoom.BranchId);
+
+                if (targetRoomType == null)
+                {
+                    string errorMsg = "修改失敗：所選房型不屬於該房間現有之分館！";
+                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    {
+                        return BadRequest(errorMsg);
+                    }
+                    TempData["ErrorMessage"] = errorMsg;
+                    return RedirectToAction(nameof(Index));
+                }
+
+                // 3. 通過驗證，寫回更新（保持原 BranchId 不變，僅更新允許修改的欄位）
+                existingRoom.RoomTypeId = model.RoomTypeId;
+                existingRoom.RoomNumber = model.RoomNumber;
+                existingRoom.Floor = model.Floor;
+                existingRoom.SupplyStatus = model.SupplyStatus ?? existingRoom.SupplyStatus;
+                existingRoom.DisabledReason = model.SupplyStatus == "Disabled" ? model.DisabledReason : null;
+
+                _context.Rooms.Update(existingRoom);
+                TempData["SuccessMessage"] = $"修改房間【{model.RoomNumber}】成功！";
             }
 
             await _context.SaveChangesAsync();
+
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Ok(new { success = true });
+            }
+
             return RedirectToAction(nameof(Index));
         }
     }
