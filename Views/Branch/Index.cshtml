@@ -4,7 +4,7 @@
     ViewData["Title"] = "分館管理";
 }
 
-<!--  成功或失敗訊息提示 Alert 區塊 -->
+<!-- 成功與失敗訊息提示 Alert 區塊 -->
 @if (TempData["SuccessMessage"] != null)
 {
     <div class="alert alert-success alert-dismissible fade show shadow-sm mb-3" role="alert">
@@ -195,33 +195,11 @@
             }
         }
 
-        function validateImageUrl(url) {
-            return new Promise((resolve) => {
-                if (!url || url.trim() === '') {
-                    resolve(true);
-                    return;
-                }
-
-                const img = new Image();
-                img.onload = () => resolve(true);
-                img.onerror = () => resolve(false);
-                img.src = url.trim();
-            });
-        }
-
-        async function confirmAndSubmit() {
+        function confirmAndSubmit() {
             const form = document.getElementById('branchForm');
 
             if (!form.checkValidity()) {
                 form.reportValidity();
-                return;
-            }
-
-            const imgUrl = document.getElementById('imageUrl').value.trim();
-
-            const isValidImg = await validateImageUrl(imgUrl);
-            if (!isValidImg) {
-                alert('【圖片路徑/網址無效】\n無法讀取此圖片！請確認 wwwroot 資料夾下是否有此檔案，或確認網路圖片網址是否正確。');
                 return;
             }
 
@@ -231,6 +209,7 @@
             const phone = document.getElementById('phone').value;
             const address = document.getElementById('address').value;
             const accepts = document.getElementById('acceptsNewBookings').value === 'true' ? '接受新訂房' : '停止新訂房';
+            const imgUrl = document.getElementById('imageUrl').value.trim();
 
             let message = '';
 

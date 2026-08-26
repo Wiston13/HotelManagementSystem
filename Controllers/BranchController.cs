@@ -50,7 +50,9 @@ namespace HotelManagementSystem.Controllers
 
                 if (!System.IO.File.Exists(physicalPath))
                 {
-                    ModelState.AddModelError("ImageUrl", $"伺服器的 wwwroot 目錄中找不到該圖片檔案：{cleanPath}");
+                    // 格式化為與房型頁面相同的錯誤訊息格式
+                    string normalizedPath = cleanPath.Replace('\\', '/');
+                    ModelState.AddModelError("ImageUrl", $"伺服器找不到圖片檔案：wwwroot/{normalizedPath}");
                 }
             }
 
