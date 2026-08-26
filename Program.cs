@@ -13,12 +13,9 @@ builder.Services.AddDbContext<HotelManagementContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("HMSDBConnection")));
 
 builder.Services.AddScoped<NoShowService>();
-builder.Services.AddDistributedMemoryCache();
-builder.Services.AddSession(options => {
-    options.IdleTimeout = TimeSpan.FromHours(2); // 登入有效時限 2 小時
-    options.Cookie.HttpOnly = true;
-    options.Cookie.IsEssential = true;
-});
+
+builder.Services.AddScoped<RoomAvailabilityService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -33,7 +30,6 @@ app.UseHttpsRedirection();
 app.UseRouting();
 
 app.UseAuthorization();
-app.UseSession();
 
 app.MapStaticAssets();
 

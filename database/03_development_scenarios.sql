@@ -41,7 +41,7 @@ BEGIN TRY
     IF (SELECT COUNT(*) FROM [dbo].[Branches]) <> 6
        OR (SELECT COUNT(*) FROM [dbo].[RoomTypes]) <> 24
        OR (SELECT COUNT(*) FROM [dbo].[Rooms]) <> 188
-       OR (SELECT COUNT(*) FROM [dbo].[OperationTypes]) <> 23
+       OR (SELECT COUNT(*) FROM [dbo].[OperationTypes]) <> 24
     BEGIN
         THROW 50002, N'基準資料不完整，請先執行 02_sample_data.sql。', 1;
     END;
