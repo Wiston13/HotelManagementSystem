@@ -1,12 +1,13 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using HotelManagementSystem.Models;
+using HotelManagementSystem.Models.Entities;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using HotelManagementSystem.Models;
-using HotelManagementSystem.Models.Entities;
+using System;
+using System.Data;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace HotelManagementSystem.Controllers
 {
@@ -68,33 +69,39 @@ namespace HotelManagementSystem.Controllers
             }
 
 
-            var query = await _context.RoomTypes.FindAsync(model.RoomTypeId);
-            if (query == null)
-            {
-                TempData["ErrorMessage"] = "找不到該房型資料。";
-                return RedirectToAction(nameof(Index));
-            }
-            RoomType res = new RoomType()
-            {
-                RoomTypeName = model.RoomTypeName,
-                MaxOccupancy = model.MaxOccupancy,
-                BedType = model.BedType,
-                NightlyPrice = model.NightlyPrice,
-                IsActive = model.IsActive,
-                ImageUrl = model.ImageUrl,
-                Description = model.Description,
-            };
+           
             //  4. 資料庫存取與例外處理
             try
             {
-                if (res.RoomTypeId == 0)
+                if (model.RoomTypeId == 0)
                 {
-                    _context.RoomTypes.Add(res);
+                    var branchExists = await _context.Branches
+                    .AnyAsync(b => b.BranchId == model.BranchId);
+
+                    if (!branchExists)
+                    {
+                        TempData["ErrorMessage"] = "找不到指定的分館資料。";
+                        return RedirectToAction(nameof(Index));
+                    }
+
+                    _context.RoomTypes.Add(model);
                     TempData["SuccessMessage"] = "新增房型成功！";
                 }
                 else
                 {
-                    _context.RoomTypes.Update(res);
+                    var existingRoomType = await _context.RoomTypes.FindAsync(model.RoomTypeId);
+                    if (existingRoomType == null)
+                    {
+                        TempData["ErrorMessage"] = "找不到該房型資料。";
+                        return RedirectToAction(nameof(Index));
+                    }
+                    existingRoomType.RoomTypeName = model.RoomTypeName;
+                    existingRoomType.MaxOccupancy = model.MaxOccupancy;
+                    existingRoomType.BedType = model.BedType;
+                    existingRoomType.NightlyPrice = model.NightlyPrice;
+                    existingRoomType.IsActive = model.IsActive;
+                    existingRoomType.ImageUrl = model.ImageUrl;
+                    existingRoomType.Description = model.Description;
                     TempData["SuccessMessage"] = "修改房型成功！";
                 }
 
