@@ -209,116 +209,124 @@ namespace HotelManagementSystem.Controllers
 
             // 交易開始
             using var transaction = _context.Database.BeginTransaction();
-            var roomType = _context.RoomTypes.FromSqlInterpolated($@"
-                SELECT *
-                FROM RoomTypes WITH (UPDLOCK, HOLDLOCK)
-                WHERE RoomTypeId = {roomTypeId} AND BranchId = {branchId} AND IsActive = 1")
-                .FirstOrDefault();
 
-            if (roomType == null)
+            try
             {
-                return NotFound("找不到指定的房型。");
+                var roomType = _context.RoomTypes.FromSqlInterpolated($@"
+                    SELECT *
+                    FROM RoomTypes WITH (UPDLOCK, HOLDLOCK)
+                    WHERE RoomTypeId = {roomTypeId} AND BranchId = {branchId} AND IsActive = 1")
+                    .FirstOrDefault();
+
+                if (roomType == null)
+                {
+                    return NotFound("找不到指定的房型。");
+                }
+                if (roomType.MaxOccupancy != guestCount)
+                {
+                    return BadRequest("房型入住人數與訂房人數不符。");
+                }
+
+
+                // 再次確認整段住宿期間的最低剩餘房量
+                var remainingCount = CalculateMinimumRemainingRooms(roomTypeId, checkIn, checkOut);
+
+                // 房量不足，不建立訂單，回到房型選擇頁重新查詢
+                if (remainingCount < 1)
+                {
+                    return RedirectToAction("RoomSelection", new
+                    {
+                        branchId = branchId,
+                        checkIn = checkIn,
+                        checkOut = checkOut,
+                        guestCount = guestCount
+                    });
+                }
+
+                // 產生訂單編號
+                var now = _taipeiClock.Now;
+                var today = now.Date;
+                var tomorrow = today.AddDays(1);
+
+                var prefix = $"BK{now:yyMMdd}{roomTypeId:D4}";
+
+                var lastBookingNumber = _context.Bookings
+                    .Where(b =>
+                        b.RoomTypeId == roomTypeId &&
+                        b.CreatedAt >= today &&
+                        b.CreatedAt < tomorrow &&
+                        b.BookingNumber.StartsWith(prefix))
+                    .OrderByDescending(b => b.BookingNumber)
+                    .Select(b => b.BookingNumber)
+                    .FirstOrDefault();
+
+                int nextSequence = 1;
+                if (lastBookingNumber != null)
+                {
+                    var lastSequence = int.Parse(lastBookingNumber.Substring(lastBookingNumber.Length - 4));
+                    nextSequence = lastSequence + 1;
+                }
+
+                var bookingNumber = $"{prefix}{nextSequence:D4}";
+
+
+                // 建立訂單
+                var booking = new Booking
+                {
+                    BookingNumber = bookingNumber,
+
+                    BranchId = branchId,
+                    RoomTypeId = roomTypeId,
+
+                    BookerName = bookerName,
+                    ContactPhone = contactPhone,
+                    Email = email,
+
+                    CheckInDate = checkIn,
+                    CheckOutDate = checkOut,
+
+                    RoomTypeNameSnapshot = roomType.RoomTypeName,
+                    MaxOccupancySnapshot = roomType.MaxOccupancy,
+                    NightlyPriceSnapshot = roomType.NightlyPrice,
+
+                    TotalAmount = roomType.NightlyPrice * (checkOut.DayNumber - checkIn.DayNumber),
+
+                    BookingStatus = "Paid",
+                    CreatedAt = _taipeiClock.Now
+                };
+
+                // 加入 DbContext
+                _context.Bookings.Add(booking);
+
+                // 寫入資料庫
+                _context.SaveChanges();
+
+                // 交易完成
+                transaction.Commit();
+
+
+                // 建立 SuccessViewModel
+                var model = new SuccessViewModel
+                {
+                    BookingNumber = bookingNumber,
+                    BranchName = branch.BranchName,
+                    RoomTypeName = roomType.RoomTypeName,
+                    CheckInDate = checkIn,
+                    CheckOutDate = checkOut,
+                    Email = email
+                };
+                return View(model);
+
             }
-            if (roomType.MaxOccupancy != guestCount)
-            {
-                return BadRequest("房型入住人數與訂房人數不符。");
-            }
-
-
-            // 再次確認整段住宿期間的最低剩餘房量
-            var remainingCount = CalculateMinimumRemainingRooms(roomTypeId, checkIn, checkOut);
-
-
-            // 房量不足，不建立訂單，回到房型選擇頁重新查詢
-            if (remainingCount < 1)
+            catch 
             {
                 transaction.Rollback();
-
-                return RedirectToAction("RoomSelection", new 
-                {
-                    branchId = branchId,
-                    checkIn = checkIn,
-                    checkOut = checkOut,
-                    guestCount = guestCount
-                });
+                throw;
             }
-
-
-            // 產生訂單編號
-            var now = _taipeiClock.Now;
-            var today = now.Date;
-            var tomorrow = today.AddDays(1);
-
-            var prefix = $"BK{now:yyMMdd}{roomTypeId:D4}";
-
-            var lastBookingNumber = _context.Bookings
-                .Where(b =>
-                    b.RoomTypeId == roomTypeId &&
-                    b.CreatedAt >= today &&
-                    b.CreatedAt < tomorrow &&
-                    b.BookingNumber.StartsWith(prefix))
-                .OrderByDescending(b => b.BookingNumber)
-                .Select(b => b.BookingNumber)
-                .FirstOrDefault();
-
-            int nextSequence = 1;
-            if (lastBookingNumber != null)
-            {
-                var lastSequence = int.Parse(lastBookingNumber.Substring(lastBookingNumber.Length - 4));
-                nextSequence = lastSequence + 1;
-            }
-
-            var bookingNumber = $"{prefix}{nextSequence:D4}";
-
-
-            // 建立訂單
-            var booking = new Booking
-            {
-                BookingNumber = bookingNumber,
-
-                BranchId = branchId,
-                RoomTypeId = roomTypeId,
-
-                BookerName = bookerName,
-                ContactPhone = contactPhone,
-                Email = email,
-
-                CheckInDate = checkIn,
-                CheckOutDate = checkOut,
-
-                RoomTypeNameSnapshot = roomType.RoomTypeName,
-                MaxOccupancySnapshot = roomType.MaxOccupancy,
-                NightlyPriceSnapshot = roomType.NightlyPrice,
-
-                TotalAmount = roomType.NightlyPrice * (checkOut.DayNumber - checkIn.DayNumber),
-
-                BookingStatus = "Paid",
-                CreatedAt = _taipeiClock.Now
-            };
-
-            // 加入 DbContext
-            _context.Bookings.Add(booking);
-
-            // 寫入資料庫
-            _context.SaveChanges();
-
-            // 交易完成
-            transaction.Commit();
-
-
-            // 建立 SuccessViewModel
-            var model = new SuccessViewModel
-            {
-                BookingNumber = bookingNumber,
-                BranchName = branch.BranchName,
-                RoomTypeName = roomType.RoomTypeName,
-                CheckInDate = checkIn,
-                CheckOutDate = checkOut,
-                Email = email
-            };
-            return View(model);
+            
         }
         
+
         public IActionResult Lookup()
         {
             return View();
