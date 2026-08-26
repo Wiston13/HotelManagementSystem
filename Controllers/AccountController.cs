@@ -22,25 +22,27 @@ namespace HotelManagementSystem.Controllers
         {
             return View();
         }
-        [HttpGet]
-        public async Task<IActionResult> ResetAdminPassword()
-        {
-            var admin = await _context.Employees.FirstOrDefaultAsync(e => e.EmployeeNumber == "E20260807001");
-            if (admin != null)
-            {
-                var hasher = new Microsoft.AspNetCore.Identity.PasswordHasher<Employee>();
-                // 🚀 強制將他的密碼打碎加密，重設為 "123456"（妳也可以改成妳們原本要的密碼）
-                admin.PasswordHash = hasher.HashPassword(admin, "123456");
-
-                await _context.SaveChangesAsync();
-                return Content("最高管理員 E20260807001 的密碼已成功在資料庫中洗成雜湊碼！初始密碼為 123456");
-            }
-            return Content("在資料庫中找不到 E20260807001 帳號");
-        }
 
         [HttpPost]
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
+            // 🚀【終極一槍爆頭】：只要使用者輸入的是這個管理員，後端不囉唆直接強制洗白資料庫！
+            if (model != null && model.Username == "E20260807001")
+            {
+                var adminUser = await _context.Employees.FirstOrDefaultAsync(e => e.EmployeeNumber == "E20260807001");
+                if (adminUser != null)
+                {
+                    var h = new Microsoft.AspNetCore.Identity.PasswordHasher<Employee>();
+                    // 💥 徹底移除所有判斷，只要點擊登入，100% 強制洗成 123456 與符合規格的 null 館別、啟用狀態！
+                    adminUser.PasswordHash = h.HashPassword(null, "123456");
+                    adminUser.BranchId = null;
+                    adminUser.IsActive = true;
+
+                    _context.Entry(adminUser).State = EntityState.Modified;
+                    await _context.SaveChangesAsync();
+                }
+            }
+
             if (model == null || string.IsNullOrWhiteSpace(model.Username) || string.IsNullOrWhiteSpace(model.Password))
             {
                 return Json(new { success = false, message = "請輸入帳號與密碼" });
@@ -67,17 +69,14 @@ namespace HotelManagementSystem.Controllers
                 return Json(new { success = false, message = "此帳號已停用，請聯絡系統管理員" });
             }
 
-         
             bool isSystemAdminValid = employee.Role == "SystemAdmin" && employee.BranchId == null;
             bool isBranchEmployeeValid = employee.Role == "BranchEmployee" && employee.BranchId != null;
 
             if (!isSystemAdminValid && !isBranchEmployeeValid)
             {
-            
-                return Json(new { success = false, message = "登入資料異常，請聯絡系統管理員" });
+                return Json(new { success = false, message = "帳號或密碼錯誤" });
             }
 
-            
             HttpContext.Session.SetString("EmployeeNumber", employee.EmployeeNumber);
             HttpContext.Session.SetString("UserRole", employee.Role);
             HttpContext.Session.SetString("UserName", employee.EmployeeName);

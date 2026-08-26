@@ -1,28 +1,25 @@
-﻿@* 飯店後台：跨分館訂單資料輸出頁 *@
-@{
+﻿@{
     ViewData["Title"] = "訂單資料匯出";
 }
 
 <div>
     <p class="text-secondary mb-4">選擇分館及日期區間，檢視跨分館訂單並可選擇匯出完整資料</p>
 
-    <!-- 查詢條件區塊 -->
     <div class="card mb-4 shadow-sm">
         <div class="card-body">
             <form id="exportForm" onsubmit="return false;">
                 <div class="row g-3 align-items-end">
                     <div class="col-12 col-md-4">
                         <label class="form-label fw-semibold">選擇分館</label>
-                       <select class="form-select" id="branchSelect" required>
-    <option value="全部分館" selected>全部分館</option>
-    <option value="台北中山商旅">台北中山商旅</option>
-    <option value="台北信義商旅">台北信義商旅</option>
-    <option value="台中草悟商旅">台中草悟商旅</option>
-    <option value="台南安平商旅">台南安平商旅</option>
-    <option value="高雄港灣商旅">高雄港灣商旅</option>
-    <option value="花蓮站前商旅">花蓮站前商旅</option>
-</select>
-
+                        <select class="form-select" id="branchSelect" required>
+                            <option value="全部分館" selected>全部分館</option>
+                            <option value="台北中山商旅">台北中山商旅</option>
+                            <option value="台北信義商旅">台北信義商旅</option>
+                            <option value="台中草悟商旅">台中草悟商旅</option>
+                            <option value="台南安平商旅">台南安平商旅</option>
+                            <option value="高雄港灣商旅">高雄港灣商旅</option>
+                            <option value="花蓮站前商旅">花蓮站前商旅</option>
+                        </select>
                     </div>
                     <div class="col-12 col-md-5">
                         <label class="form-label fw-semibold">入住日期區間</label>
@@ -33,20 +30,16 @@
                         </div>
                     </div>
                     <div class="col-12 col-md-3 d-grid">
-                       
                         <button type="button" class="btn btn-primary py-2" id="btnSearch" onclick="executeSearch()">查詢</button>
-
                     </div>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- 訂單明細表格區塊 (預設隱藏) -->
     <div class="card mb-4 shadow-sm d-none" id="resultCard">
         <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
             <h5 class="fw-bold mb-0 text-dark" id="totalCountText">共 0 筆</h5>
-            
             <button type="button" class="btn btn-outline-primary btn-sm" id="btnExport" onclick="executeExport()">📥 匯出訂單 csv 檔</button>
         </div>
         <div class="table-responsive">
@@ -86,7 +79,6 @@
         </div>
     </div>
 
-    <!-- 查無資料提示區塊 -->
     <div class="card mb-4 shadow-sm text-center py-5 d-none" id="noDataCard">
         <div class="card-body">
             <div class="text-secondary mb-3" style="font-size: 2.5rem;">🔍</div>
@@ -96,186 +88,136 @@
     </div>
 </div>
 
+<script>
+var currentFilteredData = [];
 
-@section Scripts {
-    <script>
-        // 1. 正式資料載體
-        var currentFilteredData = [];
-
-        // 2. 狀態清理器
-        function processRowByStatus(item) {
-            var start = new Date(item.check_in);
-            var end = new Date(item.check_out);
-            var nights = Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24));
-
-            var base = {
-                booking_no: item.booking_no, 
-                branch_name: item.branch_name, 
-                created_at: item.created_at, 
-                guest_name: item.guest_name, 
-                phone: item.phone, 
-                email: item.email,
-                check_in: item.check_in, 
-                check_out: item.check_out, 
-                nights: nights,
-                room_type_snapshot: item.room_type_snapshot, 
-                price_snapshot: typeof item.price_snapshot === 'number' ? item.price_snapshot.toFixed(2) : item.price_snapshot,
-                total_amount: typeof item.total_amount === 'number' ? item.total_amount.toFixed(2) : item.total_amount, 
-                status: item.status, 
-                cancel_cause: item.cancel_cause || "", 
-                cancel_reason: item.cancel_reason || "", 
-                refund_amount: typeof item.refund_amount === 'number' ? item.refund_amount.toFixed(2) : (item.refund_amount || "0.00"), 
-                cancel_emp: item.cancel_emp || "", 
-                cancel_at: item.cancel_at || "",
-                room_no: item.room_no || "", 
-                act_occupancy: item.act_occupancy || "", 
-                act_checkin_at: item.act_checkin_at || "", 
-                checkin_emp: item.checkin_emp || "", 
-                act_checkout_at: item.act_checkout_at || "", 
-                checkout_emp: item.checkout_emp || ""
-            };
-
-            if (item.status === "Cancelled") {
-                base.cancel_cause = item.cancel_cause; 
-                base.cancel_reason = item.cancel_reason;
-                base.refund_amount = typeof item.refund_amount === 'number' ? item.refund_amount.toFixed(2) : item.refund_amount; 
-                base.cancel_emp = item.cancel_emp; 
-                base.cancel_at = item.cancel_at;
-            } else if (item.status === "CheckedIn") {
-                base.room_no = item.room_no; 
-                base.act_occupancy = item.act_occupancy;
-                base.act_checkin_at = item.act_checkin_at; 
-                base.checkin_emp = item.checkin_emp;
-            } else if (item.status === "Completed") {
-                base.room_no = item.room_no; 
-                base.act_occupancy = item.act_occupancy;
-                base.act_checkin_at = item.act_checkin_at; 
-                base.checkin_emp = item.checkin_emp;
-                base.act_checkout_at = item.act_checkout_at; 
-                base.checkout_emp = item.checkout_emp;
-            }
-            return base;
-        }
-
-        // 3. 核心連動：手動接管查詢按鈕
-        async function executeSearch() {
-            var sDate = document.getElementById("dateStart").value;
-            var eDate = document.getElementById("dateEnd").value;
-            var selectedBranch = document.getElementById("branchSelect").value;
-            var resultTableBody = document.getElementById("resultTableBody");
-            var btnSearch = document.getElementById("btnSearch");
-
-            btnSearch.disabled = true;
-            btnSearch.innerText = "連線資料庫中...";
-
-            try {
-                // 使用最保險的相對路徑呼叫 API
-                var url = `/BookingExport/GetOrders?branch=${encodeURIComponent(selectedBranch)}&start=${sDate}&end=${eDate}`;
-                var response = await fetch(url);
-                var result = await response.json();
-
-                if (!result.success) {
-                    alert("資料庫讀取失敗：" + result.message);
-                    return;
-                }
-
-                currentFilteredData = result.data;
-                resultTableBody.innerHTML = "";
-
-                if (currentFilteredData.length > 0) {
-                    document.getElementById("totalCountText").innerText = "共 " + currentFilteredData.length + " 筆";
-                    
-                    currentFilteredData.forEach(function(rawItem) {
-                        var item = processRowByStatus(rawItem);
-                        var tr = document.createElement("tr");
-
-                        var badgeClass = "text-bg-secondary";
-                        if (item.status === "Paid" || item.status === "Completed") badgeClass = "text-bg-success";
-                        if (item.status === "CheckedIn") badgeClass = "text-bg-warning";
-                        if (item.status === "Cancelled") badgeClass = "text-bg-danger";
-
-                        tr.innerHTML = '<td>' + item.booking_no + '</td>' +
-                            '<td>' + item.branch_name + '</td>' +
-                            '<td>' + item.created_at + '</td>' +
-                            '<td>' + item.guest_name + '</td>' +
-                            '<td>' + item.phone + '</td>' +
-                            '<td>' + item.email + '</td>' +
-                            '<td>' + item.check_in + '</td>' +
-                            '<td>' + item.check_out + '</td>' +
-                            '<td class="text-center">' + item.nights + '</td>' +
-                            '<td>' + item.room_type_snapshot + '</td>' +
-                            '<td class="text-end">$' + item.price_snapshot + '</td>' +
-                            '<td class="text-end">$' + item.total_amount + '</td>' + 
-                            '<td class="text-end">$' + item.total_amount + '</td>' + 
-                            '<td>' + (item.created_at || '-') + '</td>' +            
-                            '<td><span class="badge ' + badgeClass + '">' + item.status + '</span></td>' + 
-                            '<td>' + (item.cancel_cause || '-') + '</td>' +          
-                            '<td>' + (item.cancel_reason || '-') + '</td>' +         
-                            '<td class="text-end">' + (item.refund_amount ? '$' + item.refund_amount : '-') + '</td>' + 
-                            '<td>' + (item.cancel_emp || '-') + '</td>' +            
-                            '<td>' + (item.cancel_at || '-') + '</td>' +             
-                            '<td>' + (item.room_no || '-') + '</td>' +               
-                            '<td class="text-center">' + (item.act_occupancy !== "" ? item.act_occupancy : '-') + '</td>' + 
-                            '<td>' + (item.act_checkin_at || '-') + '</td>' +        
-                            '<td>' + (item.checkin_emp || '-') + '</td>' +           
-                            '<td>' + (item.act_checkout_at || '-') + '</td>' +       
-                            '<td>' + (item.checkout_emp || '-') + '</td>';           
-                        resultTableBody.appendChild(tr);
-                    });
-                    
-                    document.getElementById("resultCard").classList.remove("d-none");
-                    document.getElementById("noDataCard").classList.add("d-none");
-                } else {
-                    document.getElementById("resultCard").classList.add("d-none");
-                    document.getElementById("noDataCard").classList.remove("d-none");
-                }
-
-            } catch (error) {
-                console.error(error);
-                alert("網路請求失敗，請確保後端伺服器運行正常。");
-            } finally {
-                btnSearch.disabled = false;
-                btnSearch.innerText = "查詢";
-            }
-        }
-
-        // 4. 匯出 CSV 按鈕觸發事件
-        function executeExport() {
-            if (currentFilteredData.length === 0) return;
-
-            var headers = [
-                "訂單編號", "分館", "訂單成立時間", "訂房人姓名", "聯絡電話", "Email",
-                "入住日", "退房日", "住宿晚數", "房型名稱快照", "每晚價格快照", "訂單總金額",
-                "付款金額", "付款時間", "訂單狀態", "取消因素", "取消原因", "模擬退款金額",
-                "取消員工", "取消時間", "入住時房號", "實際入住人數", "實際入住時間",
-                "入住辦理員工", "實際退房時間", "退房辦理員工"
-            ];
-
-            var csvRows = [headers.join(",")];
-            currentFilteredData.forEach(function(rawItem) {
-                var item = processRowByStatus(rawItem);
-                var row = [
-                    '"' + item.booking_no + '"', '"' + item.branch_name + '"', '"' + item.created_at + '"',
-                    '"' + item.guest_name + '"', '"' + item.phone + '"', '"' + item.email + '"',
-                    '"' + item.check_in + '"', '"' + item.check_out + '"', item.nights,
-                    '"' + item.room_type_snapshot + '"', item.price_snapshot, item.total_amount,
-                    item.total_amount, '"' + item.created_at + '"', '"' + item.status + '"',
-                    '"' + item.cancel_cause + '"', '"' + item.cancel_reason + '"', item.refund_amount || 0,
-                    '"' + item.cancel_emp + '"', '"' + item.cancel_at + '"', '"' + item.room_no + '"',
-                    item.act_occupancy || 0, '"' + item.act_checkin_at + '"', '"' + item.checkin_emp + '"',
-                    '"' + item.act_checkout_at + '"', '"' + item.checkout_emp + '"'
-                ];
-                csvRows.push(row.join(","));
-            });
-
-            var csvString = csvRows.join("\n");
-            var blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvString], { type: "text/csv;charset=utf-8;" });
-            var link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = `飯店訂單報表_${new Date().toISOString().slice(0, 10)}.csv`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-    </script>
+function escapeCsvField(val) {
+if (val === null || val === undefined) return '""';
+let str = String(val);
+return '"' + str.replace(/"/g, '""') + '"';
 }
+
+async function executeSearch() {
+var sDate = document.getElementById("dateStart").value;
+var eDate = document.getElementById("dateEnd").value;
+var selectedBranch = document.getElementById("branchSelect").value;
+var resultTableBody = document.getElementById("resultTableBody");
+var btnSearch = document.getElementById("btnSearch");
+
+btnSearch.disabled = true;
+btnSearch.innerText = "連線資料庫中...";
+
+try {
+var url = "/BookingExport/GetOrders?branch=" + encodeURIComponent(selectedBranch) + "&start=" + sDate + "&end=" + eDate;
+var response = await fetch(url);
+var result = await response.json();
+
+if (!result.success) {
+alert("資料庫讀取失敗：" + result.message);
+btnSearch.disabled = false;
+btnSearch.innerText = "查詢";
+return;
+}
+
+currentFilteredData = result.data;
+resultTableBody.replaceChildren();
+
+if (currentFilteredData.length > 0) {
+document.getElementById("totalCountText").innerText = "共 " + currentFilteredData.length + " 筆";
+
+currentFilteredData.forEach(function(item) {
+var start = new Date(item.check_in || item.CheckInDate);
+var end = new Date(item.check_out || item.CheckOutDate);
+var calculatedNights = 0;
+
+if (!isNaN(start) && !isNaN(end)) {
+calculatedNights = Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24));
+}
+
+var tr = document.createElement("tr");
+
+var badgeClass = "text-bg-secondary";
+if (item.status === "Paid" || item.status === "Completed") badgeClass = "text-bg-success";
+if (item.status === "CheckedIn") badgeClass = "text-bg-warning";
+if (item.status === "Cancelled") badgeClass = "text-bg-danger";
+
+var fields = [
+item.booking_no, item.branch_name, item.created_at, item.guest_name,
+item.phone, item.email, item.check_in, item.check_out, calculatedNights,
+item.room_type_snapshot,
+typeof item.price_snapshot === 'number' ? "$" + item.price_snapshot.toFixed(2) : item.price_snapshot,
+typeof item.total_amount === 'number' ? "$" + item.total_amount.toFixed(2) : item.total_amount,
+typeof item.total_amount === 'number' ? "$" + item.total_amount.toFixed(2) : item.total_amount,
+item.created_at || "-"
+];
+
+fields.forEach(function(val) {
+var td = document.createElement("td");
+td.textContent = val ?? "";
+if (val === calculatedNights) td.className = "text-center";
+tr.appendChild(td);
+});
+
+var tdStatus = document.createElement("td");
+var spanStatus = document.createElement("span");
+spanStatus.className = "badge " + badgeClass;
+spanStatus.textContent = item.status ?? "";
+tdStatus.appendChild(spanStatus);
+tr.appendChild(tdStatus);
+
+var appendFields = [
+item.cancel_cause || "-", item.cancel_reason || "-",
+typeof item.refund_amount === 'number' ? "$" + item.refund_amount.toFixed(2) : (item.refund_amount || "-"),
+item.cancel_emp || "-", item.cancel_at || "-", item.room_no || "-",
+item.act_occupancy !== "" && item.act_occupancy !== 0 ? item.act_occupancy : "-",
+item.act_checkin_at || "-", item.checkin_emp || "-", item.act_checkout_at || "-",
+item.checkout_emp || "-"
+];
+
+appendFields.forEach(function(val) {
+var td = document.createElement("td");
+td.textContent = val ?? "";
+tr.appendChild(td);
+});
+
+resultTableBody.appendChild(tr);
+});
+
+document.getElementById("resultCard").classList.remove("d-none");
+document.getElementById("noDataCard").classList.add("d-none");
+} else {
+document.getElementById("resultCard").classList.add("d-none");
+document.getElementById("noDataCard").classList.remove("d-none");
+}
+
+} catch (error) {
+console.error(error);
+alert("網路請求失敗，請確保後端伺服器運行正常。");
+} finally {
+btnSearch.disabled = false;
+btnSearch.innerText = "查詢";
+}
+}
+
+function executeExport() {
+if (currentFilteredData.length === 0) return;
+
+var headers = [
+"訂單編號", "分館", "訂單成立時間", "訂房人姓名", "聯絡電話", "Email",
+"入住日", "退房日", "住宿晚數", "房型名稱快照", "每晚價格快照", "訂單總金額",
+"付款金額", "付款時間", "訂單狀態", "取消因素", "取消原因", "模擬退款金額",
+"取消員工", "取消時間", "入住時房號", "實際入住人數", "實際入住時間",
+"入住辦理員工", "實際退房時間", "退房辦理員工"
+];
+
+var csvRows = [headers.join(",")];
+
+currentFilteredData.forEach(function(item) {
+var start = new Date(item.check_in || item.CheckInDate);
+var end = new Date(item.check_out || item.CheckOutDate);
+var calculatedNights = 0;
+if (!isNaN(start) && !isNaN(end)) { calculatedNights = Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24)); } var row = [escapeCsvField(item.booking_no), escapeCsvField(item.branch_name), escapeCsvField(item.created_at), escapeCsvField(item.guest_name), escapeCsvField(item.phone), escapeCsvField(item.email), escapeCsvField(item.check_in), escapeCsvField(item.check_out), calculatedNights, escapeCsvField(item.room_type_snapshot), item.price_snapshot ?? 0, item.total_amount ?? 0, item.total_amount ?? 0, escapeCsvField(item.created_at || "-"), escapeCsvField(item.status), escapeCsvField(item.cancel_cause || "-"), escapeCsvField(item.cancel_reason || "-"), item.refund_amount ?? 0, escapeCsvField(item.cancel_emp || "-"), escapeCsvField(item.cancel_at || "-"), escapeCsvField(item.room_no || "-"), item.act_occupancy || 0, escapeCsvField(item.act_checkin_at || "-"), escapeCsvField(item.checkin_emp || "-"), escapeCsvField(item.act_checkout_at || "-"), escapeCsvField(item.checkout_emp || "-")]; csvRows.push(row.join(","));
+}); var csvString = csvRows.join("\n"); var blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvString], { type: "text/csv;charset=utf-8;" }); var link = document.createElement("a"); link.href = URL.createObjectURL(blob); var today = new Date(); var dateStr = today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, '0') + "-" + String(today.getDate()).padStart(2, '0'); link.download = "飯店訂單報表_" + dateStr + ".csv"; document.body.appendChild(link); link.click(); document.body.removeChild(link);
+}
+
+</script>
