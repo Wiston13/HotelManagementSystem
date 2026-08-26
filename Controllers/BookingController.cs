@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Routing.Constraints;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 using HotelManagementSystem.Models.BookingSearchModel;
-using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
 
 
@@ -16,80 +15,18 @@ namespace HotelManagementSystem.Controllers
     public class BookingController : Controller
     {
         private readonly HotelManagementContext _context;
-        private readonly NoShowService _noShowService;
         private readonly TaipeiClock _taipeiClock;
+        private readonly NoShowService _noShowService;
+        private readonly RoomAvailabilityService _roomAvailabilityService;
+        
 
-        public BookingController(HotelManagementContext context, TaipeiClock taipeiClock, NoShowService noShowService)
+        public BookingController(HotelManagementContext context, TaipeiClock taipeiClock, NoShowService noShowService, RoomAvailabilityService roomAvailabilityService)
         {
             _context = context;
             _taipeiClock = taipeiClock;
             _noShowService = noShowService;
+            _roomAvailabilityService = roomAvailabilityService;
         }
-
-       
-
-        // 計算 某個房型 在指定住宿期間 的 最低剩餘房量
-        private int CalculateMinimumRemainingRooms(int roomTypeId, DateOnly checkIn, DateOnly checkOut)
-        {
-            var now = _taipeiClock.Now;
-            var today = _taipeiClock.Today;
-
-            // 飯店退房時間為 12:00
-            var checkOutTime = new TimeSpan(12, 0, 0);
-
-            // 判斷目前時間是否已超過退房時間
-            var isAfterCheckOutTime = now.TimeOfDay >= checkOutTime;
-
-
-            // 取得可售房量（該房型 供應狀態為 Open 的房間總數）
-            var availableCount = _context.Rooms
-                .Count(r => 
-                r.RoomTypeId == roomTypeId && 
-                r.SupplyStatus == "Open");
-
-            // 日期重疊的有效訂單
-            var bookings = _context.Bookings
-                .Where(b => 
-                    b.RoomTypeId == roomTypeId &&
-                    b.CheckInDate < checkOut && b.CheckOutDate > checkIn &&
-                    (b.BookingStatus == "Paid" || b.BookingStatus == "CheckedIn")
-                ).ToList(); 
-            
-
-            // 逐晚計算，取整段住宿期間最低剩餘房量
-            var minimumRemaining = availableCount;
-
-            for (var date = checkIn; date < checkOut; date = date.AddDays(1))
-            {
-                // 該晚正常有效訂單占用數量
-                var bookingCount = bookings
-                    .Count(b =>
-                        b.CheckInDate <= date &&
-                        b.CheckOutDate > date);
-
-                // 該晚剩餘房量
-                var remaining = availableCount - bookingCount;
-
-                // 當日期為今天且已達退房時間，再扣除逾期未退房房量
-                if (date == today && isAfterCheckOutTime)
-                {
-                    var overdueCount = _context.StayRecords
-                        .Count(s =>
-                            s.ActualCheckOutAt == null &&
-                            s.Room.RoomTypeId == roomTypeId &&
-                            s.BookingNumberNavigation.CheckOutDate == today);
-
-                    remaining -= overdueCount;
-                }
-
-                // 取整段住宿期間的最低剩餘房量
-                minimumRemaining = Math.Min(minimumRemaining, remaining);
-            }
-
-            return minimumRemaining;
-        }
-
-
 
 
 
@@ -131,7 +68,7 @@ namespace HotelManagementSystem.Controllers
                 RoomTypes = roomTypes.Select(r =>
                 {
                     // 依照統一的房量規則 計算該房型 剩餘房量
-                    var remainingCount = CalculateMinimumRemainingRooms(r.RoomTypeId, checkIn, checkOut);
+                    var remainingCount = _roomAvailabilityService.CalculateMinimumRemainingRooms(r.RoomTypeId, checkIn, checkOut);
 
                     return new RoomTypeViewModel
                     {
@@ -151,7 +88,6 @@ namespace HotelManagementSystem.Controllers
 
             return View(model);
         }
-
 
 
 
@@ -235,7 +171,7 @@ namespace HotelManagementSystem.Controllers
 
 
                 // 再次確認整段住宿期間的最低剩餘房量
-                var remainingCount = CalculateMinimumRemainingRooms(roomTypeId, checkIn, checkOut);
+                var remainingCount = _roomAvailabilityService.CalculateMinimumRemainingRooms(roomTypeId, checkIn, checkOut);
 
                 // 房量不足，不建立訂單，回到房型選擇頁重新查詢
                 if (remainingCount < 1)
@@ -413,6 +349,6 @@ namespace HotelManagementSystem.Controllers
             model.Price = booking.TotalAmount.ToString("N0");
             model.BookingStatus = StatusToChenese(booking.BookingStatus);
             return View(model);
-
         }
     }
+}
