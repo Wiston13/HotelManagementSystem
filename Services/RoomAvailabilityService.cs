@@ -74,8 +74,6 @@ namespace HotelManagementSystem.Services
 
         public int CalculateMinimumRemainingRooms(int roomTypeId, DateOnly startDate, DateOnly endDate)
         {
-            ValidateDateRange(startDate, endDate);
-
             var minimumRemainingCount = CalculateDailyRemainingRooms(roomTypeId, startDate, endDate).Values.Min();
 
             return minimumRemainingCount;
@@ -83,8 +81,6 @@ namespace HotelManagementSystem.Services
 
         public Dictionary<DateOnly, int> FindCapacityShortages(int roomTypeId, DateOnly startDate, DateOnly endDate, int supplyReduction)
         {
-            ValidateDateRange(startDate, endDate);
-
             if (supplyReduction < 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(supplyReduction), "供應減少數量不得為負數。");
