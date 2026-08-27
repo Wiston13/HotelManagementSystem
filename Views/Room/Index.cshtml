@@ -135,7 +135,7 @@
             <div class="modal-body">
                 <form id="roomForm" asp-controller="Room" asp-action="Save" method="post">
                     @Html.AntiForgeryToken()
-                    <input type="hidden" id="roomId" name="RoomId" value="0">
+                   <input type="hidden" id="roomId" name="RoomId" value="0">
                     <input type="hidden" id="branchId" name="BranchId" value="0">
                     <input type="hidden" id="supplyStatusHidden" name="SupplyStatus" value="Open" disabled>
 
@@ -274,9 +274,9 @@
             const currentBranchId = document.getElementById('branchFilter').value;
 
             supplySelect.innerHTML = `
-                                <option value="Open">開放販售</option>
-                                <option value="Disabled">停用</option>
-                            `;
+                                        <option value="Open">開放販售</option>
+                                        <option value="Disabled">停用</option>
+                                    `;
             supplySelect.disabled = false;
             supplySelect.name = "SupplyStatus";
             supplyHidden.disabled = true;
@@ -326,61 +326,128 @@
         }
 
         function confirmAndSubmit() {
-            const form = document.getElementById('roomForm');
+    const form = document.getElementById('roomForm');
 
-            if (!form.checkValidity()) {
-                form.reportValidity();
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+
+    const roomNumber =
+        document.getElementById('roomNumber').value;
+
+    const branchFilter =
+        document.getElementById('branchFilter');
+
+    const branchText =
+        branchFilter.options[branchFilter.selectedIndex]
+            ? branchFilter.options[branchFilter.selectedIndex].text
+            : '';
+
+    const roomTypeSelect =
+        document.getElementById('roomTypeId');
+
+    const roomTypeText =
+        roomTypeSelect.options[roomTypeSelect.selectedIndex]
+            ? roomTypeSelect.options[roomTypeSelect.selectedIndex].text
+            : '無（錯誤房型）';
+
+    const floor =
+        document.getElementById('floor').value;
+
+    const supplySelect =
+        document.getElementById('supplyStatus');
+
+    const supplyText =
+        supplySelect.options[supplySelect.selectedIndex]
+            ? supplySelect.options[supplySelect.selectedIndex].text
+            : '';
+
+    const disabledReason =
+        document.getElementById('disabledReason').value;
+
+    let message = '';
+
+    if (currentMode === 'add') {
+        message =
+            `【確認新增房間】\n\n` +
+            `• 所屬分館：${branchText}\n` +
+            `• 房號：${roomNumber}\n` +
+            `• 所屬房型：${roomTypeText}\n` +
+            `• 樓層：${floor} 樓\n` +
+            `• 供應狀態：${supplyText}` +
+            (supplySelect.value === 'Disabled'
+                ? `\n• 停用原因：${disabledReason}`
+                : '');
+    } else {
+        message =
+            `【確認修改房間】\n\n` +
+            `確定要儲存房號【${roomNumber}】的變更嗎？\n` +
+            `• 所屬分館：${branchText}\n` +
+            `• 房號：${roomNumber}\n` +
+            `• 所屬房型：${roomTypeText}\n` +
+            `• 樓層：${floor} 樓\n` +
+            `• 供應狀態：${supplyText}` +
+            (supplySelect.value === 'Disabled'
+                ? `\n• 停用原因：${disabledReason}`
+                : '');
+    }
+
+    if (confirm(message)) {
+        submitRoom(false);
+    }
+}
+
+function submitRoom(confirmCapacityShortage = false) {
+    const form = document.getElementById('roomForm');
+
+    let formData = $(form).serialize();
+
+    if (confirmCapacityShortage) {
+        formData += '&confirmCapacityShortage=true';
+    }
+
+    $.ajax({
+        type: 'POST',
+        url: $(form).attr('action') || '/Room/Save',
+        data: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+
+        success: function (response) {
+            if (
+                response &&
+                response.requireConfirmation === true
+            ) {
+                const confirmed =
+                    confirm(response.message);
+
+                if (confirmed) {
+                    submitRoom(true);
+                }
+
                 return;
             }
 
-            const roomNumber = document.getElementById('roomNumber').value;
-            const branchFilter = document.getElementById('branchFilter');
-            const branchText = branchFilter.options[branchFilter.selectedIndex] ? branchFilter.options[branchFilter.selectedIndex].text : '';
-            const roomTypeSelect = document.getElementById('roomTypeId');
-            const roomTypeText = roomTypeSelect.options[roomTypeSelect.selectedIndex] ? roomTypeSelect.options[roomTypeSelect.selectedIndex].text : '無（錯誤房型）';
-            const floor = document.getElementById('floor').value;
-            const supplySelect = document.getElementById('supplyStatus');
-            const supplyText = supplySelect.options[supplySelect.selectedIndex] ? supplySelect.options[supplySelect.selectedIndex].text : '';
-            const disabledReason = document.getElementById('disabledReason').value;
-
-            let message = '';
-
-            if (currentMode === 'add') {
-                message = `【確認新增房間】\n\n` +
-                    `• 所屬分館：${branchText}\n` +
-                    `• 房號：${roomNumber}\n` +
-                    `• 所屬房型：${roomTypeText}\n` +
-                    `• 樓層：${floor} 樓\n` +
-                    `• 供應狀態：${supplyText}` +
-                    (supplySelect.value === 'Disabled' ? `\n• 停用原因：${disabledReason}` : '');
-            } else {
-                message = `【確認修改房間】\n\n` +
-                    `確定要儲存房號【${roomNumber}】的變更嗎？\n` +
-                    `• 所屬分館：${branchText}\n` +
-                    `• 房號：${roomNumber}\n` +
-                    `• 所屬房型：${roomTypeText}\n` +
-                    `• 樓層：${floor} 樓\n` +
-                    `• 供應狀態：${supplyText}` +
-                    (supplySelect.value === 'Disabled' ? `\n• 停用原因：${disabledReason}` : '');
+            if (
+                response &&
+                response.success === true
+            ) {
+                window.location.reload();
+                return;
             }
 
-            if (confirm(message)) {
-                $.ajax({
-                    type: 'POST',
-                    url: $(form).attr('action') || '/Room/Save',
-                    data: $(form).serialize(),
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    success: function(response) {
-                        window.location.reload();
-                    },
-                    error: function(xhr) {
-                        // 攔截後端回傳的 400 錯誤訊息並提示
-                        alert(xhr.responseText || '儲存失敗：指定的分館或房型不存在！');
-                    }
-                });
-            }
+            window.location.reload();
+        },
+
+        error: function (xhr) {
+            alert(
+                xhr.responseText ||
+                '儲存失敗，請重新確認資料。'
+            );
         }
+    });
+}
     </script>
 }

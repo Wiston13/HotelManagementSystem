@@ -1,20 +1,24 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using HotelManagementSystem.Models;
 using HotelManagementSystem.Models.Entities;
 using HotelManagementSystem.Models.ViewModels;
+using HotelManagementSystem.Services;
 
 namespace HotelManagementSystem.Controllers
 {
     public class RoomController : Controller
     {
         private readonly HotelManagementContext _context;
-        private readonly TaipeiClock _Clock;
+        private readonly TaipeiClock _clock;
+        private readonly RoomAvailabilityService _roomAvailabilityService;
 
-        public RoomController(HotelManagementContext context, TaipeiClock clock)
+        public RoomController(HotelManagementContext context, TaipeiClock clock,RoomAvailabilityService roomAvailabilityService)
         {
             _context = context;
-            _Clock = clock;
+            _roomAvailabilityService = roomAvailabilityService;
+            _clock = clock;
         }
 
         // GET: Room/Index
@@ -36,328 +40,401 @@ namespace HotelManagementSystem.Controllers
         // POST: Room/Save
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Save(Room model, bool confirmCapacityShortage = false)
+        public async Task<IActionResult> Save(
+    Room model,
+    bool confirmCapacityShortage = false)
         {
-            // 排除導覽屬性與前端未填寫欄位的 Model 驗證錯誤（使用字串避免編譯期找不到屬性）
-            foreach (var key in ModelState.Keys.Where(k => k.Contains(".")).ToList())
+            // 移除導覽屬性等前端不負責提供的 ModelState 驗證
+            foreach (var key in ModelState.Keys
+                         .Where(k => k.Contains("."))
+                         .ToList())
             {
                 ModelState.Remove(key);
             }
+
             ModelState.Remove("Branch");
             ModelState.Remove("RoomType");
             ModelState.Remove("StayRecords");
             ModelState.Remove("Bookings");
             ModelState.Remove("CleaningStatus");
 
-            // 基本 Model 驗證
             if (!ModelState.IsValid)
             {
                 var errors = ModelState
-                        .Where(x => x.Value != null && x.Value.Errors.Count > 0)
-                        .Select(x => $"{x.Key}: {string.Join(", ", x.Value!.Errors.Select(e => e.ErrorMessage))}")
-                        .ToList();
+                    .Where(x => x.Value != null && x.Value.Errors.Count > 0)
+                    .Select(x =>
+                        $"{x.Key}: {string.Join(", ", x.Value!.Errors.Select(e => e.ErrorMessage))}")
+                    .ToList();
 
-                string detailedError = "資料驗證失敗：" + string.Join(" | ", errors);
-
-                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-                {
-                    return BadRequest(detailedError);
-                }
-
-                TempData["ErrorMessage"] = detailedError;
-                return RedirectToAction(nameof(Index));
+                return Fail(
+                    "資料驗證失敗：" + string.Join(" | ", errors));
             }
-            
 
-            // 防呆檢查：同分館內房號不能重複 (忽略自己的 RoomId)
-            bool isDuplicate = await _context.Rooms.AnyAsync(r =>
-                r.BranchId == BranchId &&
-                r.RoomNumber == RoomNumber.Trim() &&
-                r.RoomId != RoomId);
-
+            var currentOperator = GetCurrentOperator();
             var logsToInsert = new List<OperationLog>();
 
-            // 取得目前操作員編號（可依您的登入機制 User.FindFirst 等方式調整）
-            string currentOperator = User.Identity?.Name ?? "System";
+            var roomNumber = model.RoomNumber?.Trim();
 
-            // ==========================================
-            // 情況一：新增房間 (RoomId == 0)
-            // ==========================================
+            if (string.IsNullOrWhiteSpace(roomNumber))
+            {
+                return Fail("房號不可空白。");
+            }
+
+            // =====================================================
+            // 新增房間
+            // =====================================================
             if (model.RoomId == 0)
             {
-                // 規則 6：新增房間時只接受 Open 或 Disabled
-                if (model.SupplyStatus == "Reserved")
+                var requestedStatus = model.SupplyStatus?.Trim();
+
+                // PR #31：管理員新增只能 Open / Disabled
+                if (requestedStatus != "Open" &&
+                    requestedStatus != "Disabled")
                 {
-                    string errorMsg = "新增失敗：管理員建立房間時不可直接設為預留狀態 (Reserved)！";
-                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest") return BadRequest(errorMsg);
-                    TempData["ErrorMessage"] = errorMsg;
-                    return RedirectToAction(nameof(Index));
+                    return Fail(
+                        "新增失敗：房間初始供應狀態只能為 Open 或 Disabled。");
                 }
 
-            if (isDuplicate)
-            {
-                TempData["ErrorMessage"] = $"該分館內已有房號【{RoomNumber}】，請勿重複新增/修改！";
-                return RedirectToAction(nameof(Index));
-            }
-            // 驗證SupplyStatus合法性
-            if (SupplyStatus != "Open" && SupplyStatus != "Disabled")
-            {
-                TempData["ErrorMessage"] = "房間停用狀態資料異常，請重新操作！";
-                return RedirectToAction(nameof(Index));
-            }
+                // 驗證分館
+                var branchExists = await _context.Branches
+                    .AnyAsync(b => b.BranchId == model.BranchId);
 
-
-            if (RoomId == 0)
-            {
-                // 【新增房間】
-                // 1. 驗證傳入的分館是否存在
-                bool branchExists = await _context.Branches.AnyAsync(b => b.BranchId == model.BranchId);
                 if (!branchExists)
                 {
-                    string errorMsg = $"新增失敗：指定的分館 ID ({model.BranchId}) 不存在！";
-                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest") return BadRequest(errorMsg);
-                    TempData["ErrorMessage"] = errorMsg;
-                    return RedirectToAction(nameof(Index));
+                    return Fail(
+                        $"新增失敗：指定的分館 ID ({model.BranchId}) 不存在。");
                 }
 
-                // 2. 驗證 RoomTypeId 是否屬於該指定分館
-                var roomType = await _context.RoomTypes
-                    .FirstOrDefaultAsync(rt => rt.RoomTypeId == model.RoomTypeId && rt.BranchId == model.BranchId);
+                // 驗證房型必須屬於該分館
+                var roomTypeExists = await _context.RoomTypes
+                    .AnyAsync(rt =>
+                        rt.RoomTypeId == model.RoomTypeId &&
+                        rt.BranchId == model.BranchId);
 
-                if (roomType == null)
+                if (!roomTypeExists)
                 {
-                    string errorMsg = "新增失敗：所選房型不屬於指定分館！";
-                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest") return BadRequest(errorMsg);
-                    TempData["ErrorMessage"] = errorMsg;
-                    return RedirectToAction(nameof(Index));
+                    return Fail(
+                        "新增失敗：所選房型不屬於指定分館。");
                 }
 
-                // 3. 新增房間
+                // 同分館房號不可重複
+                var isDuplicate = await _context.Rooms
+                    .AnyAsync(r =>
+                        r.BranchId == model.BranchId &&
+                        r.RoomNumber == roomNumber);
+
+                if (isDuplicate)
+                {
+                    return Fail(
+                        $"新增失敗：該分館內已有房號【{roomNumber}】。");
+                }
+
+                // DisabledReason
+                string? disabledReason = null;
+
+                if (requestedStatus == "Disabled")
+                {
+                    if (string.IsNullOrWhiteSpace(model.DisabledReason))
+                    {
+                        return Fail(
+                            "新增失敗：停用房間時必須填寫停用原因。");
+                    }
+
+                    disabledReason = model.DisabledReason.Trim();
+
+                    if (disabledReason.Length > 200)
+                    {
+                        return Fail(
+                            "新增失敗：停用原因不可超過 200 字。");
+                    }
+                }
+
                 var newRoom = new Room
                 {
                     BranchId = model.BranchId,
                     RoomTypeId = model.RoomTypeId,
-                    RoomNumber = model.RoomNumber,
+                    RoomNumber = roomNumber,
                     Floor = model.Floor,
-                    SupplyStatus = (model.SupplyStatus == "Disabled") ? "Disabled" : "Open",
-                    CleaningStatus = string.IsNullOrEmpty(model.CleaningStatus) ? "Clean" : model.CleaningStatus,
-                    DisabledReason = model.SupplyStatus == "Disabled" ? model.DisabledReason : null
+
+                    SupplyStatus = requestedStatus,
+
+                    // PR #31：
+                    // SystemAdmin 不可自行指定 CleaningStatus
+                    CleaningStatus = "Clean",
+
+                    DisabledReason = disabledReason
                 };
 
                 _context.Rooms.Add(newRoom);
 
-                // 寫入日誌 (OperationTypeId = 9: RoomCreated)
                 logsToInsert.Add(new OperationLog
                 {
                     TargetBranchId = model.BranchId,
-                    OperatedAt = DateTime.Now,
+                    OperatedAt = _clock.Now,
                     OperatorEmployeeNumber = currentOperator,
+
                     OperationTypeId = 9,
                     TargetType = "Room",
-                    TargetIdentifier = model.RoomNumber,
-                    Description = $"新增房間【{model.RoomNumber}】(房型ID: {model.RoomTypeId}, 樓層: {model.Floor}, 初始狀態: {newRoom.SupplyStatus})"
+                    TargetIdentifier = roomNumber,
+
+                    Description =
+                        $"新增房間【{roomNumber}】" +
+                        $"(房型ID: {model.RoomTypeId}, " +
+                        $"樓層: {model.Floor}, " +
+                        $"初始狀態: {requestedStatus})"
                 });
 
-                TempData["SuccessMessage"] = $"新增房間【{model.RoomNumber}】成功！";
+                TempData["SuccessMessage"] =
+                    $"新增房間【{roomNumber}】成功！";
             }
-            // ==========================================
-            // 情況二：編輯房間 (RoomId > 0)
-            // ==========================================
+
+            // =====================================================
+            // 修改房間
+            // =====================================================
             else
             {
                 var existingRoom = await _context.Rooms
                     .Include(r => r.StayRecords)
-                    .FirstOrDefaultAsync(r => r.RoomId == model.RoomId);
+                    .FirstOrDefaultAsync(r =>
+                        r.RoomId == model.RoomId);
 
-                // 規則 15：RoomId 不存在時明確失敗
                 if (existingRoom == null)
                 {
-                    string errorMsg = $"修改失敗：找不到 ID 為 {model.RoomId} 的房間資料！";
-                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest") return BadRequest(errorMsg);
-                    TempData["ErrorMessage"] = errorMsg;
-                    return RedirectToAction(nameof(Index));
+                    return Fail(
+                        $"修改失敗：找不到 ID 為 {model.RoomId} 的房間資料。");
                 }
 
-                // 防止非法跨分館轉移房間
-                if (model.BranchId != 0 && model.BranchId != existingRoom.BranchId)
+                // PR #31：房間建立後不可直接換分館
+                if (model.BranchId != 0 &&
+                    model.BranchId != existingRoom.BranchId)
                 {
-                    string errorMsg = "修改失敗：房間不可直接變更所屬分館！";
-                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest") return BadRequest(errorMsg);
-                    TempData["ErrorMessage"] = errorMsg;
-                    return RedirectToAction(nameof(Index));
+                    return Fail(
+                        "修改失敗：房間不可直接變更所屬分館。");
                 }
 
-                string currentStatus = existingRoom.SupplyStatus;
-                string requestedStatus = model.SupplyStatus;
+                // 同分館房號不可重複
+                var isDuplicate = await _context.Rooms
+                    .AnyAsync(r =>
+                        r.BranchId == existingRoom.BranchId &&
+                        r.RoomNumber == roomNumber &&
+                        r.RoomId != existingRoom.RoomId);
 
-                // 規則 9：後端嚴格校驗供應狀態轉換
-                bool isValidTransition = (currentStatus, requestedStatus) switch
+                if (isDuplicate)
                 {
-                    ("Open", "Open") => true,
-                    ("Open", "Disabled") => true,
-                    ("Disabled", "Disabled") => true,
-                    ("Disabled", "Open") => true,
-                    ("Reserved", "Reserved") => true,
-                    _ => false
-                };
-                _context.OperationLogs.Add(createLog);
-            }
-            else
-            {
-                // 驗證SupplySatus轉換狀態
-                bool allowToSaveStatus(Room r)
-                {
-                    if (r.SupplyStatus == "Open" && SupplyStatus == "Open") return true;
-                    else if (r.SupplyStatus == "Open" && SupplyStatus == "Disabled") return true;
-                    else if (r.SupplyStatus == "Disabled" && SupplyStatus == "Disabled") return true;
-                    else if (r.SupplyStatus == "Disabled" && SupplyStatus == "Open") return true;
-                    else if (r.SupplyStatus == "Reserved" && SupplyStatus == "Reserved") return true;
-                    else return false;
+                    return Fail(
+                        $"修改失敗：該分館內已有房號【{roomNumber}】。");
                 }
+
+                // 新 RoomType 必須仍屬於原分館
+                var targetRoomTypeExists = await _context.RoomTypes
+                    .AnyAsync(rt =>
+                        rt.RoomTypeId == model.RoomTypeId &&
+                        rt.BranchId == existingRoom.BranchId);
+
+                if (!targetRoomTypeExists)
+                {
+                    return Fail(
+                        "修改失敗：所選房型不屬於該房間目前所屬分館。");
+                }
+
+                var currentStatus = existingRoom.SupplyStatus;
+                var requestedStatus = model.SupplyStatus?.Trim();
+
+                // PR #31：狀態轉換 whitelist
+                var isValidTransition =
+                    (currentStatus, requestedStatus) switch
+                    {
+                        ("Open", "Open") => true,
+                        ("Open", "Disabled") => true,
+
+                        ("Disabled", "Disabled") => true,
+                        ("Disabled", "Open") => true,
+
+                        // 系統 Reserved 只能維持 Reserved
+                        ("Reserved", "Reserved") => true,
+
+                        _ => false
+                    };
 
                 if (!isValidTransition)
                 {
-                    string errorMsg = $"非法狀態變更：無法將房間供應狀態從【{currentStatus}】變更為【{requestedStatus}】！";
-                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest") return BadRequest(errorMsg);
-                    TempData["ErrorMessage"] = errorMsg;
-                    return RedirectToAction(nameof(Index));
+                    return Fail(
+                        $"非法狀態變更：無法將房間供應狀態從【{currentStatus}】變更為【{requestedStatus}】。");
                 }
 
-                bool isRoomTypeChanging = existingRoom.RoomTypeId != model.RoomTypeId;
-                bool isChangingToDisabled = currentStatus == "Open" && requestedStatus == "Disabled";
-                bool isChangingToOpen = currentStatus == "Disabled" && requestedStatus == "Open";
+                var isRoomTypeChanging =
+                    existingRoom.RoomTypeId != model.RoomTypeId;
 
-                bool hasActiveStay = existingRoom.StayRecords.Any(s => s.ActualCheckOutAt == null);
+                var isChangingToDisabled =
+                    currentStatus == "Open" &&
+                    requestedStatus == "Disabled";
 
-                // 規則 A：有入住中住客 (Active StayRecord) 的限制
+                var isChangingToOpen =
+                    currentStatus == "Disabled" &&
+                    requestedStatus == "Open";
+
+                // =================================================
+                // 二次確認 stale-state protection
+                // =================================================
+                if (confirmCapacityShortage)
+                {
+                    if (currentStatus != "Open" ||
+                        requestedStatus != "Disabled")
+                    {
+                        return Fail(
+                            "房間狀態已變更，請重新整理後再操作。");
+                    }
+                }
+
+                // =================================================
+                // DisabledReason 後端驗證
+                // =================================================
+                string? disabledReason = null;
+
+                if (requestedStatus == "Disabled")
+                {
+                    if (string.IsNullOrWhiteSpace(model.DisabledReason))
+                    {
+                        return Fail(
+                            "修改失敗：停用房間時必須填寫停用原因。");
+                    }
+
+                    disabledReason = model.DisabledReason.Trim();
+
+                    if (disabledReason.Length > 200)
+                    {
+                        return Fail(
+                            "修改失敗：停用原因不可超過 200 字。");
+                    }
+                }
+
+                // =================================================
+                // Active Stay
+                // =================================================
+                var hasActiveStay =
+                    existingRoom.StayRecords
+                        .Any(s => s.ActualCheckOutAt == null);
+
                 if (hasActiveStay)
                 {
                     if (isRoomTypeChanging)
                     {
-                        string errorMsg = "修改失敗：目前有住客的房間不得修改所屬房型！";
-                        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest") return BadRequest(errorMsg);
-                        TempData["ErrorMessage"] = errorMsg;
-                        return RedirectToAction(nameof(Index));
+                        return Fail(
+                            "修改失敗：目前有住客的房間不得修改所屬房型。");
                     }
 
                     if (isChangingToDisabled)
                     {
-                        string errorMsg = "停用失敗：目前有住客在房內，無法將房間設為停用 (Disabled)！";
-                        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest") return BadRequest(errorMsg);
-                        TempData["ErrorMessage"] = errorMsg;
-                        return RedirectToAction(nameof(Index));
+                        return Fail(
+                            "停用失敗：目前有住客在房內，無法將房間設為停用。");
                     }
 
                     if (isChangingToOpen)
                     {
-                        string errorMsg = "恢復失敗：該房間目前仍有尚未辦理退房的住客，無法恢復為開放販售 (Open)！";
-                        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest") return BadRequest(errorMsg);
-                        TempData["ErrorMessage"] = errorMsg;
-                        return RedirectToAction(nameof(Index));
+                        return Fail(
+                            "恢復失敗：該房間目前仍有尚未辦理退房的住客，無法恢復為 Open。");
+                    }
+                }
+                var capacityCheckStartDate = _clock.Today;
+                var capacityCheckEndDate = capacityCheckStartDate.AddDays(60);
+
+                // =================================================
+                // PR #31：
+                // 換 RoomType 前檢查「舊房型」少一間後是否 shortage
+                //
+                // 換房型造成 shortage 是硬性禁止，不提供二次確認。
+                // =================================================
+                if (isRoomTypeChanging &&
+    currentStatus == "Open")
+                {
+                    var shortages =
+                        _roomAvailabilityService.FindCapacityShortages(
+                            existingRoom.RoomTypeId,
+                            capacityCheckStartDate,
+                            capacityCheckEndDate,
+                            supplyReduction: 1);
+
+                    if (shortages.Any())
+                    {
+                        var firstShortage = shortages
+                            .OrderBy(x => x.Key)
+                            .First();
+
+                        return Fail(
+                            $"修改失敗：變更房型後會造成原房型 " +
+                            $"{firstShortage.Key:yyyy-MM-dd} " +
+                            $"房量不足 {firstShortage.Value} 間。");
                     }
                 }
 
-                // 規則 5：變更房型前的房量檢核 (硬性阻擋)
-                if (isRoomTypeChanging && currentStatus == "Open")
+                // =================================================
+                // PR #31：
+                // Open → Disabled
+                // =================================================
+                if (isChangingToDisabled &&
+     !confirmCapacityShortage)
                 {
-                    var (canChange, capacityError) = await CanChangeRoomTypeAsync(existingRoom.RoomTypeId);
-                    if (!canChange)
-                    {
-                        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest") return BadRequest(capacityError);
-                        TempData["ErrorMessage"] = capacityError;
-                        return RedirectToAction(nameof(Index));
-                    }
-                }
+                    var shortages =
+                        _roomAvailabilityService.FindCapacityShortages(
+                            existingRoom.RoomTypeId,
+                            capacityCheckStartDate,
+                            capacityCheckEndDate,
+                            supplyReduction: 1);
 
-                // 規則 7：Open -> Disabled 前檢查房量缺口
-                if (isChangingToDisabled && !confirmCapacityShortage)
-                {
-                    var (hasShortage, shortageDetails) = await CheckDisableRoomCapacityShortageAsync(existingRoom.RoomTypeId);
-                    if (hasShortage)
+                    // 無 shortage：
+                    // 不 return，繼續往下 Save
+                    if (shortages.Any())
                     {
-                        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                        var shortageDetails = string.Join(
+                            "\n",
+                            shortages
+                                .OrderBy(x => x.Key)
+                                .Take(5)
+                                .Select(x =>
+                                    $"• {x.Key:yyyy-MM-dd}：缺少 {x.Value} 間"));
+
+                        if (shortages.Count > 5)
                         {
-                            return Ok(new
-                            {
-                                success = false,
-                                requireConfirmation = true,
-                                message = $"停用提醒：該房型在未來日期存在訂單房量缺口：\n{shortageDetails}\n是否仍要強制停用？"
-                            });
+                            shortageDetails +=
+                                $"\n...等共 {shortages.Count} 天存在缺口";
                         }
 
-                        TempData["WarningMessage"] = $"停用提醒：該房型存在房量缺口（{shortageDetails}），請再次確認後提交！";
-                        return RedirectToAction(nameof(Index));
-                    }
-                }
-
-                // 檢查新 RoomType 是否屬於該房間的分館
-                var targetRoomType = await _context.RoomTypes
-                    .FirstOrDefaultAsync(rt => rt.RoomTypeId == model.RoomTypeId && rt.BranchId == existingRoom.BranchId);
-
-
-                // 【修改房間】
-
-                var existingRoom = await _context.Rooms.FindAsync(RoomId);
-
-                if (existingRoom == null)
-                {
-                    // 驗證roomID合法性
-                    TempData["ErrorMessage"] = "找不到房間資料，儲存失敗。";
-                    return RedirectToAction(nameof(Index));
-                }
-
-                if (!allowToSaveStatus(existingRoom))
-                if (targetRoomType == null)
-                {
-                    TempData["ErrorMessage"] = "錯誤的房間切換狀態資料切換，請重新操作！";
-                    return RedirectToAction(nameof(Index));
-                }
-                    string trimmedRoomNumber = RoomNumber.Trim();
-                    string? trimmedDisabledReason =
-                        SupplyStatus == "Disabled" ? DisabledReason?.Trim() : null;
-                    string errorMsg = "修改失敗：所選房型不屬於該房間現有之分館！";
-                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest") return BadRequest(errorMsg);
-                    TempData["ErrorMessage"] = errorMsg;
-                    return RedirectToAction(nameof(Index));
-                }
-
-                    bool isGeneralChanged =                        
-                        existingRoom.RoomNumber != trimmedRoomNumber ||
-                        existingRoom.RoomTypeId != RoomTypeId ||
-                        existingRoom.Floor != Floor;
-                    bool isSupplyStatusChanged = existingRoom.SupplyStatus != SupplyStatus;
-                // 比較一般欄位變動並紀錄日誌
-                bool isBasicInfoChanged = existingRoom.RoomNumber != model.RoomNumber ||
-                                          existingRoom.Floor != model.Floor ||
-                                          existingRoom.RoomTypeId != model.RoomTypeId ||
-                                          (!string.IsNullOrEmpty(model.CleaningStatus) && existingRoom.CleaningStatus != model.CleaningStatus);
-
-                    if (isGeneralChanged)
-                    {
-
-                        var updatedLog = new OperationLog
+                        return Ok(new
                         {
-                            TargetBranchId = existingRoom.BranchId,
-                            OperatedAt = _Clock.Now,
-                            OperatorEmployeeNumber = EmployeeNum,
-                            OperationTypeId = 10,
-                            TargetType = "Room",
-                            TargetIdentifier = existingRoom.RoomId.ToString(),
-                            Description = $"修改房間：{trimmedRoomNumber} 資料。"
-                        };
-                        _context.OperationLogs.Add(updatedLog);
+                            success = false,
+                            requireConfirmation = true,
+                            message =
+                                "停用此房間後，部分日期會造成已成立訂單房量不足：\n" +
+                                shortageDetails +
+                                "\n是否仍要停用？"
+                        });
                     }
+                }
+                // =================================================
+                // OperationLog：先判斷，再修改 entity
+                // =================================================
+                var isBasicInfoChanged =
+                    existingRoom.RoomNumber != roomNumber ||
+                    existingRoom.Floor != model.Floor ||
+                    existingRoom.RoomTypeId != model.RoomTypeId;
+
                 if (isBasicInfoChanged)
                 {
                     logsToInsert.Add(new OperationLog
                     {
                         TargetBranchId = existingRoom.BranchId,
-                        OperatedAt = DateTime.Now,
+                        OperatedAt = _clock.Now,
                         OperatorEmployeeNumber = currentOperator,
-                        OperationTypeId = 10, // RoomUpdated
+
+                        OperationTypeId = 10,
                         TargetType = "Room",
-                        TargetIdentifier = existingRoom.RoomNumber,
-                        Description = $"修改房間一般資料【{existingRoom.RoomNumber}】(房號: {existingRoom.RoomNumber} -> {model.RoomNumber}, 樓層: {existingRoom.Floor} -> {model.Floor}, 房型ID: {existingRoom.RoomTypeId} -> {model.RoomTypeId})"
+                        TargetIdentifier = existingRoom.RoomId.ToString(),
+
+                        Description =
+                            $"修改房間【{existingRoom.RoomNumber}】" +
+                            $"(房號: {existingRoom.RoomNumber} -> {roomNumber}, " +
+                            $"樓層: {existingRoom.Floor} -> {model.Floor}, " +
+                            $"房型ID: {existingRoom.RoomTypeId} -> {model.RoomTypeId})"
                     });
                 }
 
@@ -366,12 +443,16 @@ namespace HotelManagementSystem.Controllers
                     logsToInsert.Add(new OperationLog
                     {
                         TargetBranchId = existingRoom.BranchId,
-                        OperatedAt = DateTime.Now,
+                        OperatedAt = _clock.Now,
                         OperatorEmployeeNumber = currentOperator,
-                        OperationTypeId = 11, // RoomDisabled
+
+                        OperationTypeId = 11,
                         TargetType = "Room",
-                        TargetIdentifier = model.RoomNumber,
-                        Description = $"停用房間【{model.RoomNumber}】(原因: {model.DisabledReason ?? "無"})"
+                        TargetIdentifier = existingRoom.RoomId.ToString(),
+
+                        Description =
+                            $"停用房間【{roomNumber}】" +
+                            $"(原因: {disabledReason})"
                     });
                 }
                 else if (isChangingToOpen)
@@ -379,38 +460,40 @@ namespace HotelManagementSystem.Controllers
                     logsToInsert.Add(new OperationLog
                     {
                         TargetBranchId = existingRoom.BranchId,
-                        OperatedAt = DateTime.Now,
+                        OperatedAt = _clock.Now,
                         OperatorEmployeeNumber = currentOperator,
-                        OperationTypeId = 12, // RoomEnabled
+
+                        OperationTypeId = 12,
                         TargetType = "Room",
-                        TargetIdentifier = model.RoomNumber,
-                        Description = $"恢復開放房間【{model.RoomNumber}】"
+                        TargetIdentifier = existingRoom.RoomId.ToString(),
+
+                        Description =
+                            $"恢復開放房間【{roomNumber}】"
                     });
                 }
 
-                // 更新欄位
+                // =================================================
+                // 真正允許 SystemAdmin 修改的欄位
+                // =================================================
+                existingRoom.RoomNumber = roomNumber;
                 existingRoom.RoomTypeId = model.RoomTypeId;
-                existingRoom.RoomNumber = model.RoomNumber;
                 existingRoom.Floor = model.Floor;
-                existingRoom.SupplyStatus = requestedStatus;
-                existingRoom.DisabledReason = (requestedStatus == "Disabled") ? model.DisabledReason : null;
+                existingRoom.SupplyStatus = requestedStatus!;
+                existingRoom.DisabledReason = disabledReason;
 
-                if (!string.IsNullOrEmpty(model.CleaningStatus))
-                {
-                    existingRoom.CleaningStatus = model.CleaningStatus;
-                }
+                // 不准：
+                // existingRoom.BranchId = model.BranchId;
 
-                _context.Rooms.Update(existingRoom);
-                TempData["SuccessMessage"] = $"修改房間【{model.RoomNumber}】成功！";
+                // 不准：
+                // existingRoom.CleaningStatus = model.CleaningStatus;
+
+                TempData["SuccessMessage"] =
+                    $"修改房間【{roomNumber}】成功！";
             }
 
-                    existingRoom.BranchId = BranchId;
-                    existingRoom.RoomNumber = trimmedRoomNumber;
-                    existingRoom.RoomTypeId = RoomTypeId;
-                    existingRoom.Floor = Floor;
-                    existingRoom.SupplyStatus = SupplyStatus;
-                    existingRoom.DisabledReason = trimmedDisabledReason;                
-            }
+            // =====================================================
+            // 統一寫 Log + Save
+            // =====================================================
             if (logsToInsert.Any())
             {
                 _context.OperationLogs.AddRange(logsToInsert);
@@ -418,124 +501,36 @@ namespace HotelManagementSystem.Controllers
 
             await _context.SaveChangesAsync();
 
-            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            if (Request.Headers["X-Requested-With"] ==
+                "XMLHttpRequest")
             {
-                return Ok(new { success = true });
+                return Ok(new
+                {
+                    success = true
+                });
             }
 
             return RedirectToAction(nameof(Index));
         }
-
-        // ==========================================
-        // Private Auxiliary Methods
-        // ==========================================
-
-        private async Task<(bool CanChange, string ErrorMessage)> CanChangeRoomTypeAsync(int originalRoomTypeId)
+      
+        private IActionResult Fail(string message)
         {
-            var today = DateOnly.FromDateTime(DateTime.Today);
-            var endDate = today.AddDays(60);
-
-            int currentOpenCount = await _context.Rooms
-                .CountAsync(r => r.RoomTypeId == originalRoomTypeId && r.SupplyStatus == "Open");
-
-            int newOpenCapacity = currentOpenCount - 1;
-
-            var activeBookings = await _context.Bookings
-                .Where(b => b.RoomTypeId == originalRoomTypeId
-                         && (b.BookingStatus == "Paid" || b.BookingStatus == "CheckedIn")
-                         && b.CheckInDate < endDate
-                         && b.CheckOutDate > today)
-                .AsNoTracking()
-                .ToListAsync();
-
-            for (var date = today; date < endDate; date = date.AddDays(1))
+            if (Request.Headers["X-Requested-With"] ==
+                "XMLHttpRequest")
             {
-                var nextDate = date.AddDays(1);
-                int dailyDemand = activeBookings.Count(b => b.CheckInDate <= date && b.CheckOutDate >= nextDate);
-
-                if (date == today)
-                {
-                    int overdueOccupancy = activeBookings.Count(b => b.BookingStatus == "CheckedIn" && b.CheckOutDate <= today);
-                    dailyDemand += overdueOccupancy;
-                }
-
-                if (dailyDemand > newOpenCapacity)
-                {
-                    return (false, $"修改失敗：原房型在 {date:yyyy-MM-dd} 已成立訂單需求 ({dailyDemand} 間) 將超過變更後的剩餘房量 ({newOpenCapacity} 間)！");
-                }
+                return BadRequest(message);
             }
 
-            return (true, string.Empty);
+            TempData["ErrorMessage"] = message;
+
+            return RedirectToAction(nameof(Index));
         }
-
-        private async Task<(bool HasShortage, string ShortageDetails)> CheckDisableRoomCapacityShortageAsync(int roomTypeId)
+        private string GetCurrentOperator()
         {
-            var today = DateOnly.FromDateTime(DateTime.Today);
-            var endDate = today.AddDays(60);
-
-            int currentOpenCount = await _context.Rooms
-                .CountAsync(r => r.RoomTypeId == roomTypeId && r.SupplyStatus == "Open");
-
-            int newOpenCapacity = currentOpenCount - 1;
-
-            var activeBookings = await _context.Bookings
-                .Where(b => b.RoomTypeId == roomTypeId
-                         && (b.BookingStatus == "Paid" || b.BookingStatus == "CheckedIn")
-                         && b.CheckInDate < endDate
-                         && b.CheckOutDate > today)
-                .AsNoTracking()
-                .ToListAsync();
-
-            List<string> shortageList = new List<string>();
-
-            for (var date = today; date < endDate; date = date.AddDays(1))
-            {
-                var nextDate = date.AddDays(1);
-                int dailyDemand = activeBookings.Count(b => b.CheckInDate <= date && b.CheckOutDate >= nextDate);
-
-                if (date == today)
-                {
-                    int overdueOccupancy = activeBookings.Count(b => b.BookingStatus == "CheckedIn" && b.CheckOutDate <= today);
-                    dailyDemand += overdueOccupancy;
-                }
-
-                if (dailyDemand > newOpenCapacity)
-                {
-                    int shortage = dailyDemand - newOpenCapacity;
-                    shortageList.Add($"• {date:yyyy-MM-dd}：缺少 {shortage} 間（需求 {dailyDemand} 間 / 剩餘容量 {newOpenCapacity} 間）");
-                }
-            }
-
-            if (shortageList.Any())
-            {
-                string details = string.Join("\n", shortageList.Take(5));
-                if (shortageList.Count > 5)
-                {
-                    details += $"\n...等共 {shortageList.Count} 天存在缺口";
-                }
-                return (true, details);
-            }
-
-            return (false, string.Empty);
+            return User
+                       .FindFirst(ClaimTypes.NameIdentifier)
+                       ?.Value
+                   ?? "E20260807001";
         }
     }
 }
-
-/*PR#31 
-9  RoomCreated
-10 RoomUpdated
-11 RoomDisabled
-12 RoomEnabled
- * 
- * 4.和8類似 有人住不能修改房型
- * 5.修改房型前檢查原房型未來房量 (有點複雜最後處理)
- * 6.加入限制 管理員改變房間狀態要有限制: 新增房間只能:開啟、停用 (不太懂先跳過)
- * 7.open->disable 計算訂單異動 傳出資料至前端 讓管理員操作知道有房間和日期受影響 再次確認
- * 8.disable->open 檢查訂單狀態 如果該房該時間有人住 拒絕開放
- * 9.supplyStatus 修改狀態時驗證 資料正確性
- ○* 14.roomcontroller加入operationLog
- ○* 15.驗證傳入的RoomId是否合法
- ○* 17.驗證roomController 傳進來的supplyStatus是否合法
- ○* 18.Views/Room/Index.cshtml 移除 如果是保留 不能操作 
- ○* 19.Views/RoomType/Index.cshtml 基本上不用改 後端正確驗證就好
- */
