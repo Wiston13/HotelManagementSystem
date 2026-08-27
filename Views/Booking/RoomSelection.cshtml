@@ -85,8 +85,10 @@
 
                             @* 選擇按鈕 *@
                             <button type="button"
-                                    class="btn btn-outline-primary px-4"
-                                    onclick="selectRoom(@room.RoomTypeId, '@room.RoomTypeName', @room.NightlyPrice)">
+                                    class="btn btn-outline-primary px-4 btn-select-room"
+                                    data-room-id="@room.RoomTypeId"
+                                    data-room-name="@room.RoomTypeName"
+                                    data-room-price="@room.NightlyPrice.ToString(System.Globalization.CultureInfo.InvariantCulture)">
                                 選擇
                             </button>
                         </div>
@@ -146,19 +148,35 @@
 </div>
 
 @section Scripts {
-    <script>
-        function selectRoom(id, name, pricePerNight) {
-            var nights = @Model.Nights;
-            var total = pricePerNight * nights;
+    <script>        
 
-            document.getElementById('displayRoomName').innerText = name;
-            document.getElementById('displayTotalPrice').innerText = 'NT$ ' + total.toLocaleString();
+        // 房型選擇
+        document.querySelectorAll('.btn-select-room')
+            .forEach(function(button) {
 
-            document.getElementById('inputRoomTypeId').value = id;
-            
+                button.addEventListener('click', function() {
 
-            document.getElementById('btnPay').disabled = false;
-        }
+                    const roomId = this.dataset.roomId;
+                    const roomName = this.dataset.roomName;
+                    const roomPrice = Number(this.dataset.roomPrice);
+
+                    // 計算總價
+                    const nights = Number('@Model.Nights');
+                    const total = roomPrice * nights;
+
+                    // 更新畫面
+                    document.getElementById('displayRoomName').textContent = roomName;
+                    document.getElementById('displayTotalPrice').textContent =
+                        'NT$ ' + total.toLocaleString();
+
+                    // 設定要送到 Payment 的 RoomTypeId
+                    document.getElementById('inputRoomTypeId').value = roomId;
+
+                    // 啟用前往付款按鈕
+                    document.getElementById('btnPay').disabled = false;
+                });
+            });
+
 
         // Payment頁面 瀏覽器按上一頁 可以重新 GET RoomSelection
         window.addEventListener('pageshow', function(event) {
