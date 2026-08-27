@@ -2,6 +2,7 @@
 using HotelManagementSystem.Models.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using HotelManagementSystem.Services;
 
 namespace HotelManagementSystem.Controllers
 {
