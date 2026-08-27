@@ -75,7 +75,7 @@
 							<label class="form-label">
 								姓名 <span class="text-danger">*</span>
 							</label>
-							<input class="form-control" type="text" id="txtName" name="BookerName" required placeholder="例如：王小明"
+							<input class="form-control" type="text" id="txtName" name="BookerName" value="@TempData["BookerName"]" required placeholder="例如：王小明"
 								   pattern="[^\d]*" maxlength="50"
 								   oninput="this.value = this.value.replace(/\d/g, '')"
 								   data-error-target="#nameError">
@@ -86,7 +86,7 @@
 							<label class="form-label">
 								聯絡電話 <span class="text-danger">*</span>
 							</label>
-							<input class="form-control" type="tel" id="txtPhone" name="ContactPhone" required placeholder="例如：0912345678" data-error-target="#phoneError">
+							<input class="form-control" type="tel" id="txtPhone" name="ContactPhone" value="@TempData["ContactPhone"]" required placeholder="例如：0912345678" data-error-target="#phoneError">
 							<div id="phoneError" class="text-danger small mt-1 d-none">請輸入正確的聯絡電話格式。</div>
 						</div>
 						<!-- 電子信箱欄位 -->
@@ -94,7 +94,7 @@
 							<label class="form-label">
 								電子信箱 <span class="text-danger">*</span>
 							</label>
-							<input class="form-control" type="email" id="txtEmail" name="Email" required placeholder="例如：name@example.com" data-error-target="#emailError">
+							<input class="form-control" type="email" id="txtEmail" name="Email" value="@TempData["Email"]" required placeholder="例如：name@example.com" data-error-target="#emailError">
 							<div id="emailError" class="text-danger small mt-1 d-none">請輸入正確的電子信箱格式。</div>
 						</div>
 					</div>
