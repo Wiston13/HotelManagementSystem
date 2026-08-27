@@ -411,11 +411,11 @@ namespace HotelManagementSystem.Controllers
                 // 交易完成
                 transaction.Commit();
 
+                // 保存剛建立成功的訂單編號，供 GET Success 使用
+                TempData["CreatedBookingNumber"] = bookingNumber;
+
                 // Redirect 到 GET Success，避免重新整理時重複 POST
-                return RedirectToAction(nameof(Success), new
-                {
-                    bookingNumber = bookingNumber
-                });
+                return RedirectToAction(nameof(Success));
             }
             catch 
             {
@@ -425,8 +425,15 @@ namespace HotelManagementSystem.Controllers
         }
 
         [HttpGet]
-        public IActionResult Success(string bookingNumber)
+        public IActionResult Success()
         {
+            // 只取得剛完成訂房流程所保存的訂單編號
+            var bookingNumber = TempData.Peek("CreatedBookingNumber") as string;
+            if (string.IsNullOrWhiteSpace(bookingNumber))
+            {
+                return BadRequest("無法顯示訂單資訊，請使用訂單查詢功能查看訂單。");
+            }
+
             var booking = _context.Bookings.FirstOrDefault(b => b.BookingNumber == bookingNumber);
             if (booking == null)
             {
