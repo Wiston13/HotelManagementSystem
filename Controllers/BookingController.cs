@@ -447,7 +447,7 @@ namespace HotelManagementSystem.Controllers
                 RoomTypeName = booking.RoomTypeNameSnapshot,
                 CheckInDate = booking.CheckInDate,
                 CheckOutDate = booking.CheckOutDate,
-                Email = booking.Email
+                //Email = booking.Email
             };
 
             return View(model);

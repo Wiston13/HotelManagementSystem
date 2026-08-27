@@ -15,7 +15,7 @@
     <h2 class="h3 fw-bold mb-2">訂房成功</h2>
 
     <p class="success-description text-secondary mb-4">
-        請保存訂單編號與聯絡電話，以便後續查詢
+        訂房已完成，請確認以下訂房資訊。
     </p>
 
     <div class="order-number rounded-3 fw-bold fs-5 py-3 px-2 mb-3">
@@ -40,16 +40,26 @@
         </p>
     </div>
 
-    <div class="booking-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
+    @* <div class="booking-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
         <p class="detail-label text-secondary mb-0">確認信</p>
         <p class="detail-value email fw-semibold text-end mb-0">
             已寄送至 @Model.Email
         </p>
-    </div>
+    </div> *@
 
-    <p class="cancel-notice text-secondary text-center mt-3 mb-0">
-        如有取消訂單需求，請於入住前一天 23：59 前，電話連絡訂房分館處理。
-    </p>
+    <div class="mt-4 text-center">
+        <p class="mb-2 text-secondary">
+            請妥善保存<span class="fw-semibold text-dark">訂單編號</span>與<span class="fw-semibold">聯絡電話</span>，以便後續查詢訂單。
+        </p>
+
+        <p class="mb-2 text-secondary">
+            您可點選下方「查看訂單」，或由「訂單查詢」查看完整訂單資訊。
+        </p>
+
+        <p class="mb-0 text-secondary">
+            如有取消訂單需求，請於入住前一天 23：59 前，電話聯絡訂房分館處理。
+        </p>
+    </div>
 
     <a asp-controller="Booking"
        asp-action="Lookup"
