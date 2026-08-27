@@ -201,30 +201,84 @@ namespace HotelManagementSystem.Controllers
 
 
         [HttpPost]
-        public IActionResult Success(int branchId, DateOnly checkIn, DateOnly checkOut, int roomTypeId, string bookerName, string contactPhone, string email, int guestCount, string cardNumber)
+        public IActionResult Success(BookingPaymentInputViewModel input)
         {
-            // 電話號碼正規化：去除空白與 -
-            var normalizedPhone = contactPhone.Replace(" ", "").Replace("-", "");
+            // ViewModel 基本驗證
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("填寫資料格式不正確。");
+            }
 
-            // 後端再次驗證正規化後是否為純數字
-            if (string.IsNullOrWhiteSpace(normalizedPhone) ||
-                !normalizedPhone.All(char.IsDigit))
+            // 訂房人姓名去除前後空白
+            input.BookerName = input.BookerName.Trim();
+
+            // Email 去除前後空白
+            input.Email = input.Email.Trim();
+
+            // 聯絡電話驗證
+            if (string.IsNullOrWhiteSpace(input.ContactPhone))
+            {
+                return BadRequest("請輸入聯絡電話。");
+            }
+            // 移除所有空白與半形"-"
+            var normalizedPhone = new string(
+                input.ContactPhone
+                    .Where(c => !char.IsWhiteSpace(c) && c != '-')
+                    .ToArray());
+            // 正規化後必須有值，且只能包含 ASCII 0～9
+            if (string.IsNullOrEmpty(normalizedPhone) ||
+                !normalizedPhone.All(c => c >= '0' && c <= '9'))
             {
                 return BadRequest("聯絡電話格式不正確。");
             }
 
-            // 日期後端驗證
+            // 信用卡卡號正規化：移除空白
+            var normalizedCardNumber = input.CardNumber.Replace(" ", "");
+            // 卡號必須為 13～19 碼 ASCII 數字，並通過 Luhn 驗證
+            if (normalizedCardNumber.Length < 13 ||
+                normalizedCardNumber.Length > 19 ||
+                !normalizedCardNumber.All(c => c >= '0' && c <= '9') ||
+                !IsValidCardNumber(normalizedCardNumber))
+            {
+                return BadRequest("信用卡卡號格式不正確。");
+            }
+
+            // 信用卡到期日去除前後空白
+            input.Expiry = input.Expiry.Trim();
+            // 信用卡到期日格式驗證
+            if (!IsValidExpiryFormat(input.Expiry))
+            {
+                return BadRequest("信用卡到期日格式不正確。");
+            }
+            // 信用卡到期日是否過期
+            if (IsExpired(input.Expiry))
+            {
+                return BadRequest("信用卡已過期。");
+            }
+
+            // CVC 去除前後空白
+            input.Cvc = input.Cvc.Trim();
+            // CVC 必須為 3 碼 ASCII 數字
+            if (input.Cvc.Length != 3 ||
+                !input.Cvc.All(c => c >= '0' && c <= '9'))
+            {
+                return BadRequest("CVC 格式不正確。");
+            }
+
+
+
+            // 訂房日期後端驗證
             var today = _taipeiClock.Today;
             var maxBookingDate = today.AddDays(60);
-            if (checkIn < today ||
-                checkOut <= checkIn ||
-                checkOut > maxBookingDate)
+            if (input.CheckInDate < today ||
+                input.CheckOutDate <= input.CheckInDate ||
+                input.CheckOutDate > maxBookingDate)
             {
                 return BadRequest("入住或退房日期不符合可預訂範圍。");
             }
 
             // 根據付款頁傳來的 branchId 找該分館資料
-            var branch = _context.Branches.FirstOrDefault(b => b.BranchId == branchId && b.AcceptsNewBookings);
+            var branch = _context.Branches.FirstOrDefault(b => b.BranchId == input.BranchId && b.AcceptsNewBookings);
             if (branch == null)
             {
                 return NotFound("找不到指定的分館，或該分館目前不開放訂房。");
@@ -238,50 +292,61 @@ namespace HotelManagementSystem.Controllers
                 var roomType = _context.RoomTypes.FromSqlInterpolated($@"
                     SELECT *
                     FROM RoomTypes WITH (UPDLOCK, HOLDLOCK)
-                    WHERE RoomTypeId = {roomTypeId} AND BranchId = {branchId} AND IsActive = 1")
+                    WHERE RoomTypeId = {input.RoomTypeId} AND BranchId = {input.BranchId} AND IsActive = 1")
                     .FirstOrDefault();
 
                 if (roomType == null)
                 {
                     return NotFound("找不到指定的房型。");
                 }
-                if (roomType.MaxOccupancy != guestCount)
+                if (roomType.MaxOccupancy != input.GuestCount)
                 {
                     return BadRequest("房型入住人數與訂房人數不符。");
                 }
 
+                // 確認付款頁顯示的房價是否仍與目前資料庫房價一致
+                if (input.ConfirmedNightlyPrice != roomType.NightlyPrice)
+                {
+                    TempData["PriceChanged"] = "房價已更新，請重新確認房型與最新價格後再繼續訂房。";
+
+                    return RedirectToAction("RoomSelection", new
+                    {
+                        branchId = input.BranchId,
+                        checkIn = input.CheckInDate,
+                        checkOut = input.CheckOutDate,
+                        guestCount = input.GuestCount
+                    });
+                }
+
 
                 // 再次確認整段住宿期間的最低剩餘房量
-                var remainingCount = _roomAvailabilityService.CalculateMinimumRemainingRooms(roomTypeId, checkIn, checkOut);
+                var remainingCount = _roomAvailabilityService.CalculateMinimumRemainingRooms(input.RoomTypeId, input.CheckInDate, input.CheckOutDate);
 
                 // 選擇房型已無空房，回房型選擇頁重新查詢可訂房型
                 if (remainingCount < 1)
                 {
                     return RedirectToAction("RoomSelection", new
                     {
-                        branchId = branchId,
-                        checkIn = checkIn,
-                        checkOut = checkOut,
-                        guestCount = guestCount
+                        branchId = input.BranchId,
+                        checkIn = input.CheckInDate,
+                        checkOut = input.CheckOutDate,
+                        guestCount = input.GuestCount
                     });
                 }
 
 
-                // 模擬付款：去除卡號空白
-                var normalizedCardNumber = cardNumber.Replace(" ", "");
-
                 // 指定測試卡號模擬付款失敗
                 if (normalizedCardNumber == "4000000000000002")
                 {
-                    TempData["PaymentError"] =
-                        "付款失敗，訂單尚未建立，請確認付款資訊後重新嘗試。";
+                    TempData["PaymentError"] = "付款失敗，訂單尚未建立，請確認付款資訊後重新嘗試。";
+
                     return RedirectToAction("Payment", new
                     {
-                        branchId,
-                        checkIn,
-                        checkOut,
-                        roomTypeId,
-                        guestCount
+                        branchId = input.BranchId,
+                        checkIn = input.CheckInDate,
+                        checkOut = input.CheckOutDate,
+                        roomTypeId = input.RoomTypeId,
+                        guestCount = input.GuestCount
                     });
                 }
 
@@ -291,11 +356,11 @@ namespace HotelManagementSystem.Controllers
                 var todayStartTime = now.Date;
                 var tomorrowStartTime = todayStartTime.AddDays(1);
 
-                var prefix = $"BK{now:yyMMdd}{roomTypeId:D4}";
+                var prefix = $"BK{now:yyMMdd}{input.RoomTypeId:D4}";
 
                 var lastBookingNumber = _context.Bookings
                     .Where(b =>
-                        b.RoomTypeId == roomTypeId &&
+                        b.RoomTypeId == input.RoomTypeId &&
                         b.CreatedAt >= todayStartTime &&
                         b.CreatedAt < tomorrowStartTime &&
                         b.BookingNumber.StartsWith(prefix))
@@ -317,21 +382,21 @@ namespace HotelManagementSystem.Controllers
                 {
                     BookingNumber = bookingNumber,
 
-                    BranchId = branchId,
-                    RoomTypeId = roomTypeId,
+                    BranchId = input.BranchId,
+                    RoomTypeId = input.RoomTypeId,
 
-                    BookerName = bookerName,
+                    BookerName = input.BookerName,
                     ContactPhone = normalizedPhone,
-                    Email = email,
+                    Email = input.Email,
 
-                    CheckInDate = checkIn,
-                    CheckOutDate = checkOut,
+                    CheckInDate = input.CheckInDate,
+                    CheckOutDate = input.CheckOutDate,
 
                     RoomTypeNameSnapshot = roomType.RoomTypeName,
                     MaxOccupancySnapshot = roomType.MaxOccupancy,
                     NightlyPriceSnapshot = roomType.NightlyPrice,
 
-                    TotalAmount = roomType.NightlyPrice * (checkOut.DayNumber - checkIn.DayNumber),
+                    TotalAmount = roomType.NightlyPrice * (input.CheckOutDate.DayNumber - input.CheckInDate.DayNumber),
 
                     BookingStatus = "Paid",
                     CreatedAt = _taipeiClock.Now
@@ -387,6 +452,60 @@ namespace HotelManagementSystem.Controllers
 
             return View(model);
         }
+
+
+        // =========================
+        // Private Methods
+        // =========================
+
+        // 信用卡卡號 Luhn 驗證
+        private bool IsValidCardNumber(string cardNumber)
+        {
+            var sum = 0;
+            var shouldDouble = false;
+
+            for (var i = cardNumber.Length - 1; i >= 0; i--)
+            {
+                var digit = cardNumber[i] - '0';
+
+                if (shouldDouble)
+                {
+                    digit *= 2;
+
+                    if (digit > 9)
+                    {
+                        digit -= 9;
+                    }
+                }
+                sum += digit;
+                shouldDouble = !shouldDouble;
+            }
+            return sum % 10 == 0;
+        }
+
+        // 信用卡到期日格式驗證
+        private bool IsValidExpiryFormat(string expiry)
+        {
+            return System.Text.RegularExpressions.Regex.IsMatch(
+                expiry,
+                @"^(0[1-9]|1[0-2])/\d{2}$");
+        }
+
+        // 信用卡到期日是否已過期
+        private bool IsExpired(string expiry)
+        {
+            var expiryMonth = int.Parse(expiry.Substring(0, 2));
+            var expiryYear = int.Parse(expiry.Substring(3, 2));
+
+            var now = _taipeiClock.Now;
+            var currentMonth = now.Month;
+            var currentYear = now.Year % 100;
+
+            return expiryYear < currentYear ||
+                   (expiryYear == currentYear && expiryMonth < currentMonth);
+        }
+
+
 
 
 

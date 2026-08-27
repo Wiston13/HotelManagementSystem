@@ -50,11 +50,13 @@
 	<form id="paymentForm" asp-controller="Booking" asp-action="Success" method="post" class="needs-validation" novalidate>
 		
 		<!-- 透過表單將資料送到下一頁 (Success) -->
-		<input type="hidden" name="branchId" value="@Model.BranchId" />
-		<input type="hidden" name="checkIn" value="@Model.CheckInDate.ToString("yyyy-MM-dd")" />
-		<input type="hidden" name="checkOut" value="@Model.CheckOutDate.ToString("yyyy-MM-dd")" />
-		<input type="hidden" name="roomTypeId" value="@Model.RoomTypeId" />
-		<input type="hidden" name="guestCount" value="@Model.GuestCount" />
+		<input type="hidden" name="BranchId" value="@Model.BranchId" />
+		<input type="hidden" name="CheckInDate" value="@Model.CheckInDate.ToString("yyyy-MM-dd")" />
+		<input type="hidden" name="CheckOutDate" value="@Model.CheckOutDate.ToString("yyyy-MM-dd")" />
+		<input type="hidden" name="RoomTypeId" value="@Model.RoomTypeId" />
+		<input type="hidden" name="GuestCount" value="@Model.GuestCount" />
+		<!-- 使用者進入付款頁時看到的每晚房價 -->
+		<input type="hidden" name="ConfirmedNightlyPrice" value="@Model.NightlyPrice" />
 
 		<!-- 二、版面欄位使用 Bootstrap Grid (桌面版並排，窄畫面自動上下排列) -->
 		<div class="row g-4 align-items-start">
@@ -73,7 +75,7 @@
 							<label class="form-label">
 								姓名 <span class="text-danger">*</span>
 							</label>
-							<input class="form-control" type="text" id="txtName" name="bookerName" required placeholder="例如：王小明"
+							<input class="form-control" type="text" id="txtName" name="BookerName" required placeholder="例如：王小明"
 								   pattern="[^\d]*" maxlength="50"
 								   oninput="this.value = this.value.replace(/\d/g, '')"
 								   data-error-target="#nameError">
@@ -84,7 +86,7 @@
 							<label class="form-label">
 								聯絡電話 <span class="text-danger">*</span>
 							</label>
-							<input class="form-control" type="tel" id="txtPhone" name="contactPhone" required placeholder="例如：0912345678" data-error-target="#phoneError">
+							<input class="form-control" type="tel" id="txtPhone" name="ContactPhone" required placeholder="例如：0912345678" data-error-target="#phoneError">
 							<div id="phoneError" class="text-danger small mt-1 d-none">請輸入正確的聯絡電話格式。</div>
 						</div>
 						<!-- 電子信箱欄位 -->
@@ -92,7 +94,7 @@
 							<label class="form-label">
 								電子信箱 <span class="text-danger">*</span>
 							</label>
-							<input class="form-control" type="email" id="txtEmail" name="email" required placeholder="例如：name@example.com" data-error-target="#emailError">
+							<input class="form-control" type="email" id="txtEmail" name="Email" required placeholder="例如：name@example.com" data-error-target="#emailError">
 							<div id="emailError" class="text-danger small mt-1 d-none">請輸入正確的電子信箱格式。</div>
 						</div>
 					</div>
@@ -119,7 +121,7 @@
 											<path d="M2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm13 2v1.5H1V4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1M1 7.5h14V12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1z" />
 										</svg>
 									</span>
-									<input class="form-control" type="text" id="txtCardNumber" name="cardNumber" required placeholder="4242 4242 4242 4242" maxlength="19" data-error-target="#cardError">
+									<input class="form-control" type="text" id="txtCardNumber" name="CardNumber" required placeholder="4242 4242 4242 4242" maxlength="19" data-error-target="#cardError">
 								</div>
 								<div id="cardError" class="text-danger small mt-1 d-none">此卡號無效。</div>
 							</div>
@@ -134,6 +136,7 @@
 									<input class="form-control text-center"
 										   type="text"
 										   id="txtExpiry"
+										   name="Expiry"
 										   required
 										   placeholder="MM/YY"
 										   maxlength="5"
@@ -145,7 +148,7 @@
 									<label class="form-label">
 										CVC 安全碼 <span class="text-danger">*</span>
 									</label>
-									<input class="form-control text-center" type="password" id="txtCvc" required placeholder="336" maxlength="3" data-error-target="#cvcError">
+									<input class="form-control text-center" type="password" id="txtCvc" name="Cvc" required placeholder="336" maxlength="3" data-error-target="#cvcError">
 									<div id="cvcError" class="text-danger small mt-1 d-none">請輸入安全碼。</div>
 								</div>
 							</div>
@@ -268,56 +271,7 @@
 
 
 
-<!-- 測試房量不足按鈕 -->
-@* <button type="button"
-		class="btn btn-outline-secondary"
-		data-bs-toggle="modal"
-		data-bs-target="#noRoomModal">
-	測試房量不足
-</button> *@
-
-<!-- 房量不足提示 -->
-<div class="modal fade"
-	 id="noRoomModal"
-	 tabindex="-1"
-	 aria-labelledby="noRoomModalLabel"
-	 aria-hidden="true"
-	 data-bs-backdrop="static"
-	 data-bs-keyboard="false">
-
-	<div class="modal-dialog modal-dialog-centered">
-
-		<div class="modal-content">
-
-			<div class="modal-header">
-				<h5 class="modal-title" id="noRoomModalLabel">
-					房型已無空房
-				</h5>
-			</div>
-
-			<div class="modal-body">
-				很抱歉，您晚了一步。<br>
-				此房型目前已無空房，請重新選擇其他房型。
-			</div>
-
-			<div class="modal-footer">
-				<button type="button"
-						class="btn btn-primary"
-						id="btnBackToRoomTypes">
-					重新選擇房型
-				</button>
-			</div>
-
-		</div>
-
-	</div>
-</div>
-
-
-
 <script>
-
-	
 	
 
 	(function() {
