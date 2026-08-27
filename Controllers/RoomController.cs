@@ -61,14 +61,7 @@ namespace HotelManagementSystem.Controllers
             {
                 TempData["ErrorMessage"] = "請填寫所有必填欄位！";
                 return RedirectToAction(nameof(Index));
-            }
-
-            // 驗證SupplyStatus合法性
-            if (SupplyStatus != "Open" && SupplyStatus != "Disabled")
-            {
-                TempData["ErrorMessage"] = "房間停用狀態資料異常，請重新操作！";
-                return RedirectToAction(nameof(Index));
-            }
+            }            
 
             // 防呆檢查：如果選停用，必須有理由
             if (SupplyStatus == "Disabled" && string.IsNullOrWhiteSpace(DisabledReason))
@@ -93,6 +86,12 @@ namespace HotelManagementSystem.Controllers
 
             if (RoomId == 0)
             {
+                // 驗證SupplyStatus合法性
+                if (SupplyStatus != "Open" && SupplyStatus != "Disabled")
+                {
+                    TempData["ErrorMessage"] = "房間停用狀態資料異常，請重新操作！";
+                    return RedirectToAction(nameof(Index));
+                }
                 // 【新增房間】
                 var newRoom = new Room
                 {
@@ -109,6 +108,7 @@ namespace HotelManagementSystem.Controllers
             }
             else
             {
+
                 // 【修改房間】
                 var existingRoom = await _context.Rooms.FindAsync(RoomId);
                 if (existingRoom != null)
@@ -119,6 +119,12 @@ namespace HotelManagementSystem.Controllers
                     existingRoom.Floor = Floor;
                     existingRoom.SupplyStatus = SupplyStatus;
                     existingRoom.DisabledReason = (SupplyStatus == "Disabled") ? DisabledReason?.Trim() : null;
+                }
+                else
+                {
+                    // 驗證roomID合法性
+                    TempData["ErrorMessage"] = "房間編號資料異常，請重新操作！";
+                    return RedirectToAction(nameof(Index));
                 }
             }
 
