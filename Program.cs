@@ -11,22 +11,14 @@ var builder = WebApplication.CreateBuilder(args);
 // 註冊 MVC 控制器與檢視服務
 builder.Services.AddControllersWithViews();
 
-// 設定 Cookie 隱私權政策，確保 Session 功能在各瀏覽器安全性限制下均能正常放行
-builder.Services.Configure<CookiePolicyOptions>(options =>
-{
-    options.CheckConsentNeeded = context => false; // 關閉強制隱私同意檢查
-    options.MinimumSameSitePolicy = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
-});
+builder.Services
+    .AddAuthentication("HotelCookie")
+    .AddCookie("HotelCookie", options =>
+    {
+        options.LoginPath = "/Account/Login";
+        options.AccessDeniedPath = "/Account/AccessDenied";
+    });
 
-// 配置 Session 快取服務
-builder.Services.AddSession(options =>
-{
-    options.IdleTimeout = TimeSpan.FromMinutes(30); // 逾時時間設定為 30 分鐘
-    options.Cookie.HttpOnly = true;                        // 提高安全性，防範 XSS 讀取 Cookie
-    options.Cookie.IsEssential = true;                     // 標記為核心必要 Cookie，不受一般隱私政策阻擋
-});
-
-// 註冊自訂業務邏輯與系統時鐘服務
 builder.Services.AddSingleton<TaipeiClock>();
 
 builder.Services.AddDbContext<HotelManagementContext>(options =>
@@ -51,9 +43,7 @@ app.UseCookiePolicy();
 
 app.UseRouting();
 
-// 啟用 Session 追蹤中介軟體（必須位於 UseRouting 之後，且在授權與路由對接之前）
-app.UseSession();
-
+app.UseAuthentication();
 app.UseAuthorization();
 
 // .NET 9 最新靜態資源優化快取對接

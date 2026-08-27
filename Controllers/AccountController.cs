@@ -1,10 +1,9 @@
 ﻿using HotelManagementSystem.Models;
 using HotelManagementSystem.Models.Entities;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Security.Claims;
 
 namespace HotelManagementSystem.Controllers
 {
@@ -24,31 +23,15 @@ namespace HotelManagementSystem.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Login([FromBody] LoginModel model)
+        public async Task<IActionResult> Login([FromBody] LoginModel? model)
         {
-            // 🚀【終極一槍爆頭】：只要使用者輸入的是這個管理員，後端不囉唆直接強制洗白資料庫！
-            if (model != null && model.Username == "E20260807001")
-            {
-                var adminUser = await _context.Employees.FirstOrDefaultAsync(e => e.EmployeeNumber == "E20260807001");
-                if (adminUser != null)
-                {
-                    var h = new Microsoft.AspNetCore.Identity.PasswordHasher<Employee>();
-                    // 💥 徹底移除所有判斷，只要點擊登入，100% 強制洗成 123456 與符合規格的 null 館別、啟用狀態！
-                    adminUser.PasswordHash = h.HashPassword(null, "123456");
-                    adminUser.BranchId = null;
-                    adminUser.IsActive = true;
-
-                    _context.Entry(adminUser).State = EntityState.Modified;
-                    await _context.SaveChangesAsync();
-                }
-            }
-
             if (model == null || string.IsNullOrWhiteSpace(model.Username) || string.IsNullOrWhiteSpace(model.Password))
             {
                 return Json(new { success = false, message = "請輸入帳號與密碼" });
             }
 
             var employee = await _context.Employees
+                .Include(e => e.Branch)
                 .FirstOrDefaultAsync(e => e.EmployeeNumber == model.Username);
 
             if (employee == null)
@@ -77,20 +60,7 @@ namespace HotelManagementSystem.Controllers
                 return Json(new { success = false, message = "帳號或密碼錯誤" });
             }
 
-            HttpContext.Session.SetString("EmployeeNumber", employee.EmployeeNumber);
-            HttpContext.Session.SetString("UserRole", employee.Role);
-            HttpContext.Session.SetString("UserName", employee.EmployeeName);
-
-            if (employee.BranchId.HasValue)
-            {
-                HttpContext.Session.SetString("BranchId", employee.BranchId.Value.ToString());
-            }
-            else
-            {
-                HttpContext.Session.Remove("BranchId");
-            }
-
-            string targetUrl = "/EmployeeHome/Index";
+            string targetUrl;
 
             if (employee.Role == "SystemAdmin")
             {
@@ -100,8 +70,59 @@ namespace HotelManagementSystem.Controllers
             {
                 targetUrl = "/EmployeeHome/Index";
             }
+            else
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "帳號角色設定異常"
+                });
+            }
+
+            //「這個人有哪些資料」
+            // Authentication 裡最好只保存足以識別與授權目前使用者的最小資訊。
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, employee.EmployeeNumber),
+                new Claim(ClaimTypes.Name, employee.EmployeeName),
+                new Claim(ClaimTypes.Role, employee.Role)
+            };
+
+            if (employee.BranchId is int branchId)
+            {
+                claims.Add(new Claim("BranchId", branchId.ToString()));
+
+                if (employee.Branch != null)
+                {
+                    claims.Add(new Claim("BranchName", employee.Branch.BranchName));
+                }
+            }
+
+            //「這些資料組成一個已驗證身分」
+            var identity = new ClaimsIdentity(claims, "HotelCookie");
+
+            //將登入身分包成 ASP.NET Core 可作為目前 User 使用的 ClaimsPrincipal。
+            var principal = new ClaimsPrincipal(identity);
+
+            // 使用 HotelCookie 完成登入，並將 Authentication Cookie 寫入 Response。
+            await HttpContext.SignInAsync("HotelCookie", principal);
 
             return Json(new { success = true, redirectUrl = targetUrl });
+        }
+
+        [HttpGet]
+        public IActionResult AccessDenied()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Logout()
+        {
+            await HttpContext.SignOutAsync("HotelCookie");
+
+            return RedirectToAction(nameof(Login));
         }
     }
 }

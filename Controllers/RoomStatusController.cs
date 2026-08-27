@@ -8,7 +8,7 @@ using System.Text.Json;
 
 namespace HotelManagementSystem.Controllers
 {
-    public class RoomStatusController : Controller
+    public class RoomStatusController : BranchEmployeeControllerBase
     {
         private readonly HotelManagementContext _context;
         private readonly TaipeiClock _taipeiClock;
@@ -17,6 +17,7 @@ namespace HotelManagementSystem.Controllers
             HotelManagementContext context,
             TaipeiClock taipeiClock,
             RoomAvailabilityService roomAvailabilityService)
+            : base(context)
         {
             _context = context;
             _taipeiClock = taipeiClock;
@@ -26,20 +27,9 @@ namespace HotelManagementSystem.Controllers
         [HttpGet]
         public IActionResult Index(int? roomId)
         {
-
-            var currentEmployeeNumber = "E20260807002"; // TODO 假設是登入的員工編號，實際應從登入資訊取得"
-
-            var staff = _context.Employees
-                .FirstOrDefault(e => e.EmployeeNumber == currentEmployeeNumber && e.IsActive);
-
-            if (staff == null)
-            {
-                return Content("員工資料錯誤，請重新登入");
-            }
-
             var model = new RoomStatusViewModel()
             {
-                Rooms = _context.Rooms.Where(r => r.BranchId == staff.BranchId)
+                Rooms = _context.Rooms.Where(r => r.BranchId == CurrentBranchId)
                 .Select(r => new RoomStatusItemViewModel
                 {
                     RoomId = r.RoomId,
@@ -85,18 +75,7 @@ namespace HotelManagementSystem.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult UpdateCleaningStatus(int roomId, string targetStatus)
         {
-
-            var currentEmployeeNumber = "E20260807002"; // TODO 假設是登入的員工編號，實際應從登入資訊取得"
-
-            var staff = _context.Employees
-                .FirstOrDefault(e => e.EmployeeNumber == currentEmployeeNumber && e.IsActive);
-
-            if (staff == null)
-            {
-                return Content("員工資料錯誤，請重新登入");
-            }
-
-            var room = _context.Rooms.FirstOrDefault(r => r.RoomId == roomId && r.BranchId == staff.BranchId);
+            var room = _context.Rooms.FirstOrDefault(r => r.RoomId == roomId && r.BranchId == CurrentBranchId);
             if (room == null)
             {
                 TempData["ErrorMessage"] = "房間資料異常，請再試一次";
@@ -130,7 +109,7 @@ namespace HotelManagementSystem.Controllers
             {
                 TargetBranchId = room.BranchId,
                 OperatedAt = _taipeiClock.Now,
-                OperatorEmployeeNumber = staff.EmployeeNumber,
+                OperatorEmployeeNumber = CurrentEmployeeNumber!,
                 OperationTypeId = 20,
                 TargetType = "Room",
                 TargetIdentifier = room.RoomNumber,
@@ -159,18 +138,7 @@ namespace HotelManagementSystem.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult UpdateSupplyStatus(int roomId, string targetStatus, bool confirmed = false)
         {
-
-            var currentEmployeeNumber = "E20260807002"; // TODO 假設是登入的員工編號，實際應從登入資訊取得"
-
-            var staff = _context.Employees
-                .FirstOrDefault(e => e.EmployeeNumber == currentEmployeeNumber && e.IsActive);
-
-            if (staff == null)
-            {
-                return Content("員工資料錯誤，請重新登入");
-            }
-
-            var room = _context.Rooms.FirstOrDefault(r => r.RoomId == roomId && r.BranchId == staff.BranchId);
+            var room = _context.Rooms.FirstOrDefault(r => r.RoomId == roomId && r.BranchId == CurrentBranchId);
             if (room == null)
             {
                 TempData["ErrorMessage"] = "房間資料異常，請再試一次";
@@ -249,7 +217,7 @@ namespace HotelManagementSystem.Controllers
             {
                 TargetBranchId = room.BranchId,
                 OperatedAt = _taipeiClock.Now,
-                OperatorEmployeeNumber = staff.EmployeeNumber,
+                OperatorEmployeeNumber = CurrentEmployeeNumber!,
                 OperationTypeId = (room.SupplyStatus == "Reserved") ? 18 : 19,
                 TargetType = "Room",
                 TargetIdentifier = room.RoomNumber,
@@ -282,18 +250,7 @@ namespace HotelManagementSystem.Controllers
             string? disabledReason,
             bool confirmed = false)
         {
-
-            var currentEmployeeNumber = "E20260807002"; // TODO 假設是登入的員工編號，實際應從登入資訊取得"
-
-            var staff = _context.Employees
-                .FirstOrDefault(e => e.EmployeeNumber == currentEmployeeNumber && e.IsActive);
-
-            if (staff == null)
-            {
-                return Content("員工資料錯誤，請重新登入");
-            }
-
-            var room = _context.Rooms.FirstOrDefault(r => r.RoomId == roomId && r.BranchId == staff.BranchId);
+            var room = _context.Rooms.FirstOrDefault(r => r.RoomId == roomId && r.BranchId == CurrentBranchId);
             if (room == null)
             {
                 TempData["ErrorMessage"] = "房間資料異常，請再試一次";
@@ -386,7 +343,7 @@ namespace HotelManagementSystem.Controllers
             {
                 TargetBranchId = room.BranchId,
                 OperatedAt = _taipeiClock.Now,
-                OperatorEmployeeNumber = staff.EmployeeNumber,
+                OperatorEmployeeNumber = CurrentEmployeeNumber!,
                 OperationTypeId = (room.SupplyStatus == "Disabled") ? 11 : 12,
                 TargetType = "Room",
                 TargetIdentifier = room.RoomNumber,
@@ -418,18 +375,7 @@ namespace HotelManagementSystem.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult UpdateDisabledReason(int roomId, string? disabledReason)
         {
-            var currentEmployeeNumber = "E20260807002"; // TODO 假設是登入的員工編號，實際應從登入資訊取得"
-
-            var staff = _context.Employees
-                .FirstOrDefault(e => e.EmployeeNumber == currentEmployeeNumber && e.IsActive);
-
-            if (staff == null)
-            {
-                TempData["ErrorMessage"] = "員工資料錯誤，請重新登入";
-                return Unauthorized();
-            }
-
-            var room = _context.Rooms.FirstOrDefault(r => r.RoomId == roomId && r.BranchId == staff.BranchId);
+            var room = _context.Rooms.FirstOrDefault(r => r.RoomId == roomId && r.BranchId == CurrentBranchId);
             if (room == null)
             {
                 TempData["ErrorMessage"] = "房間資料異常，請重新整理後再試一次。";
@@ -475,7 +421,7 @@ namespace HotelManagementSystem.Controllers
             {
                 TargetBranchId = room.BranchId,
                 OperatedAt = _taipeiClock.Now,
-                OperatorEmployeeNumber = staff.EmployeeNumber,
+                OperatorEmployeeNumber = CurrentEmployeeNumber!,
                 OperationTypeId = 24,
                 TargetType = "Room",
                 TargetIdentifier = room.RoomNumber,

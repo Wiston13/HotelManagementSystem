@@ -1,17 +1,14 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using HotelManagementSystem.Models.Entities;
-using System.Threading.Tasks;
-using System;
-using System.Linq;
 
 namespace HotelManagementSystem.Controllers
 {
-    public class OperationLogController : AdminBaseController
+    public class OperationLogController : SystemAdminControllerBase
     {
         private readonly HotelManagementSystem.Models.HotelManagementContext _context;
 
         public OperationLogController(HotelManagementSystem.Models.HotelManagementContext context)
+            : base(context)
         {
             _context = context;
         }

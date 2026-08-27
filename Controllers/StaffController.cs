@@ -2,20 +2,16 @@
 using HotelManagementSystem.Models.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using HotelManagementSystem.Services;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 
 namespace HotelManagementSystem.Controllers
 {
-    public class StaffController : AdminBaseController
+    public class StaffController : SystemAdminControllerBase
     {
         private readonly HotelManagementContext _context;
         private readonly TaipeiClock _clock;
 
         public StaffController(HotelManagementContext context)
+            : base(context)
         {
             _context = context;
             _clock = new TaipeiClock();
