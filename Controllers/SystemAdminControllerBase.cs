@@ -1,6 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using HotelManagementSystem.Models;
+﻿using HotelManagementSystem.Models;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
@@ -32,7 +32,11 @@ namespace HotelManagementSystem.Controllers
             var isActive = !string.IsNullOrWhiteSpace(employeeNumber) &&
                 await _context.Employees
                     .AsNoTracking()
-                    .AnyAsync(e => e.EmployeeNumber == employeeNumber && e.IsActive);
+                    .AnyAsync(e =>
+                        e.EmployeeNumber == employeeNumber &&
+                        e.IsActive &&
+                        e.Role == "SystemAdmin" &&
+                        e.BranchId == null);
 
             if (!isActive)
             {
