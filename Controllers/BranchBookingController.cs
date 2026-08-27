@@ -1,42 +1,19 @@
 ﻿using HotelManagementSystem.Models;
-using HotelManagementSystem.Services;
 using HotelManagementSystem.Models.BookingSearchModel;
+using HotelManagementSystem.Models.Entities;
+using HotelManagementSystem.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using HotelManagementSystem.Models.Entities;
-
-/*
- 員工帳號驗證:
- 每個ACTION都要驗證員工身分，員工身分怎麼驗證?
- employeeNum  用session抓  但session週期只有一次轉跳
- 有filter做驗證 或更好做法
- 但有同時需要branchID 和 employeeNum嗎?
- 只要有employeeNum就可以抓資料庫判斷分館了
- 那這樣會有危險嗎?
- 例如轉跳action帶的employee是假的 又或者裝到_layout或哪裡的Model 或viewdata tempdata
- viewdata和viewbag->轉跳一次請求消失 tempdata轉跳存成session 
- 
- 每步操作要驗證資料庫正確性:
- 更新時加入判斷資料庫的資料是否有誤 例如paid->cancelled 確定是不是已經是cancelled 訂單資料是否一樣
-
- 可優化:
-*訂單讀取時間
-*前端取消的訂單 有取消理由
-*取消後單獨顯示取消的訂單?或更好的做法
-*即時更改選單刷新訂單
-*訂單類別排序
-
- 
- */
 
 namespace HotelManagementSystem.Controllers
 {
-    public class BranchBookingController : Controller
+    public class BranchBookingController : BranchEmployeeControllerBase
     {
-        private readonly TaipeiClock _Clock;        
+        private readonly TaipeiClock _Clock;
         private readonly HotelManagementContext _context;
         private readonly NoShowService _noShowService;
-        public BranchBookingController(HotelManagementContext context, TaipeiClock clock ,NoShowService noShowService)
+        public BranchBookingController(HotelManagementContext context, TaipeiClock clock, NoShowService noShowService)
+            : base(context)
         {
             _context = context;
             _Clock = clock;
@@ -63,31 +40,12 @@ namespace HotelManagementSystem.Controllers
             return output;
         }
 
-        //驗證員工ID是否存在
-        private async Task<int?> EmployeeVerify(string EmpNum)
-        {
-             var q= await _context.Employees.AsNoTracking().FirstOrDefaultAsync(x => x.EmployeeNumber == EmpNum);
-             return q?.BranchId;
-            // 未來調整回傳值
-        }
-
         //查詢訂單
         [HttpGet]
         public async Task<IActionResult> BookingSearch(string keyword, string dateRange, string bookingStatus)
         {
-            // 待帳號驗證(session取得 employeenum)
-            string EmployeeNum = "E20260807002";
-
-            //驗證員工ID是否存在
-            int? BranchId = await EmployeeVerify(EmployeeNum);
-            if (BranchId == null)
-            {
-                ViewBag.VerifyError = "帳號驗證異常，即將返回登入畫面";
-                return View(new List<BookingData>());
-            }
-
             // 刷新 noshow
-           await _noShowService.UpdateNoShowsAsync();
+            await _noShowService.UpdateNoShowsAsync();
 
             // 送回前端保存查詢欄位用
             ViewBag.Keyword = keyword;
@@ -97,16 +55,16 @@ namespace HotelManagementSystem.Controllers
             List<BookingData> _bookingData = new List<BookingData>();
 
             // 驗證搜尋為空則傳回空資料
-            if (string.IsNullOrEmpty(keyword)||string.IsNullOrWhiteSpace(keyword))
+            if (string.IsNullOrEmpty(keyword) || string.IsNullOrWhiteSpace(keyword))
             {
                 return View(_bookingData);
             }
 
             var query = _context.Bookings.AsNoTracking();
-            query = query.Where(x => x.BranchId == BranchId);
+            query = query.Where(x => x.BranchId == CurrentBranchId);
             // keyword模糊查詢資料庫 及 分館ID (此處需要驗證員工帳號及帳號所屬分館取得)
             if (!string.IsNullOrWhiteSpace(keyword))
-            {                
+            {
                 query = query.Where(x => x.BookingNumber!.Contains(keyword) || x.BookerName!.Contains(keyword) || x.ContactPhone!.Contains(keyword));
             }
 
@@ -132,7 +90,7 @@ namespace HotelManagementSystem.Controllers
             }
 
 
-            _bookingData =await query.Select(x => new BookingData
+            _bookingData = await query.Select(x => new BookingData
             {
                 BookingNum = x.BookingNumber,
                 BookingDate = x.CreatedAt,
@@ -144,8 +102,8 @@ namespace HotelManagementSystem.Controllers
                 EndDate = new DateTime(x.CheckOutDate.Year, x.CheckOutDate.Month, x.CheckOutDate.Day),
                 Price = "NT$ " + x.TotalAmount.ToString("N0")
             }).ToListAsync();
-            
-            foreach(var b in _bookingData)
+
+            foreach (var b in _bookingData)
             {
                 b.BookingStatus = StatusLanguage(b.BookingStatus);
             }
@@ -158,30 +116,17 @@ namespace HotelManagementSystem.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> BookingCancel(string bookingNum, string keyword, string dateRange,
-            string keyStatus, string cancelCause ,string cancelReason)
+            string keyStatus, string cancelCause, string cancelReason)
         {
-            // 待取得分館員工
-            string EmployeeNum = "E20260807002";
             var now = _Clock.Now;
-
-            // 員工驗證
-            int? BranchId = await EmployeeVerify(EmployeeNum);
-            if (BranchId == null)
-            {
-                ViewBag.VerifyError = "帳號驗證異常，即將返回登入畫面";
-                return View("BookingSearch",new List<BookingData>());
-            }
-
-            
-
             await _noShowService.UpdateNoShowsAsync();
 
             // 查詢訂單
-            var result = _context.Bookings.FirstOrDefault(x => x.BookingNumber == bookingNum && x.BranchId == BranchId &&x.StayRecord==null);
-            if(result == null || result.BookingStatus!= "Paid")
+            var result = _context.Bookings.FirstOrDefault(x => x.BookingNumber == bookingNum && x.BranchId == CurrentBranchId && x.StayRecord == null);
+            if (result == null || result.BookingStatus != "Paid")
             {
                 TempData["BookingStatusError"] = "訂單狀態錯誤，目前無法取消訂單";
-                return RedirectToAction("BookingSearch", new {  keyword, dateRange, bookingStatus = keyStatus });
+                return RedirectToAction("BookingSearch", new { keyword, dateRange, bookingStatus = keyStatus });
             }
 
             // 判斷顧客因素+是否超過取消時間
@@ -192,14 +137,14 @@ namespace HotelManagementSystem.Controllers
                 return RedirectToAction("BookingSearch", new { keyword, dateRange, bookingStatus = keyStatus });
             }
 
-            
+
             //判斷取消因素是否正確
-            if (cancelCause!= "顧客因素" && cancelCause != "飯店因素")
+            if (cancelCause != "顧客因素" && cancelCause != "飯店因素")
             {
                 TempData["BookingStatusError"] = "取消訂單資料錯誤，無法取消訂單";
                 return RedirectToAction("BookingSearch", new { keyword, dateRange, bookingStatus = keyStatus });
             }
-            result.CancellationCause = cancelCause== "顧客因素"? "GuestRequest": "HotelUnableToFulfill";
+            result.CancellationCause = cancelCause == "顧客因素" ? "GuestRequest" : "HotelUnableToFulfill";
 
             // 限制500字
             if (string.IsNullOrWhiteSpace(cancelReason))
@@ -217,7 +162,7 @@ namespace HotelManagementSystem.Controllers
 
             result.CancelledAt = now;
 
-            result.CancelledByEmployeeNumber = EmployeeNum;
+            result.CancelledByEmployeeNumber = CurrentEmployeeNumber;
 
             result.BookingStatus = "Cancelled";
 
@@ -227,25 +172,25 @@ namespace HotelManagementSystem.Controllers
             {
                 TargetBranchId = result.BranchId,
                 OperatedAt = now,
-                OperatorEmployeeNumber = EmployeeNum,
+                OperatorEmployeeNumber = CurrentEmployeeNumber!,
                 OperationTypeId = 21,
                 TargetType = "Booking",
                 TargetIdentifier = result.BookingNumber,
                 Description = $"因{cancelCause}取消訂單 {result.BookingNumber}。"
             };
-             _context.OperationLogs.Add(operationLog);
+            _context.OperationLogs.Add(operationLog);
 
             try
             {
                 await _context.SaveChangesAsync();
             }
-            catch(DbUpdateException)
+            catch (DbUpdateException)
             {
                 TempData["BookingStatusError"] = "發生不可避免的錯誤，請重新操作訂單。";
                 return RedirectToAction("BookingSearch", new { keyword, dateRange, bookingStatus = keyStatus });
             }
 
-            return RedirectToAction("BookingSearch", new {keyword=bookingNum, dateRange, bookingStatus = "" });
+            return RedirectToAction("BookingSearch", new { keyword = bookingNum, dateRange, bookingStatus = "" });
         }
 
 
