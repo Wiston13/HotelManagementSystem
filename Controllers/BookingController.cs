@@ -238,7 +238,8 @@ namespace HotelManagementSystem.Controllers
                     .Where(c => !char.IsWhiteSpace(c) && c != '-')
                     .ToArray());
             // 正規化後必須有值，且只能包含 ASCII 0～9
-            if (string.IsNullOrEmpty(normalizedPhone) ||
+            if (string.IsNullOrEmpty(normalizedPhone) || 
+                normalizedPhone.Length > 20 || 
                 !normalizedPhone.All(c => c >= '0' && c <= '9'))
             {
                 return BadRequest("聯絡電話格式不正確。");
