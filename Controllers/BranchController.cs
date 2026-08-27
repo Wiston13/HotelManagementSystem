@@ -41,8 +41,7 @@ namespace HotelManagementSystem.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Save(Branch branch)
         {
-            // 抓到總管編號 這裡暫定是假資料
-            string EmployeeId = "E20260807001";
+            var currentOperator = CurrentEmployeeNumber!;
 
             // 💡 1. 移除導覽屬性驗證（避免 ModelState 因相關連的 Rooms / RoomTypes 為 null 而無效）
             ModelState.Remove("Rooms");
@@ -101,7 +100,7 @@ namespace HotelManagementSystem.Controllers
 
                     bookingStatusLog.TargetBranchId = branch.BranchId;
                     bookingStatusLog.OperatedAt = _Clock.Now;
-                    bookingStatusLog.OperatorEmployeeNumber = EmployeeId;
+                    bookingStatusLog.OperatorEmployeeNumber = currentOperator;
                     bookingStatusLog.OperationTypeId = 1;
                     bookingStatusLog.TargetType = "Branch";
                     bookingStatusLog.TargetIdentifier = branch.BranchId.ToString();
@@ -165,7 +164,7 @@ namespace HotelManagementSystem.Controllers
 
                             bookingStatusLog.TargetBranchId = branch.BranchId;
                             bookingStatusLog.OperatedAt = _Clock.Now;
-                            bookingStatusLog.OperatorEmployeeNumber = EmployeeId;
+                            bookingStatusLog.OperatorEmployeeNumber = currentOperator;
                             bookingStatusLog.OperationTypeId = 2;
                             bookingStatusLog.TargetType = "Branch";
                             bookingStatusLog.TargetIdentifier = branch.BranchId.ToString();
@@ -180,7 +179,7 @@ namespace HotelManagementSystem.Controllers
                     {
                         TargetBranchId = branch.BranchId,
                         OperatedAt = _Clock.Now,
-                        OperatorEmployeeNumber = EmployeeId,
+                        OperatorEmployeeNumber = currentOperator,
                         OperationTypeId = isBookingOpenOrStopped,
                         TargetType = "Branch",
                         TargetIdentifier = branch.BranchId.ToString(),

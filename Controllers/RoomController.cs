@@ -70,7 +70,7 @@ namespace HotelManagementSystem.Controllers
                     "資料驗證失敗：" + string.Join(" | ", errors));
             }
 
-            var currentOperator = GetCurrentOperator();
+            var currentOperator = CurrentEmployeeNumber!;
             var logsToInsert = new List<OperationLog>();
 
             var roomNumber = model.RoomNumber?.Trim();
@@ -524,13 +524,6 @@ namespace HotelManagementSystem.Controllers
             TempData["ErrorMessage"] = message;
 
             return RedirectToAction(nameof(Index));
-        }
-        private string GetCurrentOperator()
-        {
-            return User
-                       .FindFirst(ClaimTypes.NameIdentifier)
-                       ?.Value
-                   ?? "E20260807001";
         }
     }
 }

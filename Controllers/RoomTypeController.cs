@@ -40,8 +40,7 @@ namespace HotelManagementSystem.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Save(RoomType model)
         {
-            //暫時假資料
-            string EmployeeNum = "E20260807001";
+            var currentOperator = CurrentEmployeeNumber!;
 
             //  1. 清除 EF Core 導覽屬性的驗證錯誤（解決 ModelState 永遠無效的主因）
             ModelState.Remove("Branch");
@@ -99,7 +98,7 @@ namespace HotelManagementSystem.Controllers
                     {
                         TargetBranchId = model.BranchId,
                         OperatedAt = _Clock.Now,
-                        OperatorEmployeeNumber = EmployeeNum,
+                        OperatorEmployeeNumber = currentOperator,
                         OperationTypeId = 5,
                         TargetType = "RoomType",
                         TargetIdentifier = model.RoomTypeId.ToString(),
@@ -132,7 +131,7 @@ namespace HotelManagementSystem.Controllers
                             {
                                 TargetBranchId = existingRoomType.BranchId,
                                 OperatedAt = _Clock.Now,
-                                OperatorEmployeeNumber = EmployeeNum,
+                                OperatorEmployeeNumber = currentOperator,
                                 OperationTypeId = 6,
                                 TargetType = "RoomType",
                                 TargetIdentifier = existingRoomType.RoomTypeId.ToString(),
@@ -147,7 +146,7 @@ namespace HotelManagementSystem.Controllers
                         {
                             TargetBranchId = existingRoomType.BranchId,
                             OperatedAt = _Clock.Now,
-                            OperatorEmployeeNumber = EmployeeNum,
+                            OperatorEmployeeNumber = currentOperator,
                             OperationTypeId = model.IsActive ? 8 : 7,
                             TargetType = "RoomType",
                             TargetIdentifier = existingRoomType.RoomTypeId.ToString(),
