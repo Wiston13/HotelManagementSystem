@@ -17,13 +17,19 @@ namespace HotelManagementSystem.Controllers
             _noShowService = noShowService;
         }
 
-        public IActionResult Export()
+        public async Task<IActionResult> Export()
         {
+           
+            ViewBag.Branches = await _context.Branches
+                .OrderBy(b => b.BranchId)
+                .ToListAsync();
+
             return View();
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetOrders(string branch, string start, string end)
+        
+        public async Task<IActionResult> GetOrders(int? branchId, string start, string end)
         {
             try
             {
@@ -37,9 +43,10 @@ namespace HotelManagementSystem.Controllers
                             where booking.CheckInDate >= startDate && booking.CheckInDate <= endDate
                             select new { booking, b };
 
-                if (!string.IsNullOrEmpty(branch) && branch != "全部分館")
+              
+                if (branchId.HasValue)
                 {
-                    query = query.Where(x => x.b.BranchName == branch);
+                    query = query.Where(x => x.booking.BranchId == branchId.Value);
                 }
 
                 var dbData = await query.Select(x => new
@@ -77,9 +84,10 @@ namespace HotelManagementSystem.Controllers
                     PropertyNamingPolicy = null
                 });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Json(new { success = false, message = ex.Message });
+               
+                return Json(new { success = false, message = "查詢失敗，請稍後再試。" });
             }
         }
     }
