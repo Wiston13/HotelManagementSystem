@@ -2,7 +2,6 @@
 using HotelManagementSystem.Models.BookingSearchModel;
 using HotelManagementSystem.Models.Entities;
 using HotelManagementSystem.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -32,8 +31,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HotelManagementSystem.Controllers
 {
-    [Authorize(Roles = "BranchEmployee")]
-    public class BranchBookingController : Controller
+    public class BranchBookingController : BranchEmployeeControllerBase
     {
         private readonly TaipeiClock _Clock;
         private readonly HotelManagementContext _context;

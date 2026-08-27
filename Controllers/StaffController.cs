@@ -1,13 +1,11 @@
 ﻿using HotelManagementSystem.Models;
 using HotelManagementSystem.Models.Entities;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace HotelManagementSystem.Controllers
 {
-    [Authorize(Roles = "SystemAdmin")]
-    public class StaffController : Controller
+    public class StaffController : SystemAdminControllerBase
     {
         private readonly HotelManagementContext _context;
 

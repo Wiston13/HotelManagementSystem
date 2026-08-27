@@ -1,10 +1,8 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 
 namespace HotelManagementSystem.Controllers
 {
-    [Authorize(Roles = "SystemAdmin")]
-    public class RoomController : Controller
+    public class RoomController : SystemAdminControllerBase
     {
         public IActionResult Index()
         {

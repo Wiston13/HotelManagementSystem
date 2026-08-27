@@ -1,15 +1,13 @@
 ﻿using HotelManagementSystem.Models;
 using HotelManagementSystem.Models.ViewModels.EmployeeHome;
 using HotelManagementSystem.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace HotelManagementSystem.Controllers
 {
-    [Authorize(Roles = "BranchEmployee")]
-    public class EmployeeHomeController : Controller
+    public class EmployeeHomeController : BranchEmployeeControllerBase
     {
         private readonly HotelManagementContext _context;
         private readonly TaipeiClock _clock;

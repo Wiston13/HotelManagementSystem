@@ -2,15 +2,13 @@
 using HotelManagementSystem.Models.Entities;
 using HotelManagementSystem.Models.ViewModels.RoomStatus;
 using HotelManagementSystem.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 
 namespace HotelManagementSystem.Controllers
 {
-    [Authorize(Roles = "BranchEmployee")]
-    public class RoomStatusController : Controller
+    public class RoomStatusController : BranchEmployeeControllerBase
     {
         private readonly HotelManagementContext _context;
         private readonly TaipeiClock _taipeiClock;

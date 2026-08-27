@@ -1,13 +1,11 @@
 ﻿using HotelManagementSystem.Models;
 using HotelManagementSystem.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace HotelManagementSystem.Controllers
 {
-    [Authorize(Roles = "SystemAdmin")]
-    public class BookingExportController : Controller
+    public class BookingExportController : SystemAdminControllerBase
     {
         private readonly HotelManagementContext _context;
         private readonly NoShowService _noShowService;
