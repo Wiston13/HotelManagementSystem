@@ -162,7 +162,7 @@
 							</div>
 
 							<!-- 主要操作按鈕 -->
-							<button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+							<button type="submit" id="btnSubmitPayment" class="btn btn-primary w-100 py-2 fw-semibold">
 								確認付款並送出訂房
 							</button>
 
@@ -469,9 +469,15 @@
 			});
 
 			// 驗證全過才送出表單
+			var submitButton = document.getElementById('btnSubmitPayment');
+
 			if (isValid) {
+				submitButton.disabled = true;
+				submitButton.textContent = '處理中...';
+
 				form.submit();
 			}
+
 		}, false)
 	})()
 </script>
