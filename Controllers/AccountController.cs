@@ -103,5 +103,11 @@ namespace HotelManagementSystem.Controllers
 
             return Json(new { success = true, redirectUrl = targetUrl });
         }
+
+        [HttpGet]
+        public IActionResult AccessDenied()
+        {
+            return View();
+        }
     }
 }

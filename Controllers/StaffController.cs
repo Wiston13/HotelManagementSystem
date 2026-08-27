@@ -2,13 +2,10 @@
 using HotelManagementSystem.Models.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace HotelManagementSystem.Controllers
 {
-    public class StaffController : AdminBaseController
+    public class StaffController : Controller
     {
         private readonly HotelManagementContext _context;
 

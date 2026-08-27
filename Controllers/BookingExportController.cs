@@ -1,15 +1,11 @@
 ﻿using HotelManagementSystem.Models;
-using HotelManagementSystem.Models.Entities;
 using HotelManagementSystem.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace HotelManagementSystem.Controllers
 {
-    public class BookingExportController : AdminBaseController
+    public class BookingExportController : Controller
     {
         private readonly HotelManagementContext _context;
         private readonly NoShowService _noShowService;

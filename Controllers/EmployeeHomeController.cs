@@ -1,11 +1,14 @@
 ﻿using HotelManagementSystem.Models;
 using HotelManagementSystem.Models.ViewModels.EmployeeHome;
 using HotelManagementSystem.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace HotelManagementSystem.Controllers
 {
+    [Authorize(Roles = "BranchEmployee")]
     public class EmployeeHomeController : Controller
     {
         private readonly HotelManagementContext _context;
@@ -24,7 +27,7 @@ namespace HotelManagementSystem.Controllers
         {
             await _noShowService.UpdateNoShowsAsync();
 
-            var currentEmployeeNumber = "E20260807002"; // TODO 假設是登入的員工編號，實際應從登入資訊取得"
+            var currentEmployeeNumber = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             var staff = _context.Employees
                 .FirstOrDefault(e => e.EmployeeNumber == currentEmployeeNumber && e.IsActive);
