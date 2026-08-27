@@ -67,6 +67,13 @@ namespace HotelManagementSystem.Controllers
                 TempData["ErrorMessage"] = detailedError;
                 return RedirectToAction(nameof(Index));
             }
+            
+
+            // 防呆檢查：同分館內房號不能重複 (忽略自己的 RoomId)
+            bool isDuplicate = await _context.Rooms.AnyAsync(r =>
+                r.BranchId == BranchId &&
+                r.RoomNumber == RoomNumber.Trim() &&
+                r.RoomId != RoomId);
 
             var logsToInsert = new List<OperationLog>();
 
@@ -87,6 +94,22 @@ namespace HotelManagementSystem.Controllers
                     return RedirectToAction(nameof(Index));
                 }
 
+            if (isDuplicate)
+            {
+                TempData["ErrorMessage"] = $"該分館內已有房號【{RoomNumber}】，請勿重複新增/修改！";
+                return RedirectToAction(nameof(Index));
+            }
+            // 驗證SupplyStatus合法性
+            if (SupplyStatus != "Open" && SupplyStatus != "Disabled")
+            {
+                TempData["ErrorMessage"] = "房間停用狀態資料異常，請重新操作！";
+                return RedirectToAction(nameof(Index));
+            }
+
+
+            if (RoomId == 0)
+            {
+                // 【新增房間】
                 // 1. 驗證傳入的分館是否存在
                 bool branchExists = await _context.Branches.AnyAsync(b => b.BranchId == model.BranchId);
                 if (!branchExists)
@@ -177,6 +200,20 @@ namespace HotelManagementSystem.Controllers
                     ("Reserved", "Reserved") => true,
                     _ => false
                 };
+                _context.OperationLogs.Add(createLog);
+            }
+            else
+            {
+                // 驗證SupplySatus轉換狀態
+                bool allowToSaveStatus(Room r)
+                {
+                    if (r.SupplyStatus == "Open" && SupplyStatus == "Open") return true;
+                    else if (r.SupplyStatus == "Open" && SupplyStatus == "Disabled") return true;
+                    else if (r.SupplyStatus == "Disabled" && SupplyStatus == "Disabled") return true;
+                    else if (r.SupplyStatus == "Disabled" && SupplyStatus == "Open") return true;
+                    else if (r.SupplyStatus == "Reserved" && SupplyStatus == "Reserved") return true;
+                    else return false;
+                }
 
                 if (!isValidTransition)
                 {
@@ -257,20 +294,59 @@ namespace HotelManagementSystem.Controllers
                 var targetRoomType = await _context.RoomTypes
                     .FirstOrDefaultAsync(rt => rt.RoomTypeId == model.RoomTypeId && rt.BranchId == existingRoom.BranchId);
 
+
+                // 【修改房間】
+
+                var existingRoom = await _context.Rooms.FindAsync(RoomId);
+
+                if (existingRoom == null)
+                {
+                    // 驗證roomID合法性
+                    TempData["ErrorMessage"] = "找不到房間資料，儲存失敗。";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                if (!allowToSaveStatus(existingRoom))
                 if (targetRoomType == null)
                 {
+                    TempData["ErrorMessage"] = "錯誤的房間切換狀態資料切換，請重新操作！";
+                    return RedirectToAction(nameof(Index));
+                }
+                    string trimmedRoomNumber = RoomNumber.Trim();
+                    string? trimmedDisabledReason =
+                        SupplyStatus == "Disabled" ? DisabledReason?.Trim() : null;
                     string errorMsg = "修改失敗：所選房型不屬於該房間現有之分館！";
                     if (Request.Headers["X-Requested-With"] == "XMLHttpRequest") return BadRequest(errorMsg);
                     TempData["ErrorMessage"] = errorMsg;
                     return RedirectToAction(nameof(Index));
                 }
 
+                    bool isGeneralChanged =                        
+                        existingRoom.RoomNumber != trimmedRoomNumber ||
+                        existingRoom.RoomTypeId != RoomTypeId ||
+                        existingRoom.Floor != Floor;
+                    bool isSupplyStatusChanged = existingRoom.SupplyStatus != SupplyStatus;
                 // 比較一般欄位變動並紀錄日誌
                 bool isBasicInfoChanged = existingRoom.RoomNumber != model.RoomNumber ||
                                           existingRoom.Floor != model.Floor ||
                                           existingRoom.RoomTypeId != model.RoomTypeId ||
                                           (!string.IsNullOrEmpty(model.CleaningStatus) && existingRoom.CleaningStatus != model.CleaningStatus);
 
+                    if (isGeneralChanged)
+                    {
+
+                        var updatedLog = new OperationLog
+                        {
+                            TargetBranchId = existingRoom.BranchId,
+                            OperatedAt = _Clock.Now,
+                            OperatorEmployeeNumber = EmployeeNum,
+                            OperationTypeId = 10,
+                            TargetType = "Room",
+                            TargetIdentifier = existingRoom.RoomId.ToString(),
+                            Description = $"修改房間：{trimmedRoomNumber} 資料。"
+                        };
+                        _context.OperationLogs.Add(updatedLog);
+                    }
                 if (isBasicInfoChanged)
                 {
                     logsToInsert.Add(new OperationLog
@@ -328,6 +404,13 @@ namespace HotelManagementSystem.Controllers
                 TempData["SuccessMessage"] = $"修改房間【{model.RoomNumber}】成功！";
             }
 
+                    existingRoom.BranchId = BranchId;
+                    existingRoom.RoomNumber = trimmedRoomNumber;
+                    existingRoom.RoomTypeId = RoomTypeId;
+                    existingRoom.Floor = Floor;
+                    existingRoom.SupplyStatus = SupplyStatus;
+                    existingRoom.DisabledReason = trimmedDisabledReason;                
+            }
             if (logsToInsert.Any())
             {
                 _context.OperationLogs.AddRange(logsToInsert);
