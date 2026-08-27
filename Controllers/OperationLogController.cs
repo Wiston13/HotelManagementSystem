@@ -75,7 +75,7 @@ namespace HotelManagementSystem.Controllers
                         .Select(e => e.EmployeeNumber)
                         .ToListAsync();
 
-                    query = query.Where(l => matchedEmployeeNumbers.Contains(l.OperatorEmployeeNumber) || l.Description.ToLower().Contains(op));
+                    query = query.Where(l => matchedEmployeeNumbers.Contains(l.OperatorEmployeeNumber));
                 }
 
                 

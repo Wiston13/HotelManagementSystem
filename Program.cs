@@ -51,7 +51,8 @@ app.MapStaticAssets();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Account}/{action=Login}/{id?}") // 將預設首頁改為登入頁面
+    pattern:
+        "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
 
 app.Run();

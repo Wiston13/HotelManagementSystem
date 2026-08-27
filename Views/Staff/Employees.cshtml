@@ -78,7 +78,7 @@
             </div>
             <div class="modal-body">
                 <form id="employeeForm" novalidate>
-
+                    @Html.AntiForgeryToken()
                     <div class="mb-3">
                         <label class="form-label" for="employeeName">
                             員工姓名 <span class="text-danger">*</span>
@@ -203,7 +203,8 @@
                     employeeName: empName,
                    password: empPassword,
                     branchId: parseInt(bId),
-                    isActive: statusVal === "1"
+                    isActive: statusVal === "1",
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
                 };
 
                 if (isEdit) {

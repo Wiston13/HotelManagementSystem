@@ -35,6 +35,7 @@ namespace HotelManagementSystem.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateEmployee(string employeeName, string password, int branchId)
         {
            
@@ -92,8 +93,8 @@ namespace HotelManagementSystem.Controllers
 
                 _context.Employees.Add(newEmp);
 
-                
-                string operatorEmployeeNumber = HttpContext.Session.GetString("EmployeeNumber") ?? "";
+
+                string operatorEmployeeNumber = CurrentEmployeeNumber!;
                 string description = $"建立分館員工 {newEmp.EmployeeNumber}({newEmp.EmployeeName})。";
 
                 OperationLog log = new OperationLog
@@ -119,6 +120,7 @@ namespace HotelManagementSystem.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateEmployee(string employeeNumber, string employeeName, string password, int branchId, bool isActive)
         {
             if (string.IsNullOrWhiteSpace(employeeNumber))
@@ -165,7 +167,7 @@ namespace HotelManagementSystem.Controllers
                     emp.PasswordHash = hasher.HashPassword(emp, password);
                 }
 
-                string operatorEmployeeNumber = HttpContext.Session.GetString("EmployeeNumber") ?? "";
+                string operatorEmployeeNumber = CurrentEmployeeNumber!;
                 int currentBranchId = emp.BranchId.GetValueOrDefault(0);
                 string targetIdentifier = emp.EmployeeNumber ?? "";
 
