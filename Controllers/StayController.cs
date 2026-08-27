@@ -2,11 +2,13 @@
 using HotelManagementSystem.Models.Entities;
 using HotelManagementSystem.Models.ViewModels.Stay;
 using HotelManagementSystem.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace HotelManagementSystem.Controllers
 {
+    [Authorize(Roles = "BranchEmployee")]
     public class StayController : Controller
     {
         private readonly HotelManagementContext _context;
