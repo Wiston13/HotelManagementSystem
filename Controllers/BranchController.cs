@@ -11,13 +11,13 @@ using System.Threading.Tasks;
 
 namespace HotelManagementSystem.Controllers
 {
-    public class BranchController : Controller
+    public class BranchController : SystemAdminControllerBase
     {
         private readonly HotelManagementContext _context;
         private readonly IWebHostEnvironment _environment;
         private readonly TaipeiClock _Clock;
 
-        public BranchController(HotelManagementContext context, IWebHostEnvironment environment, TaipeiClock taipeiClock)
+        public BranchController(HotelManagementContext context, IWebHostEnvironment environment, TaipeiClock taipeiClock) : base(context)
         {
             _context = context;
             _environment = environment;

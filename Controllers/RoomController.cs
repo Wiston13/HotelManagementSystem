@@ -8,13 +8,13 @@ using HotelManagementSystem.Services;
 
 namespace HotelManagementSystem.Controllers
 {
-    public class RoomController : Controller
+    public class RoomController : SystemAdminControllerBase
     {
         private readonly HotelManagementContext _context;
         private readonly TaipeiClock _clock;
         private readonly RoomAvailabilityService _roomAvailabilityService;
 
-        public RoomController(HotelManagementContext context, TaipeiClock clock,RoomAvailabilityService roomAvailabilityService)
+        public RoomController(HotelManagementContext context, TaipeiClock clock,RoomAvailabilityService roomAvailabilityService) : base(context)
         {
             _context = context;
             _roomAvailabilityService = roomAvailabilityService;
