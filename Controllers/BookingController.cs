@@ -121,12 +121,24 @@ namespace HotelManagementSystem.Controllers
 
         private PaymentViewModel? GetPaymentViewModel(int branchId, DateOnly checkIn, DateOnly checkOut, int roomTypeId, int guestCount) 
         {
-            // 根據房型選擇頁傳來的 branchId 找該分館資料
-            var branch = _context.Branches.FirstOrDefault(b => b.BranchId == branchId);
-            // 根據房型選擇頁傳來的 roomTypeId 找該房型資料
-            var roomType = _context.RoomTypes.FirstOrDefault(rt => rt.RoomTypeId == roomTypeId);
+            // 確認分館存在且仍接受新訂房
+            var branch = _context.Branches
+                .FirstOrDefault(b =>
+                    b.BranchId == branchId &&
+                    b.AcceptsNewBookings);
+            if (branch == null)
+            {
+                return null;
+            }
 
-            if (branch == null || roomType == null)
+            // 確認房型存在、屬於該分館、仍可訂房，且入住人數符合
+            var roomType = _context.RoomTypes
+                .FirstOrDefault(rt =>
+                    rt.RoomTypeId == roomTypeId &&
+                    rt.BranchId == branchId &&
+                    rt.IsActive &&
+                    rt.MaxOccupancy == guestCount);
+            if (roomType == null)
             {
                 return null;
             }
