@@ -1,6 +1,7 @@
 ﻿using HotelManagementSystem.Models;
 using HotelManagementSystem.Models.Entities;
 using HotelManagementSystem.Models.ViewModels;
+using HotelManagementSystem.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
@@ -11,10 +12,12 @@ namespace HotelManagementSystem.Controllers
     public class RoomController : Controller
     {
         private readonly HotelManagementContext _context;
+        private readonly TaipeiClock _Clock;
 
-        public RoomController(HotelManagementContext context)
+        public RoomController(HotelManagementContext context, TaipeiClock clock)
         {
             _context = context;
+            _Clock = clock;
         }
 
         // GET: /Room/
@@ -56,6 +59,9 @@ namespace HotelManagementSystem.Controllers
             string SupplyStatus,
             string? DisabledReason)
         {
+            // 暫時操作者假資料
+            string EmployeeNum = "E20260807001";
+
             // 防呆檢查：基本必填
             if (string.IsNullOrWhiteSpace(RoomNumber) || RoomTypeId <= 0 || BranchId <= 0)
             {
@@ -105,6 +111,19 @@ namespace HotelManagementSystem.Controllers
                 };
 
                 _context.Rooms.Add(newRoom);
+                await _context.SaveChangesAsync();
+
+                var createLog = new OperationLog
+                {
+                    TargetBranchId = newRoom.BranchId,
+                    OperatedAt = _Clock.Now,
+                    OperatorEmployeeNumber = EmployeeNum,
+                    OperationTypeId = 9,
+                    TargetType = "Room",
+                    TargetIdentifier = newRoom.RoomId.ToString(),
+                    Description = $"新增房間：{newRoom.RoomNumber}。"
+                };
+                _context.OperationLogs.Add(createLog);
             }
             else
             {
@@ -113,12 +132,73 @@ namespace HotelManagementSystem.Controllers
                 var existingRoom = await _context.Rooms.FindAsync(RoomId);
                 if (existingRoom != null)
                 {
+                    string trimmedRoomNumber = RoomNumber.Trim();
+                    string? trimmedDisabledReason =
+                        SupplyStatus == "Disabled" ? DisabledReason?.Trim() : null;
+
+                    bool isGeneralChanged =
+                        existingRoom.BranchId != BranchId ||
+                        existingRoom.RoomNumber != trimmedRoomNumber ||
+                        existingRoom.RoomTypeId != RoomTypeId ||
+                        existingRoom.Floor != Floor ||
+                        existingRoom.DisabledReason != trimmedDisabledReason;
+                    bool isSupplyStatusChanged = existingRoom.SupplyStatus != SupplyStatus;
+
+                    if (isGeneralChanged)
+                    {
+                        var updatedLog = new OperationLog
+                        {
+                            TargetBranchId = BranchId,
+                            OperatedAt = _Clock.Now,
+                            OperatorEmployeeNumber = EmployeeNum,
+                            OperationTypeId = 10,
+                            TargetType = "Room",
+                            TargetIdentifier = existingRoom.RoomId.ToString(),
+                            Description = $"修改房間：{trimmedRoomNumber} 資料。"
+                        };
+                        _context.OperationLogs.Add(updatedLog);
+                    }
+
+                    if (isSupplyStatusChanged &&
+                        existingRoom.SupplyStatus == "Open" &&
+                        SupplyStatus == "Disabled")
+                    {
+                        var disabledLog = new OperationLog
+                        {
+                            TargetBranchId = BranchId,
+                            OperatedAt = _Clock.Now,
+                            OperatorEmployeeNumber = EmployeeNum,
+                            OperationTypeId = 11,
+                            TargetType = "Room",
+                            TargetIdentifier = existingRoom.RoomId.ToString(),
+                            Description = $"停用房間：{trimmedRoomNumber}。"
+                        };
+                        _context.OperationLogs.Add(disabledLog);
+                    }
+
+                    if (isSupplyStatusChanged &&
+                        existingRoom.SupplyStatus == "Disabled" &&
+                        SupplyStatus == "Open")
+                    {
+                        var enabledLog = new OperationLog
+                        {
+                            TargetBranchId = BranchId,
+                            OperatedAt = _Clock.Now,
+                            OperatorEmployeeNumber = EmployeeNum,
+                            OperationTypeId = 12,
+                            TargetType = "Room",
+                            TargetIdentifier = existingRoom.RoomId.ToString(),
+                            Description = $"啟用房間：{trimmedRoomNumber}。"
+                        };
+                        _context.OperationLogs.Add(enabledLog);
+                    }
+
                     existingRoom.BranchId = BranchId;
-                    existingRoom.RoomNumber = RoomNumber.Trim();
+                    existingRoom.RoomNumber = trimmedRoomNumber;
                     existingRoom.RoomTypeId = RoomTypeId;
                     existingRoom.Floor = Floor;
                     existingRoom.SupplyStatus = SupplyStatus;
-                    existingRoom.DisabledReason = (SupplyStatus == "Disabled") ? DisabledReason?.Trim() : null;
+                    existingRoom.DisabledReason = trimmedDisabledReason;
                 }
                 else
                 {
