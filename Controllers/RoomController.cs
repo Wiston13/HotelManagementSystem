@@ -137,18 +137,17 @@ namespace HotelManagementSystem.Controllers
                         SupplyStatus == "Disabled" ? DisabledReason?.Trim() : null;
 
                     bool isGeneralChanged =
-                        existingRoom.BranchId != BranchId ||
+                        existingRoom.BranchId != existingRoom.BranchId ||
                         existingRoom.RoomNumber != trimmedRoomNumber ||
                         existingRoom.RoomTypeId != RoomTypeId ||
-                        existingRoom.Floor != Floor ||
-                        existingRoom.DisabledReason != trimmedDisabledReason;
+                        existingRoom.Floor != Floor;
                     bool isSupplyStatusChanged = existingRoom.SupplyStatus != SupplyStatus;
 
                     if (isGeneralChanged)
                     {
                         var updatedLog = new OperationLog
                         {
-                            TargetBranchId = BranchId,
+                            TargetBranchId = existingRoom.BranchId,
                             OperatedAt = _Clock.Now,
                             OperatorEmployeeNumber = EmployeeNum,
                             OperationTypeId = 10,
@@ -165,7 +164,7 @@ namespace HotelManagementSystem.Controllers
                     {
                         var disabledLog = new OperationLog
                         {
-                            TargetBranchId = BranchId,
+                            TargetBranchId = existingRoom.BranchId,
                             OperatedAt = _Clock.Now,
                             OperatorEmployeeNumber = EmployeeNum,
                             OperationTypeId = 11,
@@ -182,7 +181,7 @@ namespace HotelManagementSystem.Controllers
                     {
                         var enabledLog = new OperationLog
                         {
-                            TargetBranchId = BranchId,
+                            TargetBranchId = existingRoom.BranchId,
                             OperatedAt = _Clock.Now,
                             OperatorEmployeeNumber = EmployeeNum,
                             OperationTypeId = 12,
@@ -226,7 +225,7 @@ namespace HotelManagementSystem.Controllers
  * 7.open->disable 計算訂單異動 傳出資料至前端 讓管理員操作知道有房間和日期受影響 再次確認
  * 8.disable->open 檢查訂單狀態 如果該房該時間有人住 拒絕開放
  * 9.supplyStatus 修改狀態時驗證 資料正確性
- * 14.roomcontroller加入operationLog
+ ○* 14.roomcontroller加入operationLog
  ○* 15.驗證傳入的RoomId是否合法
  ○* 17.驗證roomController 傳進來的supplyStatus是否合法
  ○* 18.Views/Room/Index.cshtml 移除 如果是保留 不能操作 
