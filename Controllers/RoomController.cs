@@ -75,7 +75,6 @@ namespace HotelManagementSystem.Controllers
                 TempData["ErrorMessage"] = "停用房間時必須填寫停用原因！";
                 return RedirectToAction(nameof(Index));
             }
-
             
 
             // 防呆檢查：同分館內房號不能重複 (忽略自己的 RoomId)
@@ -89,15 +88,16 @@ namespace HotelManagementSystem.Controllers
                 TempData["ErrorMessage"] = $"該分館內已有房號【{RoomNumber}】，請勿重複新增/修改！";
                 return RedirectToAction(nameof(Index));
             }
+            // 驗證SupplyStatus合法性
+            if (SupplyStatus != "Open" && SupplyStatus != "Disabled")
+            {
+                TempData["ErrorMessage"] = "房間停用狀態資料異常，請重新操作！";
+                return RedirectToAction(nameof(Index));
+            }
+
 
             if (RoomId == 0)
             {
-                // 驗證SupplyStatus合法性
-                if (SupplyStatus != "Open" && SupplyStatus != "Disabled")
-                {
-                    TempData["ErrorMessage"] = "房間停用狀態資料異常，請重新操作！";
-                    return RedirectToAction(nameof(Index));
-                }
                 // 【新增房間】
                 var newRoom = new Room
                 {
@@ -127,17 +127,39 @@ namespace HotelManagementSystem.Controllers
             }
             else
             {
+                // 驗證SupplySatus轉換狀態
+                bool allowToSaveStatus(Room r)
+                {
+                    if (r.SupplyStatus == "Open" && SupplyStatus == "Open") return true;
+                    else if (r.SupplyStatus == "Open" && SupplyStatus == "Disabled") return true;
+                    else if (r.SupplyStatus == "Disabled" && SupplyStatus == "Disabled") return true;
+                    else if (r.SupplyStatus == "Disabled" && SupplyStatus == "Open") return true;
+                    else if (r.SupplyStatus == "Reserved" && SupplyStatus == "Reserved") return true;
+                    else return false;
+                }
+
 
                 // 【修改房間】
+
                 var existingRoom = await _context.Rooms.FindAsync(RoomId);
-                if (existingRoom != null)
+
+                if (existingRoom == null)
                 {
+                    // 驗證roomID合法性
+                    TempData["ErrorMessage"] = "找不到房間資料，儲存失敗。";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                if (!allowToSaveStatus(existingRoom))
+                {
+                    TempData["ErrorMessage"] = "錯誤的房間切換狀態資料切換，請重新操作！";
+                    return RedirectToAction(nameof(Index));
+                }
                     string trimmedRoomNumber = RoomNumber.Trim();
                     string? trimmedDisabledReason =
                         SupplyStatus == "Disabled" ? DisabledReason?.Trim() : null;
 
-                    bool isGeneralChanged =
-                        existingRoom.BranchId != existingRoom.BranchId ||
+                    bool isGeneralChanged =                        
                         existingRoom.RoomNumber != trimmedRoomNumber ||
                         existingRoom.RoomTypeId != RoomTypeId ||
                         existingRoom.Floor != Floor;
@@ -145,6 +167,7 @@ namespace HotelManagementSystem.Controllers
 
                     if (isGeneralChanged)
                     {
+
                         var updatedLog = new OperationLog
                         {
                             TargetBranchId = existingRoom.BranchId,
@@ -197,14 +220,7 @@ namespace HotelManagementSystem.Controllers
                     existingRoom.RoomTypeId = RoomTypeId;
                     existingRoom.Floor = Floor;
                     existingRoom.SupplyStatus = SupplyStatus;
-                    existingRoom.DisabledReason = trimmedDisabledReason;
-                }
-                else
-                {
-                    // 驗證roomID合法性
-                    TempData["ErrorMessage"] = "找不到房間資料，儲存失敗。";
-                    return RedirectToAction(nameof(Index));
-                }
+                    existingRoom.DisabledReason = trimmedDisabledReason;                
             }
 
             await _context.SaveChangesAsync();
