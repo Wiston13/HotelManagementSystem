@@ -15,14 +15,8 @@
     var sBranchId = Context.Session.GetString("BranchId");
     var sUserName = Context.Session.GetString("UserName");
 
-    // 🎯 2. 百分之百精準對齊妳們資料庫（SQL）的真實分館名稱！
-    if (sBranchId == "1") { branchName = "台北中山商旅"; }
-    else if (sBranchId == "2") { branchName = "台北信義商旅"; }
-    else if (sBranchId == "3") { branchName = "台中草悟商旅"; }
-    else if (sBranchId == "4") { branchName = "台南安平商旅"; }
-    else if (sBranchId == "5") { branchName = "高雄港灣商旅"; }
-    else if (sBranchId == "6") { branchName = "花蓮站前商旅"; }
-    else { branchName = "未知分館"; }
+    
+    branchName = Context.Session.GetString("BranchName") ?? "未知分館";
 
 
     var isEmployeeHome = currentController == "EmployeeHome" && currentAction == "Index";

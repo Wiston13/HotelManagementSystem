@@ -27,14 +27,16 @@
                         <label class="form-label">
                             分館 <span class="text-danger">*</span>
                         </label>
-                        <select class="form-select" id="branchSelect">
-                            <option value="全部分館">全部分館</option>
-                            <option value="台北中山商旅">台北中山商旅</option>
-                            <option value="台北信義商旅">台北信義商旅</option>
-                            <option value="台中草悟商旅">台中草悟商旅</option>
-                            <option value="台南安平商旅">台南安平商旅</option>
-                            <option value="高雄港灣商旅">高雄港灣商旅</option>
-                            <option value="花蓮站前商旅">花蓮站前商旅</option>
+                        <!-- 由後端動態載入分館選單，避免硬編碼 -->
+                        <select id="branchSelect" class="form-control">
+                            <option value="">全部分館</option>
+                            @if (ViewBag.Branches != null)
+                            {
+                                foreach (var branch in ViewBag.Branches)
+                                {
+                                    <option value="@branch.BranchId">@branch.BranchName</option>
+                                }
+                            }
                         </select>
                     </div>
 
@@ -68,7 +70,7 @@
                     </div>
 
                     <div class="col-12 col-md-4 d-grid">
-                        <button type="button" class="btn btn-primary" id="btnSearch">
+                        <button type="button" class="btn btn-primary" id="btnSearch" onclick="executeSearch()">
                             查詢
                         </button>
                     </div>
@@ -83,13 +85,13 @@
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th style="width: 12%;">時間</th>
+                        <th style="width: 15%;">時間</th>
                         <th style="width: 12%;">分館</th>
                         <th style="width: 12%;">操作者</th>
                         <th style="width: 15%;">操作類型</th>
                         <th style="width: 12%;">操作對象</th>
                         <th style="width: 12%;">識別編號</th>
-                        <th style="width: 25%;">說明</th>
+                        <th style="width: 22%;">說明</th>
                     </tr>
                 </thead>
                 <tbody id="resultTableBody"></tbody>
@@ -97,7 +99,7 @@
         </div>
     </div>
 
-    <!-- 查無資料的友善提示區塊 -->
+    <!-- 查無資料提示區塊 -->
     <div class="card mb-4 shadow-sm text-center py-5 d-none" id="noDataCard">
         <div class="card-body">
             <div class="text-secondary mb-3" style="font-size: 2.5rem;">🔍</div>
@@ -106,6 +108,7 @@
         </div>
     </div>
 </div>
+
 @section Scripts {
     <script>
         document.addEventListener("DOMContentLoaded", function() {
@@ -121,14 +124,14 @@
             const operatorInput = document.getElementById("operatorInput");
             const targetInput = document.getElementById("targetInput");
 
-            // 🎯 1. 動態計算今天的 yyyy-MM-dd 格式，徹底破解各家瀏覽器語系衝突 Bug！
+            // 計算當前日期的 yyyy-MM-dd 格式
             const today = new Date();
             const year = today.getFullYear();
             const month = String(today.getMonth() + 1).padStart(2, '0');
             const day = String(today.getDate()).padStart(2, '0');
             const todayStr = `${year}-${month}-${day}`;
 
-            // 🎯 2. 動態計算一個月前的日期作為開始日期
+            // 計算一個月前的日期作為初始開始日期
             const oneMonthAgo = new Date();
             oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
             const startYear = oneMonthAgo.getFullYear();
@@ -136,63 +139,88 @@
             const startDay = String(oneMonthAgo.getDate()).padStart(2, '0');
             const startStr = `${startYear}-${startMonth}-${startDay}`;
 
-            // 🚀 正式安全賦值
+            // 初始化日期欄位預設值
             dateStart.value = startStr;
             dateEnd.value = todayStr;
 
-            // 🎯 3. 徹底鎖死防呆：限制可選的最大日期就是今天
+            // 限制最大可選日期為今天
             dateStart.setAttribute("max", todayStr);
             dateEnd.setAttribute("max", todayStr);
 
-            // 🎯 4. 日期連動防呆：後面的日期絕對不能小於前面
+            // 日期區間檢核防呆
             function validateDates() {
                 if (dateStart.value && dateEnd.value) {
                     if (dateStart.value > dateEnd.value) {
-                        // 如果開始大於結束，強制把結束日期拉回跟開始日期一樣
                         dateEnd.value = dateStart.value;
                     }
-                    // 動態限制結束日期的最小值不能小於開始日期
                     dateEnd.setAttribute("min", dateStart.value);
                 }
             }
 
-            // 一開網頁先執行一次防呆鎖定
             validateDates();
-
-            // 監聽日期更換事件
             dateStart.addEventListener("change", validateDates);
             dateEnd.addEventListener("change", validateDates);
 
-            // 🎯 5. 獨立宣告繪製表格的共用方法
-            function renderTable(dataList) {
+            // 轉譯並繪製表格資料（改用 textContent 以防範 DOM-based XSS 攻擊）
+            window.renderTable = function(dataList) {
                 resultTableBody.innerHTML = "";
                 if (dataList && dataList.length > 0) {
                     dataList.forEach(item => {
                         const tr = document.createElement("tr");
 
-                        // 時間字串格式化
-                        let displayTime = item.operatedAt ? item.operatedAt.replace("T", " ").substring(0, 16) : "";
+                        // 時間欄位
+                        const tdTime = document.createElement("td");
+                        tdTime.textContent = item.operatedAt ? item.operatedAt.replace("T", " ").substring(0, 16) : "";
+                        tr.appendChild(tdTime);
 
-                        // 分館代號精準對照
-                        let branchName = "總公司行政處";
-                        if (item.targetBranchId == 1) branchName = "台北中山商旅";
-                        else if (item.targetBranchId == 2) branchName = "台北信義商旅";
-                        else if (item.targetBranchId == 3) branchName = "台中草悟商旅";
-                        else if (item.targetBranchId == 4) branchName = "台南安平商旅";
-                        else if (item.targetBranchId == 5) branchName = "高雄港灣商旅";
-                        else if (item.targetBranchId == 6) branchName = "花蓮站前商旅";
+                        // 分館欄位
+                        const tdBranch = document.createElement("td");
+                        const spanBranch = document.createElement("span");
+                        spanBranch.className = "badge bg-light text-dark border";
+                        spanBranch.textContent = item.branchName || "系統核心";
+                        tdBranch.appendChild(spanBranch);
+                        tr.appendChild(tdBranch);
 
-                        tr.innerHTML = `
-                                    <td class="text-secondary">${displayTime}</td>
-                                    <td>${branchName}</td>
-                                    <td>${item.operatorName || item.operatorEmployeeNumber || ""}</td>
-                                    <td><span class="badge bg-light text-dark border">${item.operationTypeName || "操作"}</span></td>
-                                    <td>${item.targetType || ""}</td>
-                                    <td class="font-monospace fw-semibold">${item.targetIdentifier || ""}</td>
-                                    <td class="small text-muted">${item.description || ""}</td>
-                                `;
+                        // 操作者姓名
+                        const tdOperator = document.createElement("td");
+                        const strongOperator = document.createElement("strong");
+                        strongOperator.className = "text-primary";
+                        strongOperator.textContent = item.operatorName || "-";
+                        tdOperator.appendChild(strongOperator);
+                        tr.appendChild(tdOperator);
+
+                        // 操作類型
+                        const tdType = document.createElement("td");
+                        const spanType = document.createElement("span");
+                        spanType.className = "text-secondary";
+                        spanType.textContent = item.operationTypeName || "-";
+                        tdType.appendChild(spanType);
+                        tr.appendChild(tdType);
+
+                        // 操作對象類型
+                        const tdTargetType = document.createElement("td");
+                        const spanTgtType = document.createElement("span");
+                        spanTgtType.className = "badge bg-secondary-subtle text-secondary-emphasis";
+                        spanTgtType.textContent = item.targetType || "-";
+                        tdTargetType.appendChild(spanTgtType);
+                        tr.appendChild(tdTargetType);
+
+                        // 識別編號
+                        const tdIdentifier = document.createElement("td");
+                        const codeId = document.createElement("code");
+                        codeId.textContent = item.targetIdentifier || "-";
+                        tdIdentifier.appendChild(codeId);
+                        tr.appendChild(tdIdentifier);
+
+                        // 詳細異動說明
+                        const tdDesc = document.createElement("td");
+                        tdDesc.className = "text-muted small";
+                        tdDesc.textContent = item.description || "-";
+                        tr.appendChild(tdDesc);
+
                         resultTableBody.appendChild(tr);
                     });
+
                     resultCard.classList.remove("d-none");
                     noDataCard.classList.add("d-none");
                 } else {
@@ -201,31 +229,55 @@
                 }
             }
 
-            // 🎯 6. Fetch 異步連線後端核心
-            function fetchRealData() {
-                const queryParams = new URLSearchParams({
-                    startDate: dateStart.value,
-                    endDate: dateEnd.value,
-                    branch: branchSelect.value,
-                    type: typeSelect.value,
-                    operatorInput: operatorInput.value.trim(),
-                    target: targetInput.value.trim()
-                });
+            
+            window.executeSearch = async function() {
+                btnSearch.disabled = true;
+                btnSearch.innerText = "查詢中...";
 
-                fetch(`/OperationLog/GetFilteredLogs?${queryParams.toString()}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        renderTable(data);
-                    })
-                    .catch(err => {
-                        console.error("資料庫過濾發生錯誤:", err);
-                    });
+                const sDate = dateStart.value;
+                const eDate = dateEnd.value;
+                const bId = branchSelect.value; 
+                const type = typeSelect.value;
+                const op = operatorInput.value.trim();
+                const tgt = targetInput.value.trim();
+
+                try {
+                   
+                    let url = `/OperationLog/GetFilteredLogs?startDate=${sDate}&endDate=${eDate}`;
+                    
+                    
+                    if (bId) {
+                        url += `&branchId=${parseInt(bId)}`;
+                    }
+                    if (type) {
+                        url += `&type=${encodeURIComponent(type)}`;
+                    }
+                    if (op) {
+                        url += `&operatorInput=${encodeURIComponent(op)}`;
+                    }
+                    if (tgt) {
+                        url += `&target=${encodeURIComponent(tgt)}`;
+                    }
+                    
+                    const response = await fetch(url);
+                    const data = await response.json();
+
+                    if (data && data.success === false) {
+                        alert("操作失敗：" + (data.message || "讀取紀錄失敗。"));
+                        return;
+                    }
+                    
+                   
+                    renderTable(data);
+                } catch (error) {
+                    console.error(error);
+                    alert("網路連線失敗，請檢查網路或伺服器狀態。");
+                } finally {
+                    btnSearch.disabled = false;
+                    btnSearch.innerText = "查詢";
+                }
             }
 
-            // 🎯 7. 監聽點擊查詢按鈕事件
-            btnSearch.addEventListener("click", fetchRealData);
         });
     </script>
 }
-
-

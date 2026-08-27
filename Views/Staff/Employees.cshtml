@@ -35,36 +35,7 @@
                                         <td>@emp.EmployeeName</td>
                                         <td>@emp.EmployeeNumber</td>
                                         <td>
-                                            @{
-                                                if (emp.BranchId == 1)
-                                                {
-                                                    <text>台北中山商旅</text>
-                                                }
-                                                else if (emp.BranchId == 2)
-                                                {
-                                                    <text>台北信義商旅</text>
-                                                }
-                                                else if (emp.BranchId == 3)
-                                                {
-                                                    <text>台中草悟商旅</text>
-                                                }
-                                                else if (emp.BranchId == 4)
-                                                {
-                                                    <text>台南安平商旅</text>
-                                                }
-                                                else if (emp.BranchId == 5)
-                                                {
-                                                    <text>高雄港灣商旅</text>
-                                                }
-                                                else if (emp.BranchId == 6)
-                                                {
-                                                    <text>花蓮站前商旅</text>
-                                                }
-                                                else
-                                                {
-                                                    <text>總公司行政處</text>
-                                                }
-                                            }
+                                           @(emp.Branch?.BranchName ?? "總公司行政處")
                                         </td>
                                         <td>
                                             @if (emp.IsActive == true)
@@ -139,12 +110,13 @@
                         </label>
                         <select class="select form-select" id="branchId" required>
                             <option value="" disabled selected>請選擇分館</option>
-                            <option value="1">台北中山商旅</option>
-                            <option value="2">台北信義商旅</option>
-                            <option value="3">台中草悟商旅</option>
-                            <option value="4">台南安平商旅</option>
-                            <option value="5">高雄港灣商旅</option>
-                            <option value="6">花蓮站前商旅</option>
+                             @if (ViewBag.Branches != null)
+                            {
+                                foreach (var branch in ViewBag.Branches)
+                                {
+                                    <option value="@branch.BranchId">@branch.BranchName</option>
+                                }
+                            }
                         </select>
                         <div class="invalid-feedback">請選擇所屬分館。</div>
                     </div>
@@ -174,7 +146,7 @@
     <script>
         $(document).ready(function() {
 
-            // 1. 按下「+ 新增員工」時的清空與重置
+           
             $("#btnCreateNew").on("click", function() {
                 $("#employeeModalLabel").text("新增員工資料");
                 $("#passwordLabel").html('初始密碼 <span class="text-danger">*</span>');
@@ -189,31 +161,29 @@
                 $("#accountStatus").val("1");
             });
 
-            // 2. 【核心大修復】：精準綁定表格內的編輯按鈕，100% 隔空抓出資料庫真實數據！
+           
             $(document).on("click", ".btn-edit", function() {
                 $("#employeeModalLabel").text("修改員工資料");
                 $("#passwordLabel").html('修改密碼');
                 $("#passwordHint").removeClass("d-none");
-                $("#statusContainer").removeClass("d-none"); // 編輯時漂亮地秀出啟用/停用選單
+                $("#statusContainer").removeClass("d-none"); 
 
-                // 🚀 【抓資料密碼修正】：精準提取妳們 HTML button 上面的 data-* 真實屬性字串！
                 var name = $(this).attr("data-name");
                 var account = $(this).attr("data-account");
                 var branch = $(this).attr("data-branch");
                 var status = $(this).attr("data-status");
 
-                // 🚀 100% 動態灌進 Modal 裡面，這次保證絕對不會再出現空白！
                 $("#employeeName").val(name);
                 $("#employeeAccount").val(account);
-                $("#employeePassword").val(""); // 密碼欄位留空，讓有需要的人再填
+                $("#employeePassword").val(""); 
                 $("#branchId").val(branch);
                 $("#accountStatus").val(status);
 
-                // 將當前修改的工號鎖死在表單中，當作後端修改的鑰匙
+               
                 $("#employeeForm").attr("data-edit-account", account);
             });
 
-            // 3. 按下「儲存」按鈕時的自動分流發送
+      
             $("#btnSaveEmployee").on("click", function() {
                 var empName = $("#employeeName").val().trim();
                 var empPassword = $("#employeePassword").val();
@@ -231,7 +201,7 @@
 
                 var postData = {
                     employeeName: empName,
-                    passwordHash: empPassword,
+                   password: empPassword,
                     branchId: parseInt(bId),
                     isActive: statusVal === "1"
                 };
