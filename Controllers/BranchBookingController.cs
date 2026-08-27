@@ -37,6 +37,7 @@ namespace HotelManagementSystem.Controllers
         private readonly HotelManagementContext _context;
         private readonly NoShowService _noShowService;
         public BranchBookingController(HotelManagementContext context, TaipeiClock clock, NoShowService noShowService)
+            : base(context)
         {
             _context = context;
             _Clock = clock;
@@ -63,29 +64,10 @@ namespace HotelManagementSystem.Controllers
             return output;
         }
 
-        //驗證員工ID是否存在
-        private async Task<int?> EmployeeVerify(string EmpNum)
-        {
-            var q = await _context.Employees.AsNoTracking().FirstOrDefaultAsync(x => x.EmployeeNumber == EmpNum);
-            return q?.BranchId;
-            // 未來調整回傳值
-        }
-
         //查詢訂單
         [HttpGet]
         public async Task<IActionResult> BookingSearch(string keyword, string dateRange, string bookingStatus)
         {
-            // 待帳號驗證(session取得 employeenum)
-            string EmployeeNum = "E20260807002";
-
-            //驗證員工ID是否存在
-            int? BranchId = await EmployeeVerify(EmployeeNum);
-            if (BranchId == null)
-            {
-                ViewBag.VerifyError = "帳號驗證異常，即將返回登入畫面";
-                return View(new List<BookingData>());
-            }
-
             // 刷新 noshow
             await _noShowService.UpdateNoShowsAsync();
 
@@ -103,7 +85,7 @@ namespace HotelManagementSystem.Controllers
             }
 
             var query = _context.Bookings.AsNoTracking();
-            query = query.Where(x => x.BranchId == BranchId);
+            query = query.Where(x => x.BranchId == CurrentBranchId);
             // keyword模糊查詢資料庫 及 分館ID (此處需要驗證員工帳號及帳號所屬分館取得)
             if (!string.IsNullOrWhiteSpace(keyword))
             {
@@ -160,24 +142,11 @@ namespace HotelManagementSystem.Controllers
         public async Task<IActionResult> BookingCancel(string bookingNum, string keyword, string dateRange,
             string keyStatus, string cancelCause, string cancelReason)
         {
-            // 待取得分館員工
-            string EmployeeNum = "E20260807002";
             var now = _Clock.Now;
-
-            // 員工驗證
-            int? BranchId = await EmployeeVerify(EmployeeNum);
-            if (BranchId == null)
-            {
-                ViewBag.VerifyError = "帳號驗證異常，即將返回登入畫面";
-                return View("BookingSearch", new List<BookingData>());
-            }
-
-
-
             await _noShowService.UpdateNoShowsAsync();
 
             // 查詢訂單
-            var result = _context.Bookings.FirstOrDefault(x => x.BookingNumber == bookingNum && x.BranchId == BranchId && x.StayRecord == null);
+            var result = _context.Bookings.FirstOrDefault(x => x.BookingNumber == bookingNum && x.BranchId == CurrentBranchId && x.StayRecord == null);
             if (result == null || result.BookingStatus != "Paid")
             {
                 TempData["BookingStatusError"] = "訂單狀態錯誤，目前無法取消訂單";
@@ -217,7 +186,7 @@ namespace HotelManagementSystem.Controllers
 
             result.CancelledAt = now;
 
-            result.CancelledByEmployeeNumber = EmployeeNum;
+            result.CancelledByEmployeeNumber = CurrentEmployeeNumber;
 
             result.BookingStatus = "Cancelled";
 
@@ -227,7 +196,7 @@ namespace HotelManagementSystem.Controllers
             {
                 TargetBranchId = result.BranchId,
                 OperatedAt = now,
-                OperatorEmployeeNumber = EmployeeNum,
+                OperatorEmployeeNumber = CurrentEmployeeNumber!,
                 OperationTypeId = 21,
                 TargetType = "Booking",
                 TargetIdentifier = result.BookingNumber,

@@ -8,6 +8,7 @@ namespace HotelManagementSystem.Controllers
         private readonly HotelManagementSystem.Models.HotelManagementContext _context;
 
         public OperationLogController(HotelManagementSystem.Models.HotelManagementContext context)
+            : base(context)
         {
             _context = context;
         }

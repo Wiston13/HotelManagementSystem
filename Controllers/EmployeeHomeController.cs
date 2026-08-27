@@ -3,7 +3,6 @@ using HotelManagementSystem.Models.ViewModels.EmployeeHome;
 using HotelManagementSystem.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace HotelManagementSystem.Controllers
 {
@@ -14,6 +13,7 @@ namespace HotelManagementSystem.Controllers
         private readonly NoShowService _noShowService;
 
         public EmployeeHomeController(HotelManagementContext context, TaipeiClock clock, NoShowService noShowService)
+            : base(context)
         {
             _context = context;
             _clock = clock;
@@ -25,21 +25,11 @@ namespace HotelManagementSystem.Controllers
         {
             await _noShowService.UpdateNoShowsAsync();
 
-            var currentEmployeeNumber = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            var staff = _context.Employees
-                .FirstOrDefault(e => e.EmployeeNumber == currentEmployeeNumber && e.IsActive);
-
-            if (staff == null)
-            {
-                return Content("員工資料錯誤，請重新登入");
-            }
-
             var today = _clock.Today;
 
             var model = new EmployeeHomeViewModel
             {
-                PendingCheckIns = await _context.Bookings.Where(b => b.BranchId == staff.BranchId
+                PendingCheckIns = await _context.Bookings.Where(b => b.BranchId == CurrentBranchId
                                                             && b.BookingStatus == "Paid"
                                                             && b.CheckInDate <= today)
                     .AsNoTracking()
@@ -54,7 +44,7 @@ namespace HotelManagementSystem.Controllers
                         CheckInDate = b.CheckInDate,
                     }).ToListAsync(),
 
-                ActiveStays = await _context.StayRecords.Where(s => s.BookingNumberNavigation.BranchId == staff.BranchId
+                ActiveStays = await _context.StayRecords.Where(s => s.BookingNumberNavigation.BranchId == CurrentBranchId
                                                            && s.BookingNumberNavigation.BookingStatus == "CheckedIn"
                                                            && s.ActualCheckOutAt == null)
                     .AsNoTracking()
@@ -69,7 +59,7 @@ namespace HotelManagementSystem.Controllers
                         CheckOutDate = s.BookingNumberNavigation.CheckOutDate,
                     }).ToListAsync(),
 
-                PendingCheckOuts = await _context.StayRecords.Where(s => s.BookingNumberNavigation.BranchId == staff.BranchId
+                PendingCheckOuts = await _context.StayRecords.Where(s => s.BookingNumberNavigation.BranchId == CurrentBranchId
                                                            && s.BookingNumberNavigation.BookingStatus == "CheckedIn"
                                                            && s.ActualCheckOutAt == null
                                                            && s.BookingNumberNavigation.CheckOutDate <= today)
@@ -85,7 +75,7 @@ namespace HotelManagementSystem.Controllers
                         CheckOutDate = s.BookingNumberNavigation.CheckOutDate,
                     }).ToListAsync(),
 
-                RoomsToClean = await _context.Rooms.Where(r => r.BranchId == staff.BranchId
+                RoomsToClean = await _context.Rooms.Where(r => r.BranchId == CurrentBranchId
                                       && r.CleaningStatus == "NeedsCleaning"
                                       && !r.StayRecords.Any(s => s.ActualCheckOutAt == null))
                     .AsNoTracking()

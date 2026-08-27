@@ -10,6 +10,7 @@ namespace HotelManagementSystem.Controllers
         private readonly HotelManagementContext _context;
 
         public StaffController(HotelManagementContext context)
+            : base(context)
         {
             _context = context;
         }

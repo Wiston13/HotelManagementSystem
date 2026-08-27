@@ -11,6 +11,7 @@ namespace HotelManagementSystem.Controllers
         private readonly NoShowService _noShowService;
 
         public BookingExportController(HotelManagementContext context, NoShowService noShowService)
+            : base(context)
         {
             _context = context;
             _noShowService = noShowService;

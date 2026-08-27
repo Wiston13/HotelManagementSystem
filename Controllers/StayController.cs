@@ -14,6 +14,7 @@ namespace HotelManagementSystem.Controllers
         private readonly NoShowService _NoShowService;
 
         public StayController(HotelManagementContext context, TaipeiClock clock, NoShowService noShowService)
+            : base(context)
         {
             _context = context;
             _Clock = clock;
@@ -24,13 +25,6 @@ namespace HotelManagementSystem.Controllers
         public async Task<IActionResult> CheckIn(string? bookingNumber)
         {
             await _NoShowService.UpdateNoShowsAsync();
-
-            var staff = GetCurrentStaff();
-
-            if (staff == null)
-            {
-                return Content("員工資料錯誤，請重新登入");
-            }
 
             var model = new CheckInViewModel
             {
@@ -43,7 +37,7 @@ namespace HotelManagementSystem.Controllers
             }
 
             var booking = _context.Bookings
-                        .FirstOrDefault(b => b.BookingNumber == bookingNumber && b.BranchId == staff.BranchId);
+                        .FirstOrDefault(b => b.BookingNumber == bookingNumber && b.BranchId == CurrentBranchId);
 
             if (booking == null)
             {
@@ -122,13 +116,6 @@ namespace HotelManagementSystem.Controllers
         {
             await _NoShowService.UpdateNoShowsAsync();
 
-            var staff = GetCurrentStaff();
-
-            if (staff == null)
-            {
-                return Content("員工資料錯誤，請重新登入");
-            }
-
             var model = new CheckInViewModel
             {
                 BookingNumber = inputModel.BookingNumber
@@ -142,7 +129,7 @@ namespace HotelManagementSystem.Controllers
                 return View(model);
             }
 
-            var booking = _context.Bookings.FirstOrDefault(b => b.BookingNumber == inputModel.BookingNumber && b.BranchId == staff.BranchId);
+            var booking = _context.Bookings.FirstOrDefault(b => b.BookingNumber == inputModel.BookingNumber && b.BranchId == CurrentBranchId);
 
             if (booking == null)
             {
@@ -210,14 +197,14 @@ namespace HotelManagementSystem.Controllers
                 ActualCheckInAt = now,
                 PrimaryGuestName = booking.BookerName,
                 ActualGuestCount = inputModel.ActualGuestCount.Value,
-                CheckedInByEmployeeNumber = staff.EmployeeNumber
+                CheckedInByEmployeeNumber = CurrentEmployeeNumber!
             };
 
             var operationLog = new OperationLog
             {
                 TargetBranchId = booking.BranchId,
                 OperatedAt = now,
-                OperatorEmployeeNumber = staff.EmployeeNumber,
+                OperatorEmployeeNumber = CurrentEmployeeNumber!,
                 OperationTypeId = 22,
                 TargetType = "Booking",
                 TargetIdentifier = booking.BookingNumber,
@@ -248,13 +235,6 @@ namespace HotelManagementSystem.Controllers
         {
             await _NoShowService.UpdateNoShowsAsync();
 
-            var staff = GetCurrentStaff();
-
-            if (staff == null)
-            {
-                return Content("員工資料錯誤，請重新登入");
-            }
-
             var model = new CheckOutViewModel
             {
                 SearchValue = searchValue
@@ -269,20 +249,20 @@ namespace HotelManagementSystem.Controllers
 
             var booking = _context.Bookings.FirstOrDefault(b => b.BookingNumber == searchValue
                                                              && b.BookingStatus == "CheckedIn"
-                                                             && b.BranchId == staff.BranchId);
+                                                             && b.BranchId == CurrentBranchId);
             if (booking != null)
             {
                 stayRecord = _context.StayRecords.FirstOrDefault(s => s.BookingNumber == booking.BookingNumber && s.ActualCheckOutAt == null);
             }
             else
             {
-                var room = _context.Rooms.FirstOrDefault(r => r.RoomNumber == searchValue && r.BranchId == staff.BranchId);
+                var room = _context.Rooms.FirstOrDefault(r => r.RoomNumber == searchValue && r.BranchId == CurrentBranchId);
                 if (room != null)
                 {
                     stayRecord = _context.StayRecords.FirstOrDefault(s => s.RoomId == room.RoomId && s.ActualCheckOutAt == null);
                     if (stayRecord != null)
                     {
-                        booking = _context.Bookings.FirstOrDefault(b => b.BookingNumber == stayRecord.BookingNumber && b.BookingStatus == "CheckedIn" && b.BranchId == staff.BranchId);
+                        booking = _context.Bookings.FirstOrDefault(b => b.BookingNumber == stayRecord.BookingNumber && b.BookingStatus == "CheckedIn" && b.BranchId == CurrentBranchId);
                     }
                 }
             }
@@ -311,13 +291,6 @@ namespace HotelManagementSystem.Controllers
         {
             await _NoShowService.UpdateNoShowsAsync();
 
-            var staff = GetCurrentStaff();
-
-            if (staff == null)
-            {
-                return Content("員工資料錯誤，請重新登入");
-            }
-
             var model = new CheckOutViewModel
             {
                 BookingNumber = inputModel.BookingNumber
@@ -325,7 +298,7 @@ namespace HotelManagementSystem.Controllers
 
             var booking = _context.Bookings.FirstOrDefault(b => b.BookingNumber == inputModel.BookingNumber
                                                              && b.BookingStatus == "CheckedIn"
-                                                             && b.BranchId == staff.BranchId);
+                                                             && b.BranchId == CurrentBranchId);
 
             if (booking == null)
             {
@@ -344,7 +317,7 @@ namespace HotelManagementSystem.Controllers
 
             var now = _Clock.Now;
             var room = _context.Rooms.FirstOrDefault(r => r.RoomId == stayRecord.RoomId
-                                                       && r.BranchId == staff.BranchId);
+                                                       && r.BranchId == CurrentBranchId);
 
             if (room == null)
             {
@@ -356,7 +329,7 @@ namespace HotelManagementSystem.Controllers
             {
                 TargetBranchId = room.BranchId,
                 OperatedAt = now,
-                OperatorEmployeeNumber = staff.EmployeeNumber,
+                OperatorEmployeeNumber = CurrentEmployeeNumber!,
                 OperationTypeId = 23,
                 TargetType = "Booking",
                 TargetIdentifier = booking.BookingNumber,
@@ -366,7 +339,7 @@ namespace HotelManagementSystem.Controllers
             try
             {
                 stayRecord.ActualCheckOutAt = now;
-                stayRecord.CheckedOutByEmployeeNumber = staff.EmployeeNumber;
+                stayRecord.CheckedOutByEmployeeNumber = CurrentEmployeeNumber;
                 booking.BookingStatus = "Completed";
                 room.CleaningStatus = "NeedsCleaning";
                 _context.OperationLogs.Add(operationLog);
@@ -384,14 +357,5 @@ namespace HotelManagementSystem.Controllers
             return RedirectToAction(nameof(CheckOut));
         }
 
-        private Employee? GetCurrentStaff()
-        {
-            var currentEmployeeNumber = "E20260807002"; // TODO 假設是登入的員工編號，實際應從登入資訊取得"
-
-            var staff = _context.Employees
-                .FirstOrDefault(e => e.EmployeeNumber == currentEmployeeNumber && e.IsActive);
-
-            return staff;
-        }
     }
 }

@@ -4,6 +4,11 @@ namespace HotelManagementSystem.Controllers
 {
     public class RoomTypeController : SystemAdminControllerBase
     {
+        public RoomTypeController(HotelManagementSystem.Models.HotelManagementContext context)
+            : base(context)
+        {
+        }
+
         public IActionResult Index()
         {
             return View();

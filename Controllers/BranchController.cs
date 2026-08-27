@@ -4,6 +4,11 @@ namespace HotelManagementSystem.Controllers
 {
     public class BranchController : SystemAdminControllerBase
     {
+        public BranchController(HotelManagementSystem.Models.HotelManagementContext context)
+            : base(context)
+        {
+        }
+
         // GET: /Branch/ 或 /Branch/Index
         // 顯示分館管理主頁面
         [HttpGet]
