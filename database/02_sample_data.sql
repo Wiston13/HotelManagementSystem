@@ -226,7 +226,7 @@ BEGIN TRY
     ('E20260807008', N'劉思妤', 0, 6, @SamplePasswordHash, 'BranchEmployee');
 
     /* =========================================================
-       5. OperationTypes：固定 ID 1～23
+       5. OperationTypes：固定 ID 1～24
 
        StayController 目前以 22 / 23 寫入 Check-in / Check-out，
        因此保留既有 ID 與代碼，避免種子資料和程式不相容。
@@ -259,7 +259,8 @@ BEGIN TRY
     (20, 'RoomCleaningStatusChanged', N'更新清潔狀態'),
     (21, 'BookingCancelled',          N'取消訂單'),
     (22, 'CheckIn',                   N'Check-in'),
-    (23, 'CheckOut',                  N'Check-out');
+    (23, 'CheckOut',                  N'Check-out'),
+    (24, 'RoomDisabledReasonUpdated', N'修改房間停用原因');
 
     SET IDENTITY_INSERT [dbo].[OperationTypes] OFF;
     SET @IdentityInsertTable = NULL;
@@ -269,7 +270,7 @@ BEGIN TRY
     DBCC CHECKIDENT ('dbo.RoomTypes',      RESEED, 24)  WITH NO_INFOMSGS;
     DBCC CHECKIDENT ('dbo.Rooms',          RESEED, 188) WITH NO_INFOMSGS;
     DBCC CHECKIDENT ('dbo.StayRecords',    RESEED, 0)   WITH NO_INFOMSGS;
-    DBCC CHECKIDENT ('dbo.OperationTypes', RESEED, 23)  WITH NO_INFOMSGS;
+    DBCC CHECKIDENT ('dbo.OperationTypes', RESEED, 24)  WITH NO_INFOMSGS;
     DBCC CHECKIDENT ('dbo.OperationLogs',  RESEED, 0)   WITH NO_INFOMSGS;
 
     COMMIT TRANSACTION;

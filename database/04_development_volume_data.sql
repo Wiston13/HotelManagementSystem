@@ -53,7 +53,7 @@ BEGIN TRY
        OR (SELECT COUNT(*) FROM [dbo].[RoomTypes]) <> 24
        OR (SELECT COUNT(*) FROM [dbo].[Rooms]) <> 188
        OR (SELECT COUNT(*) FROM [dbo].[Employees]) <> 19
-       OR (SELECT COUNT(*) FROM [dbo].[OperationTypes]) <> 23
+       OR (SELECT COUNT(*) FROM [dbo].[OperationTypes]) <> 24
        OR
        (
            SELECT COUNT(*)
