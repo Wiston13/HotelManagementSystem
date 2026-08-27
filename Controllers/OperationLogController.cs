@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace HotelManagementSystem.Controllers
 {
+    [Authorize(Roles = "SystemAdmin")]
     public class OperationLogController : Controller
     {
         private readonly HotelManagementSystem.Models.HotelManagementContext _context;

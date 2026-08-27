@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace HotelManagementSystem.Controllers
 {
+    [Authorize(Roles = "SystemAdmin")]
     public class BranchController : Controller
     {
         // GET: /Branch/ 或 /Branch/Index
