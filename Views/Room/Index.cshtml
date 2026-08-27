@@ -274,9 +274,9 @@
             const currentBranchId = document.getElementById('branchFilter').value;
 
             supplySelect.innerHTML = `
-                        <option value="Open">開放販售</option>
-                        <option value="Disabled">停用</option>
-                    `;
+                                <option value="Open">開放販售</option>
+                                <option value="Disabled">停用</option>
+                            `;
             supplySelect.disabled = false;
             supplySelect.name = "SupplyStatus";
             supplyHidden.disabled = true;
@@ -337,7 +337,7 @@
             const branchFilter = document.getElementById('branchFilter');
             const branchText = branchFilter.options[branchFilter.selectedIndex] ? branchFilter.options[branchFilter.selectedIndex].text : '';
             const roomTypeSelect = document.getElementById('roomTypeId');
-            const roomTypeText = roomTypeSelect.options[roomTypeSelect.selectedIndex] ? roomTypeSelect.options[roomTypeSelect.selectedIndex].text : '';
+            const roomTypeText = roomTypeSelect.options[roomTypeSelect.selectedIndex] ? roomTypeSelect.options[roomTypeSelect.selectedIndex].text : '無（錯誤房型）';
             const floor = document.getElementById('floor').value;
             const supplySelect = document.getElementById('supplyStatus');
             const supplyText = supplySelect.options[supplySelect.selectedIndex] ? supplySelect.options[supplySelect.selectedIndex].text : '';
@@ -376,9 +376,8 @@
                         window.location.reload();
                     },
                     error: function(xhr) {
-                        // 攔截後端回傳的 HTTP 400 錯誤訊息，跳出警示視窗
+                        // 攔截後端回傳的 400 錯誤訊息並提示
                         alert(xhr.responseText || '儲存失敗：指定的分館或房型不存在！');
-                        window.location.reload();
                     }
                 });
             }
