@@ -79,8 +79,7 @@ namespace HotelManagementSystem.Controllers
                 });
             }
 
-            //「這個人有哪些資料」
-            // Authentication 裡最好只保存足以識別與授權目前使用者的最小資訊。
+            // 建立授權所需的最小 Claims，供角色與分館資料範圍判斷使用。
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, employee.EmployeeNumber),
@@ -98,13 +97,8 @@ namespace HotelManagementSystem.Controllers
                 }
             }
 
-            //「這些資料組成一個已驗證身分」
             var identity = new ClaimsIdentity(claims, "HotelCookie");
-
-            //將登入身分包成 ASP.NET Core 可作為目前 User 使用的 ClaimsPrincipal。
             var principal = new ClaimsPrincipal(identity);
-
-            // 使用 HotelCookie 完成登入，並將 Authentication Cookie 寫入 Response。
             await HttpContext.SignInAsync("HotelCookie", principal);
 
             return Json(new { success = true, redirectUrl = targetUrl });

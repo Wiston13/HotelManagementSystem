@@ -21,9 +21,6 @@ namespace HotelManagementSystem.Controllers
         protected string? CurrentEmployeeNumber =>
             User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        protected string? CurrentEmployeeName =>
-            User.Identity?.Name;
-
         public override async Task OnActionExecutionAsync(
             ActionExecutingContext context,
             ActionExecutionDelegate next)

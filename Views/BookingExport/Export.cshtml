@@ -11,7 +11,6 @@
                 <div class="row g-3 align-items-end">
                     <div class="col-12 col-md-4">
                         <label class="form-label fw-semibold">選擇分館</label>
-                        <!-- 【落實規範 6-2】：下拉選單重構，全部分館對應空值，其餘選項動態帶入數字 ID -->
                         <select id="branchSelect" class="form-control">
                             <option value="">全部分館</option>
                             @if (ViewBag.Branches != null)
@@ -26,9 +25,9 @@
                     <div class="col-12 col-md-5">
                         <label class="form-label fw-semibold">入住日期區間</label>
                         <div class="input-group">
-                            <input type="date" class="form-control" id="dateStart" value="2026-08-15">
+                            <input type="date" class="form-control" id="dateStart">
                             <span class="input-group-text bg-light text-secondary">至</span>
-                            <input type="date" class="form-control" id="dateEnd" value="2026-09-15">
+                            <input type="date" class="form-control" id="dateEnd">
                         </div>
                     </div>
                     <div class="col-12 col-md-3 d-grid">
@@ -93,6 +92,19 @@
 <script>
     var currentFilteredData = [];
 
+    function formatDate(date) {
+        var year = date.getFullYear();
+        var month = String(date.getMonth() + 1).padStart(2, "0");
+        var day = String(date.getDate()).padStart(2, "0");
+        return year + "-" + month + "-" + day;
+    }
+
+    var endDate = new Date();
+    var startDate = new Date(endDate);
+    startDate.setDate(startDate.getDate() - 30);
+    document.getElementById("dateStart").value = formatDate(startDate);
+    document.getElementById("dateEnd").value = formatDate(endDate);
+
     function escapeCsvField(val) {
         if (val === null || val === undefined) return '""';
         let str = String(val);
@@ -102,7 +114,6 @@
     async function executeSearch() {
         var sDate = document.getElementById("dateStart").value;
         var eDate = document.getElementById("dateEnd").value;
-        // 【落實規範 6-2】：此處取出的值將會是 branchId 數值（例如 "1"）或全部分館的空字串 ""
         var selectedBranchId = document.getElementById("branchSelect").value;
         var resultTableBody = document.getElementById("resultTableBody");
         var btnSearch = document.getElementById("btnSearch");
@@ -111,16 +122,12 @@
         btnSearch.innerText = "連線資料庫中...";
 
         try {
-            // 【落實規範 6-2】：調整 URL 查詢參數名稱為 branchId，精準對接後端
             var url = "/BookingExport/GetOrders?branchId=" + encodeURIComponent(selectedBranchId) + "&start=" + sDate + "&end=" + eDate;
             var response = await fetch(url);
             var result = await response.json();
 
             if (!result.success) {
-                // 【落實規範 九】：前端提示訊息重構，移除印出 result.message，避免將 Exception 內部細節暴露給使用者
                 alert("資料庫讀取失敗，請稍後再試。");
-                btnSearch.disabled = false;
-                btnSearch.innerText = "查詢";
                 return;
             }
 
@@ -131,14 +138,6 @@
                 document.getElementById("totalCountText").innerText = "共 " + currentFilteredData.length + " 筆";
 
                 currentFilteredData.forEach(function(item) {
-                    var start = new Date(item.check_in || item.CheckInDate);
-                    var end = new Date(item.check_out || item.CheckOutDate);
-                    var calculatedNights = 0;
-
-                    if (!isNaN(start) && !isNaN(end)) {
-                        calculatedNights = Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24));
-                    }
-
                     var tr = document.createElement("tr");
 
                     var badgeClass = "text-bg-secondary";
@@ -148,7 +147,7 @@
 
                     var fields = [
                         item.booking_no, item.branch_name, item.created_at, item.guest_name,
-                        item.phone, item.email, item.check_in, item.check_out, calculatedNights,
+                        item.phone, item.email, item.check_in, item.check_out, item.nights,
                         item.room_type_snapshot,
                         typeof item.price_snapshot === 'number' ? "$" + item.price_snapshot.toFixed(2) : item.price_snapshot,
                         typeof item.total_amount === 'number' ? "$" + item.total_amount.toFixed(2) : item.total_amount,
@@ -159,7 +158,7 @@
                     fields.forEach(function(val) {
                         var td = document.createElement("td");
                         td.textContent = val ?? "";
-                        if (val === calculatedNights) td.className = "text-center";
+                        if (val === item.nights) td.className = "text-center";
                         tr.appendChild(td);
                     });
 
@@ -218,15 +217,9 @@
         var csvRows = [headers.join(",")];
 
         currentFilteredData.forEach(function(item) {
-            var start = new Date(item.check_in || item.CheckInDate);
-            var end = new Date(item.check_out || item.CheckOutDate);
-            var calculatedNights = 0;
-            if (!isNaN(start) && !isNaN(end)) {
-                calculatedNights = Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24));
-            }
             var row = [
                 escapeCsvField(item.booking_no),
-                escapeCsvField(item.branch_name), escapeCsvField(item.created_at), escapeCsvField(item.guest_name), escapeCsvField(item.phone), escapeCsvField(item.email), escapeCsvField(item.check_in), escapeCsvField(item.check_out), calculatedNights, escapeCsvField(item.room_type_snapshot), item.price_snapshot ?? 0, item.total_amount ?? 0, item.total_amount ?? 0, escapeCsvField(item.created_at || "-"), escapeCsvField(item.status), escapeCsvField(item.cancel_cause || "-"), escapeCsvField(item.cancel_reason || "-"), item.refund_amount ?? 0, escapeCsvField(item.cancel_emp || "-"), escapeCsvField(item.cancel_at || "-"), escapeCsvField(item.room_no || "-"), item.act_occupancy || 0, escapeCsvField(item.act_checkin_at || "-"), escapeCsvField(item.checkin_emp || "-"), escapeCsvField(item.act_checkout_at || "-"), escapeCsvField(item.checkout_emp || "-")]; csvRows.push(row.join(","));
+                escapeCsvField(item.branch_name), escapeCsvField(item.created_at), escapeCsvField(item.guest_name), escapeCsvField(item.phone), escapeCsvField(item.email), escapeCsvField(item.check_in), escapeCsvField(item.check_out), item.nights, escapeCsvField(item.room_type_snapshot), item.price_snapshot ?? 0, item.total_amount ?? 0, item.total_amount ?? 0, escapeCsvField(item.created_at || "-"), escapeCsvField(item.status), escapeCsvField(item.cancel_cause || "-"), escapeCsvField(item.cancel_reason || "-"), item.refund_amount ?? 0, escapeCsvField(item.cancel_emp || "-"), escapeCsvField(item.cancel_at || "-"), escapeCsvField(item.room_no || "-"), item.act_occupancy || 0, escapeCsvField(item.act_checkin_at || "-"), escapeCsvField(item.checkin_emp || "-"), escapeCsvField(item.act_checkout_at || "-"), escapeCsvField(item.checkout_emp || "-")]; csvRows.push(row.join(","));
         }); var csvString = csvRows.join("\n"); var blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvString], { type: "text/csv;charset=utf-8;" }); var link = document.createElement("a"); link.href = URL.createObjectURL(blob); var today = new Date(); var dateStr = today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, '0') + "-" + String(today.getDate()).padStart(2, '0'); link.download = "飯店訂單報表_" + dateStr + ".csv"; document.body.appendChild(link); link.click(); document.body.removeChild(link);
     }
 

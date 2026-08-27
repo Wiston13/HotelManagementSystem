@@ -1,6 +1,5 @@
-@using Microsoft.AspNetCore.Http
 @{
-   
+
 
     var pageTitle = ViewData["Title"] as string;
 
@@ -52,7 +51,7 @@
             <nav class="backoffice-layout__sidebar col-md-3 col-lg-2 d-md-block bg-white border-end collapse p-3" id="managerSidebar">
                 <div class="pt-3">
                     <h5 class="sidebar-heading px-3 mb-3 text-primary fw-bold">
-                        旅館管理系統
+                        旅宿管理系統
                     </h5>
 
                     <ul class="nav flex-column gap-1">
@@ -83,8 +82,7 @@
                         <li class="nav-item">
                             <a class="nav-link rounded @(Check(isBookingExport))"
                                asp-controller="BookingExport" asp-action="Export">
-                                <i class="bi bi-file-earmark-arrow-down me-2"></i>資料匯出    
-                                
+                                <i class="bi bi-file-earmark-arrow-down me-2"></i>資料匯出
                             </a>
                         </li>
                         <li class="nav-item">

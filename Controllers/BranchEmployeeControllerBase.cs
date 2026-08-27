@@ -21,9 +21,6 @@ namespace HotelManagementSystem.Controllers
         protected string? CurrentEmployeeNumber =>
             User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        protected string? CurrentEmployeeName =>
-            User.Identity?.Name;
-
         protected int? CurrentBranchId
         {
             get
@@ -35,9 +32,6 @@ namespace HotelManagementSystem.Controllers
                     : null;
             }
         }
-
-        protected string? CurrentBranchName =>
-            User.FindFirst("BranchName")?.Value;
 
         public override async Task OnActionExecutionAsync(
             ActionExecutingContext context,

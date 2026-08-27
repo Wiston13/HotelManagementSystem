@@ -11,22 +11,22 @@ namespace HotelManagementSystem.Controllers
         private readonly HotelManagementContext _context;
         private readonly TaipeiClock _clock;
 
-        public StaffController(HotelManagementContext context)
+        public StaffController(HotelManagementContext context, TaipeiClock clock)
             : base(context)
         {
             _context = context;
-            _clock = new TaipeiClock();
+            _clock = clock;
         }
 
         public async Task<IActionResult> Employees()
         {
-            
+
             var employeeList = await _context.Employees
                 .Include(e => e.Branch)
                 .Where(e => e.Role == "BranchEmployee")
                 .ToListAsync();
 
-          
+
             ViewBag.Branches = await _context.Branches
                 .OrderBy(b => b.BranchId)
                 .ToListAsync();
@@ -38,19 +38,19 @@ namespace HotelManagementSystem.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateEmployee(string employeeName, string password, int branchId)
         {
-           
+
             if (string.IsNullOrWhiteSpace(employeeName))
             {
                 return Json(new { success = false, message = "員工姓名不可為空！" });
             }
 
-            
+
             if (string.IsNullOrWhiteSpace(password))
             {
                 return Json(new { success = false, message = "請輸入初始密碼" });
             }
 
-            
+
             var branchExists = await _context.Branches.AnyAsync(b => b.BranchId == branchId);
             if (!branchExists)
             {
@@ -59,7 +59,7 @@ namespace HotelManagementSystem.Controllers
 
             try
             {
-                
+
                 string datePrefix = "E" + _clock.Today.ToString("yyyyMMdd");
 
                 var lastEmployee = await _context.Employees
@@ -99,7 +99,7 @@ namespace HotelManagementSystem.Controllers
 
                 OperationLog log = new OperationLog
                 {
-                    TargetBranchId = newEmp.BranchId.GetValueOrDefault(0),
+                    TargetBranchId = branchId,
                     OperatedAt = _clock.Now,
                     OperatorEmployeeNumber = operatorEmployeeNumber,
                     OperationTypeId = 13, // EmployeeCreated
@@ -128,13 +128,13 @@ namespace HotelManagementSystem.Controllers
                 return Json(new { success = false, message = "員工編號不可為空！" });
             }
 
-      
+
             if (string.IsNullOrWhiteSpace(employeeName))
             {
                 return Json(new { success = false, message = "員工姓名不可為空！" });
             }
 
-            
+
             var branchExists = await _context.Branches.AnyAsync(b => b.BranchId == branchId);
             if (!branchExists)
             {
@@ -143,20 +143,20 @@ namespace HotelManagementSystem.Controllers
 
             try
             {
-               
+
                 var emp = await _context.Employees.FirstOrDefaultAsync(e => e.EmployeeNumber == employeeNumber && e.Role == "BranchEmployee");
                 if (emp == null)
                 {
                     return Json(new { success = false, message = "找不到該名分館員工資料！" });
                 }
 
-                
+
                 string oldName = emp.EmployeeName ?? "";
                 int? oldBranchId = emp.BranchId;
                 bool oldIsActive = emp.IsActive;
                 bool isPasswordReset = !string.IsNullOrWhiteSpace(password);
 
-               
+
                 emp.EmployeeName = employeeName;
                 emp.BranchId = branchId;
                 emp.IsActive = isActive;
@@ -168,10 +168,10 @@ namespace HotelManagementSystem.Controllers
                 }
 
                 string operatorEmployeeNumber = CurrentEmployeeNumber!;
-                int currentBranchId = emp.BranchId.GetValueOrDefault(0);
+                int currentBranchId = branchId;
                 string targetIdentifier = emp.EmployeeNumber ?? "";
 
-                
+
                 if (oldName != emp.EmployeeName || oldBranchId != emp.BranchId)
                 {
                     _context.OperationLogs.Add(new OperationLog
@@ -228,13 +228,13 @@ namespace HotelManagementSystem.Controllers
                     });
                 }
 
-             
+
                 await _context.SaveChangesAsync();
                 return Json(new { success = true, message = "員工資料修改成功！" });
             }
             catch (Exception)
             {
-             
+
                 return Json(new { success = false, message = "操作失敗，請稍後再試。" });
             }
         }

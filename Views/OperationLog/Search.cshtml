@@ -1,16 +1,13 @@
-﻿@model IEnumerable<dynamic>
-@{
+﻿@{
     ViewData["Title"] = "操作紀錄";
 }
 
 <div>
     <p class="text-secondary mb-4">查詢系統內各帳號的操作歷程紀錄</p>
 
-    <!-- 查詢條件區塊 (Card) -->
-    <div class="card mb-4 shadow-sm" id="searchCard">
+    <div class="card mb-4 shadow-sm">
         <div class="card-body">
             <form id="searchForm" onsubmit="return false;">
-                <!-- 第一排：日期區間、分館、操作類型 -->
                 <div class="row g-3 mb-3">
                     <div class="col-12 col-md-4">
                         <label class="form-label">
@@ -27,7 +24,6 @@
                         <label class="form-label">
                             分館 <span class="text-danger">*</span>
                         </label>
-                        <!-- 由後端動態載入分館選單，避免硬編碼 -->
                         <select id="branchSelect" class="form-control">
                             <option value="">全部分館</option>
                             @if (ViewBag.Branches != null)
@@ -45,7 +41,7 @@
                             操作類型 <span class="text-danger">*</span>
                         </label>
                         <select class="form-select" id="typeSelect">
-                            <option value="全部類型" selected>全部類型</option>
+                            <option value="" selected>全部類型</option>
                             @if (ViewBag.ActionTypes != null)
                             {
                                 foreach (var name in ViewBag.ActionTypes)
@@ -57,7 +53,6 @@
                     </div>
                 </div>
 
-                <!-- 第二排：操作者、操作對象、查詢按鈕 -->
                 <div class="row g-3 align-items-end">
                     <div class="col-12 col-md-4">
                         <label class="form-label">操作者 <span class="text-secondary">＊選填</span></label>
@@ -79,7 +74,6 @@
         </div>
     </div>
 
-    <!-- 查詢結果列表區塊 -->
     <div class="card mb-4 shadow-sm d-none" id="resultCard">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
@@ -99,7 +93,6 @@
         </div>
     </div>
 
-    <!-- 查無資料提示區塊 -->
     <div class="card mb-4 shadow-sm text-center py-5 d-none" id="noDataCard">
         <div class="card-body">
             <div class="text-secondary mb-3" style="font-size: 2.5rem;">🔍</div>
@@ -124,14 +117,12 @@
             const operatorInput = document.getElementById("operatorInput");
             const targetInput = document.getElementById("targetInput");
 
-            // 計算當前日期的 yyyy-MM-dd 格式
             const today = new Date();
             const year = today.getFullYear();
             const month = String(today.getMonth() + 1).padStart(2, '0');
             const day = String(today.getDate()).padStart(2, '0');
             const todayStr = `${year}-${month}-${day}`;
 
-            // 計算一個月前的日期作為初始開始日期
             const oneMonthAgo = new Date();
             oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
             const startYear = oneMonthAgo.getFullYear();
@@ -139,15 +130,12 @@
             const startDay = String(oneMonthAgo.getDate()).padStart(2, '0');
             const startStr = `${startYear}-${startMonth}-${startDay}`;
 
-            // 初始化日期欄位預設值
             dateStart.value = startStr;
             dateEnd.value = todayStr;
 
-            // 限制最大可選日期為今天
             dateStart.setAttribute("max", todayStr);
             dateEnd.setAttribute("max", todayStr);
 
-            // 日期區間檢核防呆
             function validateDates() {
                 if (dateStart.value && dateEnd.value) {
                     if (dateStart.value > dateEnd.value) {
@@ -161,19 +149,17 @@
             dateStart.addEventListener("change", validateDates);
             dateEnd.addEventListener("change", validateDates);
 
-            // 轉譯並繪製表格資料（改用 textContent 以防範 DOM-based XSS 攻擊）
+            // 使用 textContent 顯示資料，避免將資料庫字串解析為 HTML。
             window.renderTable = function(dataList) {
                 resultTableBody.innerHTML = "";
                 if (dataList && dataList.length > 0) {
                     dataList.forEach(item => {
                         const tr = document.createElement("tr");
 
-                        // 時間欄位
                         const tdTime = document.createElement("td");
                         tdTime.textContent = item.operatedAt ? item.operatedAt.replace("T", " ").substring(0, 16) : "";
                         tr.appendChild(tdTime);
 
-                        // 分館欄位
                         const tdBranch = document.createElement("td");
                         const spanBranch = document.createElement("span");
                         spanBranch.className = "badge bg-light text-dark border";
@@ -181,7 +167,6 @@
                         tdBranch.appendChild(spanBranch);
                         tr.appendChild(tdBranch);
 
-                        // 操作者姓名
                         const tdOperator = document.createElement("td");
                         const strongOperator = document.createElement("strong");
                         strongOperator.className = "text-primary";
@@ -189,7 +174,6 @@
                         tdOperator.appendChild(strongOperator);
                         tr.appendChild(tdOperator);
 
-                        // 操作類型
                         const tdType = document.createElement("td");
                         const spanType = document.createElement("span");
                         spanType.className = "text-secondary";
@@ -197,7 +181,6 @@
                         tdType.appendChild(spanType);
                         tr.appendChild(tdType);
 
-                        // 操作對象類型
                         const tdTargetType = document.createElement("td");
                         const spanTgtType = document.createElement("span");
                         spanTgtType.className = "badge bg-secondary-subtle text-secondary-emphasis";
@@ -205,14 +188,12 @@
                         tdTargetType.appendChild(spanTgtType);
                         tr.appendChild(tdTargetType);
 
-                        // 識別編號
                         const tdIdentifier = document.createElement("td");
                         const codeId = document.createElement("code");
                         codeId.textContent = item.targetIdentifier || "-";
                         tdIdentifier.appendChild(codeId);
                         tr.appendChild(tdIdentifier);
 
-                        // 詳細異動說明
                         const tdDesc = document.createElement("td");
                         tdDesc.className = "text-muted small";
                         tdDesc.textContent = item.description || "-";
@@ -229,23 +210,23 @@
                 }
             }
 
-            
+
             window.executeSearch = async function() {
                 btnSearch.disabled = true;
                 btnSearch.innerText = "查詢中...";
 
                 const sDate = dateStart.value;
                 const eDate = dateEnd.value;
-                const bId = branchSelect.value; 
+                const bId = branchSelect.value;
                 const type = typeSelect.value;
                 const op = operatorInput.value.trim();
                 const tgt = targetInput.value.trim();
 
                 try {
-                   
+
                     let url = `/OperationLog/GetFilteredLogs?startDate=${sDate}&endDate=${eDate}`;
-                    
-                    
+
+
                     if (bId) {
                         url += `&branchId=${parseInt(bId)}`;
                     }
@@ -258,7 +239,7 @@
                     if (tgt) {
                         url += `&target=${encodeURIComponent(tgt)}`;
                     }
-                    
+
                     const response = await fetch(url);
                     const data = await response.json();
 
@@ -266,8 +247,8 @@
                         alert("操作失敗：" + (data.message || "讀取紀錄失敗。"));
                         return;
                     }
-                    
-                   
+
+
                     renderTable(data);
                 } catch (error) {
                     console.error(error);

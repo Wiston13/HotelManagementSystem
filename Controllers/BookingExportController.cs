@@ -19,7 +19,7 @@ namespace HotelManagementSystem.Controllers
 
         public async Task<IActionResult> Export()
         {
-           
+
             ViewBag.Branches = await _context.Branches
                 .OrderBy(b => b.BranchId)
                 .ToListAsync();
@@ -28,7 +28,7 @@ namespace HotelManagementSystem.Controllers
         }
 
         [HttpGet]
-        
+
         public async Task<IActionResult> GetOrders(int? branchId, string start, string end)
         {
             try
@@ -43,7 +43,7 @@ namespace HotelManagementSystem.Controllers
                             where booking.CheckInDate >= startDate && booking.CheckInDate <= endDate
                             select new { booking, b };
 
-              
+
                 if (branchId.HasValue)
                 {
                     query = query.Where(x => x.booking.BranchId == branchId.Value);
@@ -79,14 +79,11 @@ namespace HotelManagementSystem.Controllers
                     checkout_emp = x.booking.StayRecord != null ? x.booking.StayRecord.CheckedOutByEmployeeNumber : ""
                 }).ToListAsync();
 
-                return Json(new { success = true, data = dbData }, new System.Text.Json.JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = null
-                });
+                return Json(new { success = true, data = dbData });
             }
             catch (Exception)
             {
-               
+
                 return Json(new { success = false, message = "查詢失敗，請稍後再試。" });
             }
         }

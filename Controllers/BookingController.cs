@@ -1,7 +1,7 @@
-﻿using HotelManagementSystem.Models;
-using HotelManagementSystem.Models.BookingSearchModel;
+﻿using Microsoft.AspNetCore.Mvc;
 using HotelManagementSystem.Services;
-using Microsoft.AspNetCore.Mvc;
+using HotelManagementSystem.Models;
+using HotelManagementSystem.Models.BookingSearchModel;
 using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
 
@@ -17,11 +17,11 @@ namespace HotelManagementSystem.Controllers
             _context = context;
             _noShowService = noShowService;
         }
-
+        
 
         [HttpGet]
         public IActionResult RoomSelection(string branchName, DateTime checkIn, DateTime checkOut, int guests)
-        {
+        {            
             return View();
         }
 
@@ -62,12 +62,12 @@ namespace HotelManagementSystem.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Lookup(string BookingNum, string Phone)
+        public async Task<IActionResult> Lookup(string BookingNum,string Phone)
         {
             var model = new BookingData();
 
             // 檢查bookingNum 和phone的值是否為空
-            if (string.IsNullOrWhiteSpace(BookingNum) || string.IsNullOrWhiteSpace(Phone))
+            if (string.IsNullOrWhiteSpace(BookingNum)||string.IsNullOrWhiteSpace(Phone))
             {
                 return View(model);
             }
@@ -86,7 +86,7 @@ namespace HotelManagementSystem.Controllers
             }
 
             // 查詢
-            var booking = await _context.Bookings.AsNoTracking().FirstOrDefaultAsync(b => b.BookingNumber == BookingNum && b.ContactPhone == Phone);
+            var booking = await _context.Bookings.AsNoTracking().FirstOrDefaultAsync(b => b.BookingNumber == BookingNum &&b.ContactPhone==Phone);
 
             // 沒結果吐回空資料及noresult 
             if (booking == null)
@@ -106,7 +106,7 @@ namespace HotelManagementSystem.Controllers
             model.BranchName = branch?.BranchName;
             model.Roomtype = booking.RoomTypeNameSnapshot;
             model.StartDate = new DateTime(booking.CheckInDate.Year, booking.CheckInDate.Month, booking.CheckInDate.Day);
-            model.EndDate = new DateTime(booking.CheckOutDate.Year, booking.CheckOutDate.Month, booking.CheckOutDate.Day);
+            model.EndDate = new DateTime(booking.CheckOutDate.Year, booking.CheckOutDate.Month, booking.CheckOutDate.Day); 
             model.BookingDate = booking.CreatedAt;
             model.Name = booking.BookerName;
             model.Price = booking.TotalAmount.ToString("N0");
