@@ -31,6 +31,7 @@ namespace HotelManagementSystem.Controllers
             }
 
             var employee = await _context.Employees
+                .Include(e => e.Branch)
                 .FirstOrDefaultAsync(e => e.EmployeeNumber == model.Username);
 
             if (employee == null)
@@ -90,6 +91,11 @@ namespace HotelManagementSystem.Controllers
             if (employee.BranchId is int branchId)
             {
                 claims.Add(new Claim("BranchId", branchId.ToString()));
+
+                if (employee.Branch != null)
+                {
+                    claims.Add(new Claim("BranchName", employee.Branch.BranchName));
+                }
             }
 
             //「這些資料組成一個已驗證身分」
@@ -108,6 +114,15 @@ namespace HotelManagementSystem.Controllers
         public IActionResult AccessDenied()
         {
             return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Logout()
+        {
+            await HttpContext.SignOutAsync("HotelCookie");
+
+            return RedirectToAction(nameof(Login));
         }
     }
 }
