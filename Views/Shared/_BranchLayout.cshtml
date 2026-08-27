@@ -1,6 +1,4 @@
-﻿@using System.Security.Claims
-
-@{
+﻿@{
     var pageTitle = ViewData["Title"] as string;
     var branchName = User.FindFirst("BranchName")?.Value;
     var staffName = User.Identity?.Name;

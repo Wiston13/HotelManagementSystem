@@ -5,30 +5,6 @@ using HotelManagementSystem.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-/*
- 員工帳號驗證:
- 每個ACTION都要驗證員工身分，員工身分怎麼驗證?
- employeeNum  用session抓  但session週期只有一次轉跳
- 有filter做驗證 或更好做法
- 但有同時需要branchID 和 employeeNum嗎?
- 只要有employeeNum就可以抓資料庫判斷分館了
- 那這樣會有危險嗎?
- 例如轉跳action帶的employee是假的 又或者裝到_layout或哪裡的Model 或viewdata tempdata
- viewdata和viewbag->轉跳一次請求消失 tempdata轉跳存成session 
- 
- 每步操作要驗證資料庫正確性:
- 更新時加入判斷資料庫的資料是否有誤 例如paid->cancelled 確定是不是已經是cancelled 訂單資料是否一樣
-
- 可優化:
-*訂單讀取時間
-*前端取消的訂單 有取消理由
-*取消後單獨顯示取消的訂單?或更好的做法
-*即時更改選單刷新訂單
-*訂單類別排序
-
- 
- */
-
 namespace HotelManagementSystem.Controllers
 {
     public class BranchBookingController : BranchEmployeeControllerBase
