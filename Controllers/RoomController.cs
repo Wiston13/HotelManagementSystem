@@ -123,7 +123,7 @@ namespace HotelManagementSystem.Controllers
                 else
                 {
                     // 驗證roomID合法性
-                    TempData["ErrorMessage"] = "房間編號資料異常，請重新操作！";
+                    TempData["ErrorMessage"] = "找不到房間資料，儲存失敗。";
                     return RedirectToAction(nameof(Index));
                 }
             }
@@ -135,6 +135,10 @@ namespace HotelManagementSystem.Controllers
 }
 
 /*PR#31 
+9  RoomCreated
+10 RoomUpdated
+11 RoomDisabled
+12 RoomEnabled
  * 
  * 4.和8類似 有人住不能修改房型
  * 5.修改房型前檢查原房型未來房量 (有點複雜最後處理)
@@ -143,8 +147,8 @@ namespace HotelManagementSystem.Controllers
  * 8.disable->open 檢查訂單狀態 如果該房該時間有人住 拒絕開放
  * 9.supplyStatus 修改狀態時驗證 資料正確性
  * 14.roomcontroller加入operationLog
- * 15.驗證傳入的RoomId是否合法
- * 17.驗證roomController 傳進來的supplyStatus是否合法
+ ○* 15.驗證傳入的RoomId是否合法
+ ○* 17.驗證roomController 傳進來的supplyStatus是否合法
  ○* 18.Views/Room/Index.cshtml 移除 如果是保留 不能操作 
  ○* 19.Views/RoomType/Index.cshtml 基本上不用改 後端正確驗證就好
  */
