@@ -20,12 +20,10 @@ namespace HotelManagementSystem.Controllers
 
         public async Task<IActionResult> Employees()
         {
-
             var employeeList = await _context.Employees
                 .Include(e => e.Branch)
                 .Where(e => e.Role == "BranchEmployee")
                 .ToListAsync();
-
 
             ViewBag.Branches = await _context.Branches
                 .OrderBy(b => b.BranchId)
@@ -38,18 +36,15 @@ namespace HotelManagementSystem.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateEmployee(string employeeName, string password, int branchId)
         {
-
             if (string.IsNullOrWhiteSpace(employeeName))
             {
                 return Json(new { success = false, message = "員工姓名不可為空！" });
             }
 
-
             if (string.IsNullOrWhiteSpace(password))
             {
                 return Json(new { success = false, message = "請輸入初始密碼" });
             }
-
 
             var branchExists = await _context.Branches.AnyAsync(b => b.BranchId == branchId);
             if (!branchExists)
@@ -93,7 +88,6 @@ namespace HotelManagementSystem.Controllers
 
                 _context.Employees.Add(newEmp);
 
-
                 string operatorEmployeeNumber = CurrentEmployeeNumber!;
                 string description = $"建立分館員工 {newEmp.EmployeeNumber}({newEmp.EmployeeName})。";
 
@@ -128,12 +122,10 @@ namespace HotelManagementSystem.Controllers
                 return Json(new { success = false, message = "員工編號不可為空！" });
             }
 
-
             if (string.IsNullOrWhiteSpace(employeeName))
             {
                 return Json(new { success = false, message = "員工姓名不可為空！" });
             }
-
 
             var branchExists = await _context.Branches.AnyAsync(b => b.BranchId == branchId);
             if (!branchExists)
@@ -150,12 +142,10 @@ namespace HotelManagementSystem.Controllers
                     return Json(new { success = false, message = "找不到該名分館員工資料！" });
                 }
 
-
                 string oldName = emp.EmployeeName ?? "";
                 int? oldBranchId = emp.BranchId;
                 bool oldIsActive = emp.IsActive;
                 bool isPasswordReset = !string.IsNullOrWhiteSpace(password);
-
 
                 emp.EmployeeName = employeeName;
                 emp.BranchId = branchId;
@@ -170,7 +160,6 @@ namespace HotelManagementSystem.Controllers
                 string operatorEmployeeNumber = CurrentEmployeeNumber!;
                 int currentBranchId = branchId;
                 string targetIdentifier = emp.EmployeeNumber ?? "";
-
 
                 if (oldName != emp.EmployeeName || oldBranchId != emp.BranchId)
                 {
@@ -227,7 +216,6 @@ namespace HotelManagementSystem.Controllers
                         Description = $"重設員工密碼：{emp.EmployeeNumber}({emp.EmployeeName})。"
                     });
                 }
-
 
                 await _context.SaveChangesAsync();
                 return Json(new { success = true, message = "員工資料修改成功！" });

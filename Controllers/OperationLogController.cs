@@ -20,7 +20,6 @@ namespace HotelManagementSystem.Controllers
                 .Select(t => t.OperationTypeName)
                 .ToListAsync();
 
-
             ViewBag.Branches = await _context.Branches
                 .OrderBy(b => b.BranchId)
                 .ToListAsync();
@@ -41,7 +40,6 @@ namespace HotelManagementSystem.Controllers
                     .Include(l => l.TargetBranch)
                     .AsQueryable();
 
-
                 if (!string.IsNullOrWhiteSpace(startDate) && DateTime.TryParse(startDate, out var sDate))
                 {
                     query = query.Where(l => l.OperatedAt >= sDate);
@@ -52,18 +50,15 @@ namespace HotelManagementSystem.Controllers
                     query = query.Where(l => l.OperatedAt < eDateEnd);
                 }
 
-
                 if (branchId.HasValue)
                 {
                     query = query.Where(l => l.TargetBranchId == branchId.Value);
                 }
 
-
                 if (!string.IsNullOrWhiteSpace(type))
                 {
                     query = query.Where(l => l.OperationType.OperationTypeName == type);
                 }
-
 
                 if (!string.IsNullOrWhiteSpace(operatorInput))
                 {
@@ -77,18 +72,15 @@ namespace HotelManagementSystem.Controllers
                     query = query.Where(l => matchedEmployeeNumbers.Contains(l.OperatorEmployeeNumber));
                 }
 
-
                 if (!string.IsNullOrWhiteSpace(target))
                 {
                     var tgt = target.Trim().ToLower();
                     query = query.Where(l => l.TargetIdentifier.ToLower().Contains(tgt) || l.TargetType.ToLower().Contains(tgt) || l.Description.ToLower().Contains(tgt));
                 }
 
-
                 var rawLogs = await query
                     .OrderByDescending(l => l.OperationLogId)
                     .ToListAsync();
-
 
                 var employeeMap = await _context.Employees
                     .ToDictionaryAsync(e => e.EmployeeNumber, e => e.EmployeeName);

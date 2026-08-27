@@ -43,7 +43,6 @@ namespace HotelManagementSystem.Controllers
                             where booking.CheckInDate >= startDate && booking.CheckInDate <= endDate
                             select new { booking, b };
 
-
                 if (branchId.HasValue)
                 {
                     query = query.Where(x => x.booking.BranchId == branchId.Value);

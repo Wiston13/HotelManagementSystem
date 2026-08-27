@@ -60,24 +60,9 @@ namespace HotelManagementSystem.Controllers
                 return Json(new { success = false, message = "帳號或密碼錯誤" });
             }
 
-            string targetUrl;
-
-            if (employee.Role == "SystemAdmin")
-            {
-                targetUrl = "/Staff/Employees";
-            }
-            else if (employee.Role == "BranchEmployee")
-            {
-                targetUrl = "/EmployeeHome/Index";
-            }
-            else
-            {
-                return Json(new
-                {
-                    success = false,
-                    message = "帳號角色設定異常"
-                });
-            }
+            string targetUrl = employee.Role == "SystemAdmin"
+                ? "/Staff/Employees"
+                : "/EmployeeHome/Index";
 
             // 建立授權所需的最小 Claims，供角色與分館資料範圍判斷使用。
             var claims = new List<Claim>

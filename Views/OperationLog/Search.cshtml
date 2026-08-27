@@ -210,7 +210,6 @@
                 }
             }
 
-
             window.executeSearch = async function() {
                 btnSearch.disabled = true;
                 btnSearch.innerText = "查詢中...";
@@ -225,7 +224,6 @@
                 try {
 
                     let url = `/OperationLog/GetFilteredLogs?startDate=${sDate}&endDate=${eDate}`;
-
 
                     if (bId) {
                         url += `&branchId=${parseInt(bId)}`;
@@ -247,7 +245,6 @@
                         alert("操作失敗：" + (data.message || "讀取紀錄失敗。"));
                         return;
                     }
-
 
                     renderTable(data);
                 } catch (error) {

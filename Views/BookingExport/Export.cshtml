@@ -220,8 +220,25 @@
             var row = [
                 escapeCsvField(item.booking_no),
                 escapeCsvField(item.branch_name), escapeCsvField(item.created_at), escapeCsvField(item.guest_name), escapeCsvField(item.phone), escapeCsvField(item.email), escapeCsvField(item.check_in), escapeCsvField(item.check_out), item.nights, escapeCsvField(item.room_type_snapshot), item.price_snapshot ?? 0, item.total_amount ?? 0, item.total_amount ?? 0, escapeCsvField(item.created_at || "-"), escapeCsvField(item.status), escapeCsvField(item.cancel_cause || "-"), escapeCsvField(item.cancel_reason || "-"), item.refund_amount ?? 0, escapeCsvField(item.cancel_emp || "-"), escapeCsvField(item.cancel_at || "-"), escapeCsvField(item.room_no || "-"), item.act_occupancy || 0, escapeCsvField(item.act_checkin_at || "-"), escapeCsvField(item.checkin_emp || "-"), escapeCsvField(item.act_checkout_at || "-"), escapeCsvField(item.checkout_emp || "-")]; csvRows.push(row.join(","));
-        }); var csvString = csvRows.join("\n"); var blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvString], { type: "text/csv;charset=utf-8;" }); var link = document.createElement("a"); link.href = URL.createObjectURL(blob); var today = new Date(); var dateStr = today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, '0') + "-" + String(today.getDate()).padStart(2, '0'); link.download = "飯店訂單報表_" + dateStr + ".csv"; document.body.appendChild(link); link.click(); document.body.removeChild(link);
-    }
+        });
 
+        var csvString = csvRows.join("\n");
+        var blob = new Blob(
+            [new Uint8Array([0xEF, 0xBB, 0xBF]), csvString],
+            { type: "text/csv;charset=utf-8;" }
+        );
+        var link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+
+        var today = new Date();
+        var dateStr = today.getFullYear() + "-" +
+            String(today.getMonth() + 1).padStart(2, '0') + "-" +
+            String(today.getDate()).padStart(2, '0');
+
+        link.download = "飯店訂單報表_" + dateStr + ".csv";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
 
 </script>

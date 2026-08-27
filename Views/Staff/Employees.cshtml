@@ -146,7 +146,6 @@
     <script>
         $(document).ready(function() {
 
-
             $("#btnCreateNew").on("click", function() {
                 $("#employeeModalLabel").text("新增員工資料");
                 $("#passwordLabel").html('初始密碼 <span class="text-danger">*</span>');
@@ -160,7 +159,6 @@
                 $("#branchId").val("");
                 $("#accountStatus").val("1");
             });
-
 
             $(document).on("click", ".btn-edit", function() {
                 $("#employeeModalLabel").text("修改員工資料");
@@ -179,10 +177,8 @@
                 $("#branchId").val(branch);
                 $("#accountStatus").val(status);
 
-
                 $("#employeeForm").attr("data-edit-account", account);
             });
-
 
             $("#btnSaveEmployee").on("click", function() {
                 var empName = $("#employeeName").val().trim();
