@@ -1,12 +1,14 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using HotelManagementSystem.Models;
+using HotelManagementSystem.Models.Entities;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using HotelManagementSystem.Models;
-using HotelManagementSystem.Models.Entities;
+using HotelManagementSystem.Services;
+using System;
+using System.Data;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace HotelManagementSystem.Controllers
 {
@@ -14,11 +16,13 @@ namespace HotelManagementSystem.Controllers
     {
         private readonly HotelManagementContext _context;
         private readonly IWebHostEnvironment _environment;
+        private readonly TaipeiClock _Clock;
 
-        public RoomTypeController(HotelManagementContext context, IWebHostEnvironment environment)
+        public RoomTypeController(HotelManagementContext context, IWebHostEnvironment environment, TaipeiClock clock)
         {
             _context = context;
             _environment = environment;
+            _Clock = clock;
         }
 
         [HttpGet]
@@ -36,6 +40,9 @@ namespace HotelManagementSystem.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Save(RoomType model)
         {
+            //暫時假資料
+            string EmployeeNum = "E20260807001";
+
             //  1. 清除 EF Core 導覽屬性的驗證錯誤（解決 ModelState 永遠無效的主因）
             ModelState.Remove("Branch");
             ModelState.Remove("Rooms");
@@ -67,26 +74,105 @@ namespace HotelManagementSystem.Controllers
                 return View("Index", await _context.RoomTypes.ToListAsync());
             }
 
+            
+
+           
             //  4. 資料庫存取與例外處理
             try
             {
                 if (model.RoomTypeId == 0)
                 {
+                    var branchExists = await _context.Branches
+                    .AnyAsync(b => b.BranchId == model.BranchId);
+
+                    if (!branchExists)
+                    {
+                        TempData["ErrorMessage"] = "找不到指定的分館資料。";
+                        return RedirectToAction(nameof(Index));
+                    }
+
+                    
+
                     _context.RoomTypes.Add(model);
+                    await _context.SaveChangesAsync();
+                    OperationLog createLog = new OperationLog()
+                    {
+                        TargetBranchId = model.BranchId,
+                        OperatedAt = _Clock.Now,
+                        OperatorEmployeeNumber = EmployeeNum,
+                        OperationTypeId = 5,
+                        TargetType = "RoomType",
+                        TargetIdentifier = model.RoomTypeId.ToString(),
+                        Description = $"新增房型：{model.RoomTypeName}"
+                    };
+                     _context.OperationLogs.Add(createLog);
                     TempData["SuccessMessage"] = "新增房型成功！";
                 }
                 else
                 {
-                    _context.RoomTypes.Update(model);
+
+                    var existingRoomType = await _context.RoomTypes.FindAsync(model.RoomTypeId);
+                    if (existingRoomType == null)
+                    {
+                        TempData["ErrorMessage"] = "找不到該房型資料。";
+                        return RedirectToAction(nameof(Index));
+                    }
+
+                    bool isOtherChanged = existingRoomType.RoomTypeName != model.RoomTypeName ||
+                                          existingRoomType.MaxOccupancy != model.MaxOccupancy ||
+                                          existingRoomType.BedType != model.BedType ||
+                                          existingRoomType.NightlyPrice != model.NightlyPrice ||
+                                          existingRoomType.ImageUrl != model.ImageUrl ||
+                                          existingRoomType.Description != model.Description;
+                    bool isActiveChanged = existingRoomType.IsActive != model.IsActive;
+                    if (isOtherChanged )
+                    {
+                        
+                        OperationLog updatedLog = new OperationLog()
+                            {
+                                TargetBranchId = existingRoomType.BranchId,
+                                OperatedAt = _Clock.Now,
+                                OperatorEmployeeNumber = EmployeeNum,
+                                OperationTypeId = 6,
+                                TargetType = "RoomType",
+                                TargetIdentifier = existingRoomType.RoomTypeId.ToString(),
+                                Description = $"修改房型：{existingRoomType.RoomTypeName}。"
+                            };
+                        _context.OperationLogs.Add(updatedLog);
+                    }
+                    if (isActiveChanged)
+                    {
+                        string action = model.IsActive ? "啟用" : "停用";
+                        OperationLog roomActiveLog = new OperationLog()
+                        {
+                            TargetBranchId = existingRoomType.BranchId,
+                            OperatedAt = _Clock.Now,
+                            OperatorEmployeeNumber = EmployeeNum,
+                            OperationTypeId = model.IsActive ? 8 : 7,
+                            TargetType = "RoomType",
+                            TargetIdentifier = existingRoomType.RoomTypeId.ToString(),
+                            Description = $"{action} 房型：{existingRoomType.RoomTypeName}。"
+                        };
+                        _context.OperationLogs.Add(roomActiveLog);
+                    }
+                    existingRoomType.RoomTypeName = model.RoomTypeName;
+                    existingRoomType.MaxOccupancy = model.MaxOccupancy;
+                    existingRoomType.BedType = model.BedType;
+                    existingRoomType.NightlyPrice = model.NightlyPrice;
+                    existingRoomType.IsActive = model.IsActive;
+                    existingRoomType.ImageUrl = model.ImageUrl;
+                    existingRoomType.Description = model.Description;
+
+                   
                     TempData["SuccessMessage"] = "修改房型成功！";
                 }
 
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                TempData["ErrorMessage"] = "資料庫儲存失敗：" + ex.Message;
+                TempData["ErrorMessage"] = "資料庫儲存失敗";
                 ViewBag.Branches = await _context.Branches.ToListAsync();
                 return View("Index", await _context.RoomTypes.ToListAsync());
             }
