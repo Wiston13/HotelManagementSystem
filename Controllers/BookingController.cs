@@ -61,24 +61,19 @@ namespace HotelManagementSystem.Controllers
                     r.IsActive
                 ).ToList();            
 
-            // 計算入住晚數
-            var nights = checkOut.DayNumber - checkIn.DayNumber;
 
 
-            // 建立 RoomSelectionViewModel
-            var model = new RoomSelectionViewModel
-            {
-                BranchId = branchId,
-                BranchName = branch.BranchName,
-                CheckInDate = checkIn,
-                CheckOutDate = checkOut,
-                Nights = nights,
-                GuestCount = guestCount,
 
-                RoomTypes = roomTypes.Select(r =>
+            // 只留下目前仍有空房的房型
+            var availableRoomTypes = roomTypes
+                .Select(r =>
                 {
                     // 依照統一的房量規則 計算該房型 剩餘房量
-                    var remainingCount = _roomAvailabilityService.CalculateMinimumRemainingRooms(r.RoomTypeId, checkIn, checkOut);
+                    var remainingCount =
+                        _roomAvailabilityService.CalculateMinimumRemainingRooms(
+                            r.RoomTypeId,
+                            checkIn,
+                            checkOut);
 
                     return new RoomTypeViewModel
                     {
@@ -89,11 +84,34 @@ namespace HotelManagementSystem.Controllers
                         NightlyPrice = r.NightlyPrice,
                         Description = r.Description,
                         ImageUrl = r.ImageUrl,
-
                         AvailableRooms = remainingCount
                     };
-                }).ToList()
+                })
+                .Where(r => r.AvailableRooms > 0)
+                .ToList();
 
+
+            // 沒有任何可預訂房型，回到首頁
+            if (!availableRoomTypes.Any())
+            {
+                TempData["NoAvailableRoom"] =
+                    "很抱歉，目前沒有符合查詢條件的可訂房間，請調整查詢條件後再試一次。";
+
+                return RedirectToAction("Index", "Home");
+            }
+
+            // 計算入住晚數
+            var nights = checkOut.DayNumber - checkIn.DayNumber;
+
+            var model = new RoomSelectionViewModel
+            {
+                BranchId = branchId,
+                BranchName = branch.BranchName,
+                CheckInDate = checkIn,
+                CheckOutDate = checkOut,
+                Nights = nights,
+                GuestCount = guestCount,
+                RoomTypes = availableRoomTypes
             };
 
             return View(model);
@@ -236,7 +254,7 @@ namespace HotelManagementSystem.Controllers
                 // 再次確認整段住宿期間的最低剩餘房量
                 var remainingCount = _roomAvailabilityService.CalculateMinimumRemainingRooms(roomTypeId, checkIn, checkOut);
 
-                // 房量不足，不建立訂單，回到房型選擇頁重新查詢
+                // 選擇房型已無空房，回房型選擇頁重新查詢可訂房型
                 if (remainingCount < 1)
                 {
                     return RedirectToAction("RoomSelection", new
