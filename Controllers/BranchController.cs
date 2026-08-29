@@ -1,4 +1,5 @@
-﻿using HotelManagementSystem.Models;
+﻿using HotelManagementSystem.Helper;
+using HotelManagementSystem.Models;
 using HotelManagementSystem.Models.Entities;
 using HotelManagementSystem.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -10,13 +11,13 @@ namespace HotelManagementSystem.Controllers
     {
         private readonly HotelManagementContext _context;
         private readonly IWebHostEnvironment _environment;
-        private readonly TaipeiClock _Clock;
+        private readonly TaipeiClock _clock;
 
         public BranchController(HotelManagementContext context, IWebHostEnvironment environment, TaipeiClock taipeiClock) : base(context)
         {
             _context = context;
             _environment = environment;
-            _Clock = taipeiClock;
+            _clock = taipeiClock;
         }
 
         // GET: /Branch/
@@ -69,16 +70,12 @@ namespace HotelManagementSystem.Controllers
                 return View("Index", branches);
             }
 
-            // branch.Phone 正規化
-            string phone = branch.Phone.Trim();
-            phone = phone.Replace(" ", "");
-            phone = phone.Replace("-", "");
-            if (string.IsNullOrEmpty(phone) || !phone.All(char.IsDigit))
+            if (!PhoneHelper.TryNormalize(branch.Phone, out var normalizedPhone))
             {
-                TempData["ErrorMessage"] = "電話只能包含數字、空白或半形連字號，修改失敗！";
+                TempData["ErrorMessage"] = "電話格式不正確，移除空白與半形連字號後須為 1～20 碼半形數字。";
                 return RedirectToAction(nameof(Index));
             }
-            branch.Phone = phone;
+            branch.Phone = normalizedPhone;
 
             OperationLog bookingStatusLog = new OperationLog();
             int isBookingOpenOrStopped = 0;
@@ -97,7 +94,7 @@ namespace HotelManagementSystem.Controllers
                         await _context.SaveChangesAsync();
 
                         bookingStatusLog.TargetBranchId = branch.BranchId;
-                        bookingStatusLog.OperatedAt = _Clock.Now;
+                        bookingStatusLog.OperatedAt = _clock.Now;
                         bookingStatusLog.OperatorEmployeeNumber = currentOperator;
                         bookingStatusLog.OperationTypeId = 1;
                         bookingStatusLog.TargetType = "Branch";
@@ -170,12 +167,12 @@ namespace HotelManagementSystem.Controllers
                         TempData["SuccessMessage"] = $"修改分館【{branch.BranchName}】成功！";
 
                         bookingStatusLog.TargetBranchId = branch.BranchId;
-                        bookingStatusLog.OperatedAt = _Clock.Now;
+                        bookingStatusLog.OperatedAt = _clock.Now;
                         bookingStatusLog.OperatorEmployeeNumber = currentOperator;
                         bookingStatusLog.OperationTypeId = 2;
                         bookingStatusLog.TargetType = "Branch";
                         bookingStatusLog.TargetIdentifier = branch.BranchId.ToString();
-                        bookingStatusLog.Description = $"修改{branch.BranchName}商旅資料";//考慮加入修改細節
+                        bookingStatusLog.Description = $"修改{branch.BranchName}商旅資料";
                         _context.Add(bookingStatusLog);
                     }
                 }
@@ -185,7 +182,7 @@ namespace HotelManagementSystem.Controllers
                     var updateLog = new OperationLog()
                     {
                         TargetBranchId = branch.BranchId,
-                        OperatedAt = _Clock.Now,
+                        OperatedAt = _clock.Now,
                         OperatorEmployeeNumber = currentOperator,
                         OperationTypeId = isBookingOpenOrStopped,
                         TargetType = "Branch",

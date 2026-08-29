@@ -2,6 +2,7 @@
 using HotelManagementSystem.Models.BookingSearchModel;
 using HotelManagementSystem.Models.Entities;
 using HotelManagementSystem.Services;
+using HotelManagementSystem.Helper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,35 +10,29 @@ namespace HotelManagementSystem.Controllers
 {
     public class BranchBookingController : BranchEmployeeControllerBase
     {
-        private readonly TaipeiClock _Clock;
+        private readonly TaipeiClock _clock;
         private readonly HotelManagementContext _context;
         private readonly NoShowService _noShowService;
         public BranchBookingController(HotelManagementContext context, TaipeiClock clock, NoShowService noShowService)
             : base(context)
         {
             _context = context;
-            _Clock = clock;
+            _clock = clock;
             _noShowService = noShowService;
         }
 
-        // 轉換前端狀態字串和資料庫相同
-        private string StatusLanguage(string input)
+        // 將前端中文篩選值轉為資料庫狀態碼。
+        private static string GetBookingStatusCode(string input)
         {
-            string output = "";
-            switch (input)
+            return input switch
             {
-                case "Completed": output = "已完成"; break;
-                case "CheckedIn": output = "入住中"; break;
-                case "Cancelled": output = "已取消"; break;
-                case "NoShow": output = "逾期未入住"; break;
-                case "Paid": output = "已付款"; break;
-                case "已完成": output = "Completed"; break;
-                case "入住中": output = "CheckedIn"; break;
-                case "已取消": output = "Cancelled"; break;
-                case "逾期未入住": output = "NoShow"; break;
-                case "已付款": output = "Paid"; break;
-            }
-            return output;
+                "已付款" => "Paid",
+                "入住中" => "CheckedIn",
+                "已完成" => "Completed",
+                "已取消" => "Cancelled",
+                "逾期未入住" => "NoShow",
+                _ => string.Empty
+            };
         }
 
         //查詢訂單
@@ -52,23 +47,23 @@ namespace HotelManagementSystem.Controllers
             ViewBag.DateRange = dateRange;
             ViewBag.BookingStatus = bookingStatus;
 
-            List<BookingData> _bookingData = new List<BookingData>();
+            List<BookingData> bookingData = new List<BookingData>();
 
             // 驗證搜尋為空則傳回空資料
-            if (string.IsNullOrEmpty(keyword) || string.IsNullOrWhiteSpace(keyword))
+            if (string.IsNullOrWhiteSpace(keyword))
             {
-                return View(_bookingData);
+                return View(bookingData);
             }
 
             var query = _context.Bookings.AsNoTracking();
             query = query.Where(x => x.BranchId == CurrentBranchId);
-            // keyword模糊查詢資料庫 及 分館ID (此處需要驗證員工帳號及帳號所屬分館取得)
+            // keyword 模糊查詢資料庫與目前員工所屬分館。
             if (!string.IsNullOrWhiteSpace(keyword))
             {
                 query = query.Where(x => x.BookingNumber!.Contains(keyword) || x.BookerName!.Contains(keyword) || x.ContactPhone!.Contains(keyword));
             }
 
-            // dateRange查詢時間範圍 (此處考慮加入前端預設時間段 避免訂單結果爆量讀取過久)
+            // dateRange 查詢時間範圍
             if (!string.IsNullOrWhiteSpace(dateRange))
             {
                 var dates = dateRange.Split(" - ");
@@ -86,11 +81,11 @@ namespace HotelManagementSystem.Controllers
             // bookingstatu查詢訂單狀態
             if (!string.IsNullOrWhiteSpace(bookingStatus))
             {
-                query = query.Where(x => x.BookingStatus == StatusLanguage(bookingStatus));
+                query = query.Where(x => x.BookingStatus == GetBookingStatusCode(bookingStatus));
             }
 
 
-            _bookingData = await query.Select(x => new BookingData
+            bookingData = await query.Select(x => new BookingData
             {
                 BookingNum = x.BookingNumber,
                 BookingDate = x.CreatedAt,
@@ -103,12 +98,12 @@ namespace HotelManagementSystem.Controllers
                 Price = "NT$ " + x.TotalAmount.ToString("N0")
             }).ToListAsync();
 
-            foreach (var b in _bookingData)
+            foreach (var b in bookingData)
             {
-                b.BookingStatus = StatusLanguage(b.BookingStatus);
+                b.BookingStatus = StatusDisplayHelper.GetBookingStatusText(b.BookingStatus);
             }
 
-            return View(_bookingData);
+            return View(bookingData);
         }
 
         // 加入operationLog
@@ -118,7 +113,7 @@ namespace HotelManagementSystem.Controllers
         public async Task<IActionResult> BookingCancel(string bookingNum, string keyword, string dateRange,
             string keyStatus, string cancelCause, string cancelReason)
         {
-            var now = _Clock.Now;
+            var now = _clock.Now;
             await _noShowService.UpdateNoShowsAsync();
 
             // 查詢訂單

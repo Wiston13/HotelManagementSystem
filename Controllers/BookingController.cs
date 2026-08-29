@@ -5,7 +5,7 @@ using HotelManagementSystem.Models.ViewModels.Booking;
 using HotelManagementSystem.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Text.RegularExpressions;
+using HotelManagementSystem.Helper;
 
 
 namespace HotelManagementSystem.Controllers
@@ -218,15 +218,7 @@ namespace HotelManagementSystem.Controllers
             {
                 return BadRequest("請輸入聯絡電話。");
             }
-            // 移除所有空白與半形"-"
-            var normalizedPhone = new string(
-                input.ContactPhone
-                    .Where(c => !char.IsWhiteSpace(c) && c != '-')
-                    .ToArray());
-            // 正規化後必須有值，且只能包含 ASCII 0～9
-            if (string.IsNullOrEmpty(normalizedPhone) ||
-                normalizedPhone.Length > 20 ||
-                !normalizedPhone.All(c => c >= '0' && c <= '9'))
+            if (!PhoneHelper.TryNormalize(input.ContactPhone, out var normalizedPhone))
             {
                 return BadRequest("聯絡電話格式不正確。");
             }
@@ -450,7 +442,6 @@ namespace HotelManagementSystem.Controllers
                 RoomTypeName = booking.RoomTypeNameSnapshot,
                 CheckInDate = booking.CheckInDate,
                 CheckOutDate = booking.CheckOutDate,
-                //Email = booking.Email
             };
 
             return View(model);
@@ -508,31 +499,6 @@ namespace HotelManagementSystem.Controllers
                    (expiryYear == currentYear && expiryMonth < currentMonth);
         }
 
-        //把資料庫BookingStatus英文轉成中文
-        private string StatusToChenese(string input)
-        {
-            string output = "";
-            switch (input)
-            {
-                case "Completed":
-                    output = "已完成";
-                    break;
-                case "CheckedIn":
-                    output = "入住中";
-                    break;
-                case "Cancelled":
-                    output = "已取消";
-                    break;
-                case "NoShow":
-                    output = "逾期未入住";
-                    break;
-                case "Paid":
-                    output = "已付款";
-                    break;
-            }
-            return output;
-        }
-
         [HttpGet]
         public async Task<IActionResult> Lookup(string BookingNum, string Phone)
         {
@@ -548,23 +514,19 @@ namespace HotelManagementSystem.Controllers
 
             BookingNum = BookingNum.Trim();
 
-            //前端phone正規化
-            Phone = Phone.Trim();
-            Phone = Regex.Replace(Phone, " ", "");
-            Phone = Regex.Replace(Phone, "-", "");
-            if (!Phone.All(char.IsDigit))
+            if (!PhoneHelper.TryNormalize(Phone, out var normalizedPhone))
             {
                 return View(model);
             }
 
             // 查詢
-            var booking = await _context.Bookings.AsNoTracking().FirstOrDefaultAsync(b => b.BookingNumber == BookingNum && b.ContactPhone == Phone);
+            var booking = await _context.Bookings.AsNoTracking().FirstOrDefaultAsync(b => b.BookingNumber == BookingNum && b.ContactPhone == normalizedPhone);
 
             // 沒結果吐回空資料及noresult 
             if (booking == null)
             {
                 model.BookingNum = BookingNum;
-                model.Phone = Phone;
+                model.Phone = normalizedPhone;
                 ViewBag.NoResult = true;
                 return View(model);
             }
@@ -582,7 +544,7 @@ namespace HotelManagementSystem.Controllers
             model.BookingDate = booking.CreatedAt;
             model.Name = booking.BookerName;
             model.Price = booking.TotalAmount.ToString("N0");
-            model.BookingStatus = StatusToChenese(booking.BookingStatus);
+            model.BookingStatus = StatusDisplayHelper.GetBookingStatusText(booking.BookingStatus);
             return View(model);
         }
 

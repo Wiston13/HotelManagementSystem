@@ -3,7 +3,6 @@ using HotelManagementSystem.Models.Entities;
 using HotelManagementSystem.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Data;
 
 namespace HotelManagementSystem.Controllers
 {
@@ -11,13 +10,13 @@ namespace HotelManagementSystem.Controllers
     {
         private readonly HotelManagementContext _context;
         private readonly IWebHostEnvironment _environment;
-        private readonly TaipeiClock _Clock;
+        private readonly TaipeiClock _clock;
 
         public RoomTypeController(HotelManagementContext context, IWebHostEnvironment environment, TaipeiClock clock) : base(context)
         {
             _context = context;
             _environment = environment;
-            _Clock = clock;
+            _clock = clock;
         }
 
         [HttpGet]
@@ -94,7 +93,7 @@ namespace HotelManagementSystem.Controllers
                         OperationLog createLog = new OperationLog()
                         {
                             TargetBranchId = model.BranchId,
-                            OperatedAt = _Clock.Now,
+                            OperatedAt = _clock.Now,
                             OperatorEmployeeNumber = currentOperator,
                             OperationTypeId = 5,
                             TargetType = "RoomType",
@@ -137,7 +136,7 @@ namespace HotelManagementSystem.Controllers
                         OperationLog updatedLog = new OperationLog()
                         {
                             TargetBranchId = existingRoomType.BranchId,
-                            OperatedAt = _Clock.Now,
+                            OperatedAt = _clock.Now,
                             OperatorEmployeeNumber = currentOperator,
                             OperationTypeId = 6,
                             TargetType = "RoomType",
@@ -152,7 +151,7 @@ namespace HotelManagementSystem.Controllers
                         OperationLog roomActiveLog = new OperationLog()
                         {
                             TargetBranchId = existingRoomType.BranchId,
-                            OperatedAt = _Clock.Now,
+                            OperatedAt = _clock.Now,
                             OperatorEmployeeNumber = currentOperator,
                             OperationTypeId = model.IsActive ? 8 : 7,
                             TargetType = "RoomType",

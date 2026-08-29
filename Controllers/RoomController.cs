@@ -86,7 +86,7 @@ namespace HotelManagementSystem.Controllers
             {
                 var requestedStatus = model.SupplyStatus?.Trim();
 
-                // PR #31：管理員新增只能 Open / Disabled
+                // 管理員新增只能 Open / Disabled
                 if (requestedStatus != "Open" &&
                     requestedStatus != "Disabled")
                 {
@@ -157,7 +157,6 @@ namespace HotelManagementSystem.Controllers
 
                     SupplyStatus = requestedStatus,
 
-                    // PR #31：
                     // SystemAdmin 不可自行指定 CleaningStatus
                     CleaningStatus = "Clean",
 
@@ -203,7 +202,7 @@ namespace HotelManagementSystem.Controllers
                         $"修改失敗：找不到 ID 為 {model.RoomId} 的房間資料。");
                 }
 
-                // PR #31：房間建立後不可直接換分館
+                // 房間建立後不可直接換分館
                 if (model.BranchId != 0 &&
                     model.BranchId != existingRoom.BranchId)
                 {
@@ -239,7 +238,7 @@ namespace HotelManagementSystem.Controllers
                 var currentStatus = existingRoom.SupplyStatus;
                 var requestedStatus = model.SupplyStatus?.Trim();
 
-                // PR #31：狀態轉換 whitelist
+                // 狀態轉換白名單
                 var isValidTransition =
                     (currentStatus, requestedStatus) switch
                     {
@@ -338,7 +337,6 @@ namespace HotelManagementSystem.Controllers
                 var capacityCheckEndDate = capacityCheckStartDate.AddDays(60);
 
                 // =================================================
-                // PR #31：
                 // 換 RoomType 前檢查「舊房型」少一間後是否 shortage
                 //
                 // 換房型造成 shortage 是硬性禁止，不提供二次確認。
@@ -367,7 +365,6 @@ namespace HotelManagementSystem.Controllers
                 }
 
                 // =================================================
-                // PR #31：
                 // Open → Disabled
                 // =================================================
                 if (isChangingToDisabled &&
@@ -480,11 +477,6 @@ namespace HotelManagementSystem.Controllers
                 existingRoom.SupplyStatus = requestedStatus!;
                 existingRoom.DisabledReason = disabledReason;
 
-                // 不准：
-                // existingRoom.BranchId = model.BranchId;
-
-                // 不准：
-                // existingRoom.CleaningStatus = model.CleaningStatus;
 
                 TempData["SuccessMessage"] =
                     $"修改房間【{roomNumber}】成功！";

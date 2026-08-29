@@ -1,5 +1,6 @@
 ﻿using HotelManagementSystem.Models;
 using HotelManagementSystem.Services;
+using HotelManagementSystem.Helper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -33,8 +34,12 @@ namespace HotelManagementSystem.Controllers
         {
             try
             {
-                DateOnly startDate = DateOnly.Parse(start);
-                DateOnly endDate = DateOnly.Parse(end);
+                if (!DateOnly.TryParseExact(start, "yyyy-MM-dd", out var startDate) ||
+                    !DateOnly.TryParseExact(end, "yyyy-MM-dd", out var endDate) ||
+                    startDate > endDate)
+                {
+                    return Json(new { success = false, message = "日期區間格式不正確。" });
+                }
 
                 await _noShowService.UpdateNoShowsAsync();
 
@@ -62,7 +67,7 @@ namespace HotelManagementSystem.Controllers
                     room_type_snapshot = x.booking.RoomTypeNameSnapshot,
                     price_snapshot = x.booking.NightlyPriceSnapshot,
                     total_amount = x.booking.TotalAmount,
-                    status = x.booking.BookingStatus,
+                    status = StatusDisplayHelper.GetBookingStatusText(x.booking.BookingStatus),
 
                     cancel_cause = x.booking.CancellationCause ?? "",
                     cancel_reason = x.booking.CancellationReason ?? "",
@@ -72,9 +77,9 @@ namespace HotelManagementSystem.Controllers
                     refund_amount = x.booking.BookingStatus == "Cancelled" ? x.booking.TotalAmount : 0,
                     room_no = x.booking.StayRecord != null ? x.booking.StayRecord.RoomNumberSnapshot : "",
                     act_occupancy = x.booking.StayRecord != null ? x.booking.StayRecord.ActualGuestCount : 0,
-                    act_checkin_at = x.booking.StayRecord != null ? Convert.ToString(x.booking.StayRecord.ActualCheckInAt) : "",
+                    act_checkin_at = x.booking.StayRecord != null ? x.booking.StayRecord.ActualCheckInAt.ToString("yyyy-MM-dd HH:mm:ss") : "",
                     checkin_emp = x.booking.StayRecord != null ? x.booking.StayRecord.CheckedInByEmployeeNumber : "",
-                    act_checkout_at = x.booking.StayRecord != null ? Convert.ToString(x.booking.StayRecord.ActualCheckOutAt) : "",
+                    act_checkout_at = x.booking.StayRecord != null && x.booking.StayRecord.ActualCheckOutAt.HasValue ? x.booking.StayRecord.ActualCheckOutAt.Value.ToString("yyyy-MM-dd HH:mm:ss") : "",
                     checkout_emp = x.booking.StayRecord != null ? x.booking.StayRecord.CheckedOutByEmployeeNumber : ""
                 }).ToListAsync();
 
