@@ -86,7 +86,7 @@ namespace HotelManagementSystem.Controllers
             {
                 var requestedStatus = model.SupplyStatus?.Trim();
 
-                // PR #31：管理員新增只能 Open / Disabled
+                // 管理員新增只能 Open / Disabled
                 if (requestedStatus != "Open" &&
                     requestedStatus != "Disabled")
                 {
@@ -104,13 +104,13 @@ namespace HotelManagementSystem.Controllers
                         $"新增失敗：指定的分館 ID ({model.BranchId}) 不存在。");
                 }
 
-                // 驗證房型必須屬於該分館
-                var roomTypeExists = await _context.RoomTypes
-                    .AnyAsync(rt =>
+                // 驗證房型必須屬於該分館，並取得房型名稱供操作紀錄使用。
+                var roomType = await _context.RoomTypes
+                    .FirstOrDefaultAsync(rt =>
                         rt.RoomTypeId == model.RoomTypeId &&
                         rt.BranchId == model.BranchId);
 
-                if (!roomTypeExists)
+                if (roomType == null)
                 {
                     return Fail(
                         "新增失敗：所選房型不屬於指定分館。");
@@ -157,7 +157,6 @@ namespace HotelManagementSystem.Controllers
 
                     SupplyStatus = requestedStatus,
 
-                    // PR #31：
                     // SystemAdmin 不可自行指定 CleaningStatus
                     CleaningStatus = "Clean",
 
@@ -178,7 +177,7 @@ namespace HotelManagementSystem.Controllers
 
                     Description =
                         $"新增房間【{roomNumber}】" +
-                        $"(房型ID: {model.RoomTypeId}, " +
+                        $"(房型: {roomType.RoomTypeName}, " +
                         $"樓層: {model.Floor}, " +
                         $"初始狀態: {requestedStatus})"
                 });
@@ -194,6 +193,7 @@ namespace HotelManagementSystem.Controllers
             {
                 var existingRoom = await _context.Rooms
                     .Include(r => r.StayRecords)
+                    .Include(r => r.RoomType)
                     .FirstOrDefaultAsync(r =>
                         r.RoomId == model.RoomId);
 
@@ -203,7 +203,7 @@ namespace HotelManagementSystem.Controllers
                         $"修改失敗：找不到 ID 為 {model.RoomId} 的房間資料。");
                 }
 
-                // PR #31：房間建立後不可直接換分館
+                // 房間建立後不可直接換分館
                 if (model.BranchId != 0 &&
                     model.BranchId != existingRoom.BranchId)
                 {
@@ -224,22 +224,31 @@ namespace HotelManagementSystem.Controllers
                         $"修改失敗：該分館內已有房號【{roomNumber}】。");
                 }
 
-                // 新 RoomType 必須仍屬於原分館
-                var targetRoomTypeExists = await _context.RoomTypes
-                    .AnyAsync(rt =>
-                        rt.RoomTypeId == model.RoomTypeId &&
-                        rt.BranchId == existingRoom.BranchId);
+                var isRoomTypeChanging =
+                    existingRoom.RoomTypeId != model.RoomTypeId;
+                var targetRoomTypeName = existingRoom.RoomType.RoomTypeName;
 
-                if (!targetRoomTypeExists)
+                if (isRoomTypeChanging)
                 {
-                    return Fail(
-                        "修改失敗：所選房型不屬於該房間目前所屬分館。");
+                    // 新 RoomType 必須仍屬於原分館，並取得名稱供操作紀錄使用。
+                    var targetRoomType = await _context.RoomTypes
+                        .FirstOrDefaultAsync(rt =>
+                            rt.RoomTypeId == model.RoomTypeId &&
+                            rt.BranchId == existingRoom.BranchId);
+
+                    if (targetRoomType == null)
+                    {
+                        return Fail(
+                            "修改失敗：所選房型不屬於該房間目前所屬分館。");
+                    }
+
+                    targetRoomTypeName = targetRoomType.RoomTypeName;
                 }
 
                 var currentStatus = existingRoom.SupplyStatus;
                 var requestedStatus = model.SupplyStatus?.Trim();
 
-                // PR #31：狀態轉換 whitelist
+                // 狀態轉換白名單
                 var isValidTransition =
                     (currentStatus, requestedStatus) switch
                     {
@@ -260,9 +269,6 @@ namespace HotelManagementSystem.Controllers
                     return Fail(
                         $"非法狀態變更：無法將房間供應狀態從【{currentStatus}】變更為【{requestedStatus}】。");
                 }
-
-                var isRoomTypeChanging =
-                    existingRoom.RoomTypeId != model.RoomTypeId;
 
                 var isChangingToDisabled =
                     currentStatus == "Open" &&
@@ -338,7 +344,6 @@ namespace HotelManagementSystem.Controllers
                 var capacityCheckEndDate = capacityCheckStartDate.AddDays(60);
 
                 // =================================================
-                // PR #31：
                 // 換 RoomType 前檢查「舊房型」少一間後是否 shortage
                 //
                 // 換房型造成 shortage 是硬性禁止，不提供二次確認。
@@ -367,7 +372,6 @@ namespace HotelManagementSystem.Controllers
                 }
 
                 // =================================================
-                // PR #31：
                 // Open → Disabled
                 // =================================================
                 if (isChangingToDisabled &&
@@ -427,13 +431,13 @@ namespace HotelManagementSystem.Controllers
 
                         OperationTypeId = 10,
                         TargetType = "Room",
-                        TargetIdentifier = existingRoom.RoomId.ToString(),
+                        TargetIdentifier = roomNumber,
 
                         Description =
                             $"修改房間【{existingRoom.RoomNumber}】" +
                             $"(房號: {existingRoom.RoomNumber} -> {roomNumber}, " +
                             $"樓層: {existingRoom.Floor} -> {model.Floor}, " +
-                            $"房型ID: {existingRoom.RoomTypeId} -> {model.RoomTypeId})"
+                            $"房型: {existingRoom.RoomType.RoomTypeName} -> {targetRoomTypeName})"
                     });
                 }
 
@@ -447,7 +451,7 @@ namespace HotelManagementSystem.Controllers
 
                         OperationTypeId = 11,
                         TargetType = "Room",
-                        TargetIdentifier = existingRoom.RoomId.ToString(),
+                        TargetIdentifier = roomNumber,
 
                         Description =
                             $"停用房間【{roomNumber}】" +
@@ -464,7 +468,7 @@ namespace HotelManagementSystem.Controllers
 
                         OperationTypeId = 12,
                         TargetType = "Room",
-                        TargetIdentifier = existingRoom.RoomId.ToString(),
+                        TargetIdentifier = roomNumber,
 
                         Description =
                             $"恢復開放房間【{roomNumber}】"
@@ -480,11 +484,6 @@ namespace HotelManagementSystem.Controllers
                 existingRoom.SupplyStatus = requestedStatus!;
                 existingRoom.DisabledReason = disabledReason;
 
-                // 不准：
-                // existingRoom.BranchId = model.BranchId;
-
-                // 不准：
-                // existingRoom.CleaningStatus = model.CleaningStatus;
 
                 TempData["SuccessMessage"] =
                     $"修改房間【{roomNumber}】成功！";

@@ -1,13 +1,9 @@
-﻿using HotelManagementSystem.Models;
+﻿using HotelManagementSystem.Helper;
+using HotelManagementSystem.Models;
 using HotelManagementSystem.Models.Entities;
 using HotelManagementSystem.Services;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace HotelManagementSystem.Controllers
 {
@@ -15,16 +11,15 @@ namespace HotelManagementSystem.Controllers
     {
         private readonly HotelManagementContext _context;
         private readonly IWebHostEnvironment _environment;
-        private readonly TaipeiClock _Clock;
+        private readonly TaipeiClock _clock;
 
         public BranchController(HotelManagementContext context, IWebHostEnvironment environment, TaipeiClock taipeiClock) : base(context)
         {
             _context = context;
             _environment = environment;
-            _Clock = taipeiClock;
+            _clock = taipeiClock;
         }
 
-        // GET: /Branch/
         [HttpGet]
         public async Task<IActionResult> Index()
         {
@@ -36,18 +31,16 @@ namespace HotelManagementSystem.Controllers
             return View(branches);
         }
 
-        // POST: /Branch/Save
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Save(Branch branch)
         {
             var currentOperator = CurrentEmployeeNumber!;
 
-            // 💡 1. 移除導覽屬性驗證（避免 ModelState 因相關連的 Rooms / RoomTypes 為 null 而無效）
+            // 前端不提供導覽屬性，避免其驗證造成 ModelState 無效。
             ModelState.Remove("Rooms");
             ModelState.Remove("RoomTypes");
 
-            // 💡 2. 檢查圖片檔案是否存在 (針對相對路徑)
             if (!string.IsNullOrEmpty(branch.ImageUrl) && !branch.ImageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
             {
                 string cleanPath = branch.ImageUrl.TrimStart('~', '/', '\\');
@@ -55,13 +48,11 @@ namespace HotelManagementSystem.Controllers
 
                 if (!System.IO.File.Exists(physicalPath))
                 {
-                    // 格式化為與房型頁面相同的錯誤訊息格式
                     string normalizedPath = cleanPath.Replace('\\', '/');
                     ModelState.AddModelError("ImageUrl", $"伺服器找不到圖片檔案：wwwroot/{normalizedPath}");
                 }
             }
 
-            // 💡 3. 模型驗證未通過處理
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values
@@ -74,44 +65,49 @@ namespace HotelManagementSystem.Controllers
                 return View("Index", branches);
             }
 
-            // branch.Phone 正規化
-            string phone = branch.Phone.Trim();
-            phone = phone.Replace(" ", "");
-            phone = phone.Replace("-", "");
-            if (string.IsNullOrEmpty(phone) || !phone.All(char.IsDigit))
+            if (!PhoneHelper.TryNormalize(branch.Phone, out var normalizedPhone))
             {
-                TempData["ErrorMessage"] = "電話只能包含數字、空白或半形連字號，修改失敗！";
+                TempData["ErrorMessage"] = "電話格式不正確，移除空白與半形連字號後須為 1～20 碼半形數字。";
                 return RedirectToAction(nameof(Index));
             }
-            branch.Phone = phone;
+            branch.Phone = normalizedPhone;
 
             OperationLog bookingStatusLog = new OperationLog();
             int isBookingOpenOrStopped = 0;
 
-            // 💡 4. 資料庫存取與 TempData 提示訊息
             try
             {
                 if (branch.BranchId == 0)
                 {
-                    // 【新增分館】                   
-                    _context.Branches.Add(branch);
-                    TempData["SuccessMessage"] = $"新增分館【{branch.BranchName}】成功！";
-                    await _context.SaveChangesAsync();
+                    await using var transaction = await _context.Database.BeginTransactionAsync();
 
-                    bookingStatusLog.TargetBranchId = branch.BranchId;
-                    bookingStatusLog.OperatedAt = _Clock.Now;
-                    bookingStatusLog.OperatorEmployeeNumber = currentOperator;
-                    bookingStatusLog.OperationTypeId = 1;
-                    bookingStatusLog.TargetType = "Branch";
-                    bookingStatusLog.TargetIdentifier = branch.BranchId.ToString();
-                    bookingStatusLog.Description = $"建立{branch.BranchName}商旅";
+                    try
+                    {
+                        _context.Branches.Add(branch);
+                        await _context.SaveChangesAsync();
 
-                    _context.Add(bookingStatusLog);
+                        bookingStatusLog.TargetBranchId = branch.BranchId;
+                        bookingStatusLog.OperatedAt = _clock.Now;
+                        bookingStatusLog.OperatorEmployeeNumber = currentOperator;
+                        bookingStatusLog.OperationTypeId = 1;
+                        bookingStatusLog.TargetType = "Branch";
+                        bookingStatusLog.TargetIdentifier = branch.BranchName;
+                        bookingStatusLog.Description = $"建立{branch.BranchName}商旅";
+
+                        _context.Add(bookingStatusLog);
+                        await _context.SaveChangesAsync();
+                        await transaction.CommitAsync();
+
+                        TempData["SuccessMessage"] = $"新增分館【{branch.BranchName}】成功！";
+                    }
+                    catch
+                    {
+                        await transaction.RollbackAsync();
+                        throw;
+                    }
                 }
                 else
                 {
-
-                    // 【修改分館】
                     var existingBranch = await _context.Branches.FindAsync(branch.BranchId);
 
                     if (existingBranch == null)
@@ -129,48 +125,41 @@ namespace HotelManagementSystem.Controllers
                     existingBranch.Description != branch.Description;
                     bool bookingStatusChanged = existingBranch.AcceptsNewBookings != branch.AcceptsNewBookings;
 
-
-                   
-                        existingBranch.BranchName = branch.BranchName;
-                        existingBranch.Region = branch.Region;
-                        existingBranch.Phone = branch.Phone;
-                        existingBranch.Address = branch.Address;
-                        // 如果更改開放訂房狀態
-                        if (bookingStatusChanged)
+                    existingBranch.BranchName = branch.BranchName;
+                    existingBranch.Region = branch.Region;
+                    existingBranch.Phone = branch.Phone;
+                    existingBranch.Address = branch.Address;
+                    if (bookingStatusChanged)
+                    {
+                        if (existingBranch.AcceptsNewBookings == false)
                         {
-                            if (existingBranch.AcceptsNewBookings == false)
-                            {
-                                //開放新訂房
-                                isBookingOpenOrStopped = 3;
-                            }
-                            else
-                            {
-                                //停止新訂房
-                                isBookingOpenOrStopped = 4;
-                            }
+                            isBookingOpenOrStopped = 3;
                         }
-
-                        existingBranch.AcceptsNewBookings = branch.AcceptsNewBookings;
-
-                        // 如果名稱、電話、地址、區域、介紹、圖片有更改
-                        if (hasGeneralChanges)
+                        else
                         {
-                            
-                            existingBranch.ImageUrl = branch.ImageUrl;
-                            existingBranch.Description = branch.Description;
-
-                            TempData["SuccessMessage"] = $"修改分館【{branch.BranchName}】成功！";
-                            await _context.SaveChangesAsync();
-
-                            bookingStatusLog.TargetBranchId = branch.BranchId;
-                            bookingStatusLog.OperatedAt = _Clock.Now;
-                            bookingStatusLog.OperatorEmployeeNumber = currentOperator;
-                            bookingStatusLog.OperationTypeId = 2;
-                            bookingStatusLog.TargetType = "Branch";
-                            bookingStatusLog.TargetIdentifier = branch.BranchId.ToString();
-                            bookingStatusLog.Description = $"修改{branch.BranchName}商旅資料";//考慮加入修改細節
-                            _context.Add(bookingStatusLog);
+                            isBookingOpenOrStopped = 4;
                         }
+                    }
+
+                    existingBranch.AcceptsNewBookings = branch.AcceptsNewBookings;
+
+                    if (hasGeneralChanges)
+                    {
+
+                        existingBranch.ImageUrl = branch.ImageUrl;
+                        existingBranch.Description = branch.Description;
+
+                        TempData["SuccessMessage"] = $"修改分館【{branch.BranchName}】成功！";
+
+                        bookingStatusLog.TargetBranchId = branch.BranchId;
+                        bookingStatusLog.OperatedAt = _clock.Now;
+                        bookingStatusLog.OperatorEmployeeNumber = currentOperator;
+                        bookingStatusLog.OperationTypeId = 2;
+                        bookingStatusLog.TargetType = "Branch";
+                        bookingStatusLog.TargetIdentifier = branch.BranchName;
+                        bookingStatusLog.Description = $"修改{branch.BranchName}商旅資料";
+                        _context.Add(bookingStatusLog);
+                    }
                 }
                 if (isBookingOpenOrStopped != 0)
                 {
@@ -178,11 +167,11 @@ namespace HotelManagementSystem.Controllers
                     var updateLog = new OperationLog()
                     {
                         TargetBranchId = branch.BranchId,
-                        OperatedAt = _Clock.Now,
+                        OperatedAt = _clock.Now,
                         OperatorEmployeeNumber = currentOperator,
                         OperationTypeId = isBookingOpenOrStopped,
                         TargetType = "Branch",
-                        TargetIdentifier = branch.BranchId.ToString(),
+                        TargetIdentifier = branch.BranchName,
                         Description = $"修改{branch.BranchName}商旅資料 將{branch.BranchName}商旅設定為{temp}新訂房。"
                     };
 

@@ -141,9 +141,9 @@
                     var tr = document.createElement("tr");
 
                     var badgeClass = "text-bg-secondary";
-                    if (item.status === "Paid" || item.status === "Completed") badgeClass = "text-bg-success";
-                    if (item.status === "CheckedIn") badgeClass = "text-bg-warning";
-                    if (item.status === "Cancelled") badgeClass = "text-bg-danger";
+                    if (item.status === "已付款" || item.status === "已完成") badgeClass = "text-bg-success";
+                    if (item.status === "入住中") badgeClass = "text-bg-warning";
+                    if (item.status === "已取消") badgeClass = "text-bg-danger";
 
                     var fields = [
                         item.booking_no, item.branch_name, item.created_at, item.guest_name,

@@ -10,21 +10,21 @@ namespace HotelManagementSystem.Controllers
     public class StayController : BranchEmployeeControllerBase
     {
         private readonly HotelManagementContext _context;
-        private readonly TaipeiClock _Clock;
-        private readonly NoShowService _NoShowService;
+        private readonly TaipeiClock _clock;
+        private readonly NoShowService _noShowService;
 
         public StayController(HotelManagementContext context, TaipeiClock clock, NoShowService noShowService)
             : base(context)
         {
             _context = context;
-            _Clock = clock;
-            _NoShowService = noShowService;
+            _clock = clock;
+            _noShowService = noShowService;
         }
 
         [HttpGet]
         public async Task<IActionResult> CheckIn(string? bookingNumber)
         {
-            await _NoShowService.UpdateNoShowsAsync();
+            await _noShowService.UpdateNoShowsAsync();
 
             var model = new CheckInViewModel
             {
@@ -53,7 +53,7 @@ namespace HotelManagementSystem.Controllers
 
             var checkInStart = booking.CheckInDate.ToDateTime(new TimeOnly(16, 0));
             var checkOutDeadline = booking.CheckOutDate.ToDateTime(new TimeOnly(12, 0));
-            var now = _Clock.Now;
+            var now = _clock.Now;
 
             if (now < checkInStart)
             {
@@ -114,7 +114,7 @@ namespace HotelManagementSystem.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CheckIn(CheckInViewModel inputModel)
         {
-            await _NoShowService.UpdateNoShowsAsync();
+            await _noShowService.UpdateNoShowsAsync();
 
             var model = new CheckInViewModel
             {
@@ -145,7 +145,7 @@ namespace HotelManagementSystem.Controllers
 
             var checkInStart = booking.CheckInDate.ToDateTime(new TimeOnly(16, 0));
             var checkOutDeadline = booking.CheckOutDate.ToDateTime(new TimeOnly(12, 0));
-            var now = _Clock.Now;
+            var now = _clock.Now;
 
             if (now < checkInStart)
             {
@@ -233,7 +233,7 @@ namespace HotelManagementSystem.Controllers
         [HttpGet]
         public async Task<IActionResult> CheckOut(string? searchValue)
         {
-            await _NoShowService.UpdateNoShowsAsync();
+            await _noShowService.UpdateNoShowsAsync();
 
             var model = new CheckOutViewModel
             {
@@ -289,7 +289,7 @@ namespace HotelManagementSystem.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CheckOut(CheckOutViewModel inputModel)
         {
-            await _NoShowService.UpdateNoShowsAsync();
+            await _noShowService.UpdateNoShowsAsync();
 
             var model = new CheckOutViewModel
             {
@@ -315,7 +315,7 @@ namespace HotelManagementSystem.Controllers
                 return View(model);
             }
 
-            var now = _Clock.Now;
+            var now = _clock.Now;
             var room = _context.Rooms.FirstOrDefault(r => r.RoomId == stayRecord.RoomId
                                                        && r.BranchId == CurrentBranchId);
 

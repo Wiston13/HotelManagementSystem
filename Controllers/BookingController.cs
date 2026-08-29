@@ -1,14 +1,11 @@
 ﻿using HotelManagementSystem.Models;
+using HotelManagementSystem.Models.BookingSearchModel;
 using HotelManagementSystem.Models.Entities;
 using HotelManagementSystem.Models.ViewModels.Booking;
 using HotelManagementSystem.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Routing.Constraints;
 using Microsoft.EntityFrameworkCore;
-using System.Diagnostics;
-using HotelManagementSystem.Models.BookingSearchModel;
-using System.Text.RegularExpressions;
-
+using HotelManagementSystem.Helper;
 
 namespace HotelManagementSystem.Controllers
 {
@@ -18,7 +15,6 @@ namespace HotelManagementSystem.Controllers
         private readonly TaipeiClock _taipeiClock;
         private readonly NoShowService _noShowService;
         private readonly RoomAvailabilityService _roomAvailabilityService;
-        
 
         public BookingController(HotelManagementContext context, TaipeiClock taipeiClock, NoShowService noShowService, RoomAvailabilityService roomAvailabilityService)
         {
@@ -28,17 +24,11 @@ namespace HotelManagementSystem.Controllers
             _roomAvailabilityService = roomAvailabilityService;
         }
 
-
-
         [HttpGet]
         public IActionResult RoomSelection(int branchId, DateOnly checkIn, DateOnly checkOut, int guestCount)
         {
             // 日期後端驗證
-            var today = _taipeiClock.Today;
-            var maxBookingDate = today.AddDays(60);
-            if (checkIn < today ||
-                checkOut <= checkIn ||
-                checkOut > maxBookingDate)
+            if (!IsValidBookingDateRange(checkIn, checkOut))
             {
                 return BadRequest("入住或退房日期不符合可預訂範圍。");
             }
@@ -53,16 +43,13 @@ namespace HotelManagementSystem.Controllers
                 return NotFound("找不到指定的分館，或該分館目前不開放訂房。");
             }
 
-            // 查詢該分館 符合所選房型人數 且 啟用 的房型
+            // 查詢該分館符合入住人數且已啟用的房型
             var roomTypes = _context.RoomTypes
-                .Where(r => 
-                    r.BranchId == branchId && 
-                    r.MaxOccupancy == guestCount && 
+                .Where(r =>
+                    r.BranchId == branchId &&
+                    r.MaxOccupancy == guestCount &&
                     r.IsActive
-                ).ToList();            
-
-
-
+                ).ToList();
 
             // 只留下目前仍有空房的房型
             var availableRoomTypes = roomTypes
@@ -90,7 +77,6 @@ namespace HotelManagementSystem.Controllers
                 .Where(r => r.AvailableRooms > 0)
                 .ToList();
 
-
             // 沒有任何可預訂房型，回到首頁
             if (!availableRoomTypes.Any())
             {
@@ -117,9 +103,7 @@ namespace HotelManagementSystem.Controllers
             return View(model);
         }
 
-
-
-        private PaymentViewModel? GetPaymentViewModel(int branchId, DateOnly checkIn, DateOnly checkOut, int roomTypeId, int guestCount) 
+        private PaymentViewModel? GetPaymentViewModel(int branchId, DateOnly checkIn, DateOnly checkOut, int roomTypeId, int guestCount)
         {
             // 確認分館存在且仍接受新訂房
             var branch = _context.Branches
@@ -167,11 +151,7 @@ namespace HotelManagementSystem.Controllers
         public IActionResult PaymentPost(int branchId, DateOnly checkIn, DateOnly checkOut, int roomTypeId, int guestCount)
         {
             // 日期後端驗證
-            var today = _taipeiClock.Today;
-            var maxBookingDate = today.AddDays(60);
-            if (checkIn < today ||
-                checkOut <= checkIn ||
-                checkOut > maxBookingDate)
+            if (!IsValidBookingDateRange(checkIn, checkOut))
             {
                 return BadRequest("入住或退房日期不符合可預訂範圍。");
             }
@@ -191,11 +171,7 @@ namespace HotelManagementSystem.Controllers
         public IActionResult PaymentGet(int branchId, DateOnly checkIn, DateOnly checkOut, int roomTypeId, int guestCount)
         {
             // 日期後端驗證
-            var today = _taipeiClock.Today;
-            var maxBookingDate = today.AddDays(60);
-            if (checkIn < today ||
-                checkOut <= checkIn ||
-                checkOut > maxBookingDate)
+            if (!IsValidBookingDateRange(checkIn, checkOut))
             {
                 return BadRequest("入住或退房日期不符合可預訂範圍。");
             }
@@ -209,8 +185,6 @@ namespace HotelManagementSystem.Controllers
 
             return View(model);
         }
-
-
 
         [HttpPost]
         public IActionResult Success(BookingPaymentInputViewModel input)
@@ -232,15 +206,7 @@ namespace HotelManagementSystem.Controllers
             {
                 return BadRequest("請輸入聯絡電話。");
             }
-            // 移除所有空白與半形"-"
-            var normalizedPhone = new string(
-                input.ContactPhone
-                    .Where(c => !char.IsWhiteSpace(c) && c != '-')
-                    .ToArray());
-            // 正規化後必須有值，且只能包含 ASCII 0～9
-            if (string.IsNullOrEmpty(normalizedPhone) || 
-                normalizedPhone.Length > 20 || 
-                !normalizedPhone.All(c => c >= '0' && c <= '9'))
+            if (!PhoneHelper.TryNormalize(input.ContactPhone, out var normalizedPhone))
             {
                 return BadRequest("聯絡電話格式不正確。");
             }
@@ -278,14 +244,8 @@ namespace HotelManagementSystem.Controllers
                 return BadRequest("CVC 格式不正確。");
             }
 
-
-
             // 訂房日期後端驗證
-            var today = _taipeiClock.Today;
-            var maxBookingDate = today.AddDays(60);
-            if (input.CheckInDate < today ||
-                input.CheckOutDate <= input.CheckInDate ||
-                input.CheckOutDate > maxBookingDate)
+            if (!IsValidBookingDateRange(input.CheckInDate, input.CheckOutDate))
             {
                 return BadRequest("入住或退房日期不符合可預訂範圍。");
             }
@@ -418,13 +378,10 @@ namespace HotelManagementSystem.Controllers
                     CreatedAt = _taipeiClock.Now
                 };
 
-                // 加入 DbContext
                 _context.Bookings.Add(booking);
 
-                // 寫入資料庫
                 _context.SaveChanges();
 
-                // 交易完成
                 transaction.Commit();
 
                 // 保存剛建立成功的訂單編號，供 GET Success 使用
@@ -433,11 +390,11 @@ namespace HotelManagementSystem.Controllers
                 // Redirect 到 GET Success，避免重新整理時重複 POST
                 return RedirectToAction(nameof(Success));
             }
-            catch 
+            catch
             {
                 transaction.Rollback();
                 throw;
-            }            
+            }
         }
 
         [HttpGet]
@@ -461,8 +418,6 @@ namespace HotelManagementSystem.Controllers
             {
                 return NotFound("找不到指定的分館。");
             }
-            
-
             var model = new SuccessViewModel
             {
                 BookingNumber = booking.BookingNumber,
@@ -470,16 +425,10 @@ namespace HotelManagementSystem.Controllers
                 RoomTypeName = booking.RoomTypeNameSnapshot,
                 CheckInDate = booking.CheckInDate,
                 CheckOutDate = booking.CheckOutDate,
-                //Email = booking.Email
             };
 
             return View(model);
         }
-
-
-        // =========================
-        // Private Methods
-        // =========================
 
         // 信用卡卡號 Luhn 驗證
         private bool IsValidCardNumber(string cardNumber)
@@ -528,42 +477,11 @@ namespace HotelManagementSystem.Controllers
                    (expiryYear == currentYear && expiryMonth < currentMonth);
         }
 
-
-
-
-
-
-        //把資料庫BookingStatus英文轉成中文
-        private string StatusToChenese(string input)
-        {
-            string output = "";
-            switch (input)
-            {
-                case "Completed":
-                    output = "已完成";
-                    break;
-                case "CheckedIn":
-                    output = "入住中";
-                    break;
-                case "Cancelled":
-                    output = "已取消";
-                    break;
-                case "NoShow":
-                    output = "逾期未入住";
-                    break;
-                case "Paid":
-                    output = "已付款";
-                    break;
-            }
-            return output;
-        }
-
         [HttpGet]
         public async Task<IActionResult> Lookup(string BookingNum, string Phone)
         {
             var model = new BookingData();
 
-            // 檢查bookingNum 和phone的值是否為空
             if (string.IsNullOrWhiteSpace(BookingNum) || string.IsNullOrWhiteSpace(Phone))
             {
                 return View(model);
@@ -573,31 +491,23 @@ namespace HotelManagementSystem.Controllers
 
             BookingNum = BookingNum.Trim();
 
-            //前端phone正規化
-            Phone = Phone.Trim();
-            Phone = Regex.Replace(Phone, " ", "");
-            Phone = Regex.Replace(Phone, "-", "");
-            if (!Phone.All(char.IsDigit))
+            if (!PhoneHelper.TryNormalize(Phone, out var normalizedPhone))
             {
                 return View(model);
             }
 
-            // 查詢
-            var booking = await _context.Bookings.AsNoTracking().FirstOrDefaultAsync(b => b.BookingNumber == BookingNum && b.ContactPhone == Phone);
+            var booking = await _context.Bookings.AsNoTracking().FirstOrDefaultAsync(b => b.BookingNumber == BookingNum && b.ContactPhone == normalizedPhone);
 
-            // 沒結果吐回空資料及noresult 
             if (booking == null)
             {
                 model.BookingNum = BookingNum;
-                model.Phone = Phone;
+                model.Phone = normalizedPhone;
                 ViewBag.NoResult = true;
                 return View(model);
             }
 
-            // 查詢訂單分館
             var branch = await _context.Branches.AsNoTracking().FirstOrDefaultAsync(b => b.BranchId == booking!.BranchId);
 
-            // 打包結果
             model.BookingNum = booking.BookingNumber;
             model.Phone = booking.ContactPhone;
             model.BranchName = branch?.BranchName;
@@ -607,8 +517,18 @@ namespace HotelManagementSystem.Controllers
             model.BookingDate = booking.CreatedAt;
             model.Name = booking.BookerName;
             model.Price = booking.TotalAmount.ToString("N0");
-            model.BookingStatus = StatusToChenese(booking.BookingStatus);
+            model.BookingStatus = StatusDisplayHelper.GetBookingStatusText(booking.BookingStatus);
             return View(model);
+        }
+
+        private bool IsValidBookingDateRange(DateOnly checkIn, DateOnly checkOut)
+        {
+            var today = _taipeiClock.Today;
+            var maxBookingDate = today.AddDays(60);
+
+            return checkIn >= today &&
+                   checkOut > checkIn &&
+                   checkOut <= maxBookingDate;
         }
     }
 }

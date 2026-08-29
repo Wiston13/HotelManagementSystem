@@ -292,6 +292,14 @@ namespace HotelManagementSystem.Controllers
                     return RedirectToAction(nameof(Index));
                 }
 
+                var newReason = disabledReason.Trim();
+
+                if (newReason.Length > 200)
+                {
+                    TempData["ErrorMessage"] = "停用原因不可超過 200 字。";
+                    return RedirectToAction(nameof(Index));
+                }
+
                 if (room.SupplyStatus == "Open")
                 {
                     var today = _taipeiClock.Today;
@@ -308,7 +316,7 @@ namespace HotelManagementSystem.Controllers
                             RoomId = room.RoomId,
                             RoomNumber = room.RoomNumber,
                             TargetStatus = targetStatus,
-                            DisabledReason = disabledReason.Trim(),
+                            DisabledReason = newReason,
                             Shortages = shortages
                                 .OrderBy(shortage => shortage.Key)
                                 .Select(shortage => new CapacityShortageViewModel
@@ -325,7 +333,7 @@ namespace HotelManagementSystem.Controllers
                 }
 
                 room.SupplyStatus = "Disabled";
-                room.DisabledReason = disabledReason.Trim();
+                room.DisabledReason = newReason;
             }
             else
             {
@@ -406,6 +414,12 @@ namespace HotelManagementSystem.Controllers
 
             var oldReason = room.DisabledReason;
             var newReason = disabledReason.Trim();
+
+            if (newReason.Length > 200)
+            {
+                TempData["ErrorMessage"] = "停用原因不可超過 200 字。";
+                return BadRequest();
+            }
 
             if (room.DisabledReason == newReason)
             {

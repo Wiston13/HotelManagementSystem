@@ -5,7 +5,7 @@
         private static readonly Dictionary<string, string> BookingStatusTexts = new()
         {
             ["Paid"] = "已付款",
-            ["CheckedIn"] = "已入住",
+            ["CheckedIn"] = "入住中",
             ["Completed"] = "已完成",
             ["Cancelled"] = "已取消",
             ["NoShow"] = "逾期未入住"
