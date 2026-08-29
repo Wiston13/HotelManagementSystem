@@ -65,9 +65,9 @@
 
                         <!-- 人數 (佔 2 份) -->
                         <div class="col-md-2">
-                            <label class="form-label text-muted small">房型人數</label>
+                            <label class="form-label text-muted small">入住人數</label>
                             <select class="form-select" id="RoomSelect">
-                                <option value="" disabled selected hidden>選擇房型人數</option>
+                                <option value="" disabled selected hidden>選擇入住人數</option>
                                 <option value="" disabled >請先選擇分館</option>                            
                             </select>
                         </div>
@@ -218,7 +218,7 @@
 
         // 清空原本的人數選項
         RoomSelect.innerHTML =
-            '<option value="" disabled selected hidden>選擇房型人數</option>';
+            '<option value="" disabled selected hidden>選擇入住人數</option>';
 
         // 取得不重複的人數
         let occupancies = [
@@ -237,14 +237,7 @@
             option.value = num;
 
             // UI 顯示文字
-            let roomText = {
-                1: "單人房",
-                2: "雙人房",
-                3: "三人房",
-                4: "四人房",
-                6: "六人房"
-            };
-            option.textContent = roomText[num] ?? `${num}人房`;
+            option.textContent = `${num} 人`;
 
             RoomSelect.appendChild(option);
         });
