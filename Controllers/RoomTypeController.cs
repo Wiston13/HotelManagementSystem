@@ -22,10 +22,8 @@ namespace HotelManagementSystem.Controllers
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            // 撈出分館清單傳給選單
             ViewBag.Branches = await _context.Branches.ToListAsync();
 
-            // 撈出所有房型資料傳給頁面
             var roomTypes = await _context.RoomTypes.ToListAsync();
             return View(roomTypes);
         }
@@ -36,15 +34,13 @@ namespace HotelManagementSystem.Controllers
         {
             var currentOperator = CurrentEmployeeNumber!;
 
-            //  1. 清除 EF Core 導覽屬性的驗證錯誤（解決 ModelState 永遠無效的主因）
+            // 前端不提供導覽屬性，避免其驗證造成 ModelState 無效。
             ModelState.Remove("Branch");
             ModelState.Remove("Rooms");
             ModelState.Remove("Bookings");
 
-            //  2. 彈性檢查本地圖片檔案是否存在（若為相對路徑）
             if (!string.IsNullOrEmpty(model.ImageUrl) && !model.ImageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
             {
-                // 清理路徑開頭的 '~', '/', '\'
                 string cleanPath = model.ImageUrl.TrimStart('~', '/', '\\');
                 string physicalPath = Path.Combine(_environment.WebRootPath, cleanPath);
 
@@ -54,7 +50,6 @@ namespace HotelManagementSystem.Controllers
                 }
             }
 
-            //  3. 模型驗證未通過處理
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values
@@ -67,10 +62,6 @@ namespace HotelManagementSystem.Controllers
                 return View("Index", await _context.RoomTypes.ToListAsync());
             }
 
-
-
-
-            //  4. 資料庫存取與例外處理
             try
             {
                 if (model.RoomTypeId == 0)
@@ -170,8 +161,6 @@ namespace HotelManagementSystem.Controllers
                     existingRoomType.IsActive = model.IsActive;
                     existingRoomType.ImageUrl = model.ImageUrl;
                     existingRoomType.Description = model.Description;
-
-
                     await _context.SaveChangesAsync();
                     TempData["SuccessMessage"] = "修改房型成功！";
 

@@ -35,11 +35,9 @@ namespace HotelManagementSystem.Controllers
             };
         }
 
-        //查詢訂單
         [HttpGet]
         public async Task<IActionResult> BookingSearch(string keyword, string dateRange, string bookingStatus)
         {
-            // 刷新 noshow
             await _noShowService.UpdateNoShowsAsync();
 
             // 送回前端保存查詢欄位用
@@ -49,7 +47,6 @@ namespace HotelManagementSystem.Controllers
 
             List<BookingData> bookingData = new List<BookingData>();
 
-            // 驗證搜尋為空則傳回空資料
             if (string.IsNullOrWhiteSpace(keyword))
             {
                 return View(bookingData);
@@ -63,7 +60,6 @@ namespace HotelManagementSystem.Controllers
                 query = query.Where(x => x.BookingNumber!.Contains(keyword) || x.BookerName!.Contains(keyword) || x.ContactPhone!.Contains(keyword));
             }
 
-            // dateRange 查詢時間範圍
             if (!string.IsNullOrWhiteSpace(dateRange))
             {
                 var dates = dateRange.Split(" - ");
@@ -77,13 +73,10 @@ namespace HotelManagementSystem.Controllers
                 }
             }
 
-
-            // bookingstatu查詢訂單狀態
             if (!string.IsNullOrWhiteSpace(bookingStatus))
             {
                 query = query.Where(x => x.BookingStatus == GetBookingStatusCode(bookingStatus));
             }
-
 
             bookingData = await query.Select(x => new BookingData
             {
@@ -106,8 +99,6 @@ namespace HotelManagementSystem.Controllers
             return View(bookingData);
         }
 
-        // 加入operationLog
-        // 取消訂單 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> BookingCancel(string bookingNum, string keyword, string dateRange,
@@ -116,7 +107,6 @@ namespace HotelManagementSystem.Controllers
             var now = _clock.Now;
             await _noShowService.UpdateNoShowsAsync();
 
-            // 查詢訂單
             var result = _context.Bookings.FirstOrDefault(x => x.BookingNumber == bookingNum && x.BranchId == CurrentBranchId && x.StayRecord == null);
             if (result == null || result.BookingStatus != "Paid")
             {
@@ -124,16 +114,13 @@ namespace HotelManagementSystem.Controllers
                 return RedirectToAction("BookingSearch", new { keyword, dateRange, bookingStatus = keyStatus });
             }
 
-            // 判斷顧客因素+是否超過取消時間
-
+            // 顧客因素僅能在入住日前取消。
             if (cancelCause == "顧客因素" && DateOnly.FromDateTime(now) >= result.CheckInDate)
             {
                 TempData["BookingStatusError"] = "超過顧客取消時間，無法取消訂單";
                 return RedirectToAction("BookingSearch", new { keyword, dateRange, bookingStatus = keyStatus });
             }
-
-
-            //判斷取消因素是否正確
+            // 取消因素僅允許顧客因素或飯店因素。
             if (cancelCause != "顧客因素" && cancelCause != "飯店因素")
             {
                 TempData["BookingStatusError"] = "取消訂單資料錯誤，無法取消訂單";
@@ -141,7 +128,7 @@ namespace HotelManagementSystem.Controllers
             }
             result.CancellationCause = cancelCause == "顧客因素" ? "GuestRequest" : "HotelUnableToFulfill";
 
-            // 限制500字
+            // 取消理由上限為 500 字。
             if (string.IsNullOrWhiteSpace(cancelReason))
             {
                 TempData["BookingStatusError"] = "取消理由不可為空";
@@ -161,8 +148,6 @@ namespace HotelManagementSystem.Controllers
 
             result.BookingStatus = "Cancelled";
 
-
-            // 新增操作紀錄
             var operationLog = new OperationLog
             {
                 TargetBranchId = result.BranchId,
@@ -187,7 +172,5 @@ namespace HotelManagementSystem.Controllers
 
             return RedirectToAction("BookingSearch", new { keyword = bookingNum, dateRange, bookingStatus = "" });
         }
-
-
     }
 }

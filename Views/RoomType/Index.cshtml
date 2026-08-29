@@ -230,7 +230,6 @@
         function confirmAndSubmit() {
             const form = document.getElementById('roomTypeForm');
 
-            // 1. 檢查 HTML5 必填欄位 (required)
             if (!form.checkValidity()) {
                 form.reportValidity();
                 return;
@@ -255,7 +254,6 @@
                 `• 狀態：${status}\n` +
                 `• 圖片路徑：${imgUrl}`;
 
-            // 2. 確定後直接送出 Form
             if (confirm(message)) {
                 form.submit();
             }

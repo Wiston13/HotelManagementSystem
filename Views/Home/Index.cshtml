@@ -6,9 +6,7 @@
     <link rel="stylesheet" href="~/css/home/Index.css" asp-append-version="true" />
 }
 
-
 @model HotelManagementSystem.Models.ViewModels.Home.HomeViewModel
-
 
 <!-- 插件區 -->
 @*flatpickr 用來調整日期選取版型的插件*@
@@ -16,8 +14,6 @@
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/zh.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-
-
 
 @if (TempData["NoAvailableRoom"] != null)
 {
@@ -27,7 +23,6 @@
 }
 
 <!-- 以下是查詢區塊 -->
-<!-- Index.cshtml -->
 <div class="container-fluid bg-white sticky-top shadow-sm py-2" style="top: 0; z-index: 1020;">
     <div class="container my-1">
         <!-- 查詢區塊 Card -->
@@ -39,7 +34,6 @@
                         <!-- 分館 (佔 3 份) -->
                         <div class="col-md-3">
                             <label class="form-label text-muted small">分館</label>
-                            <!-- 這裡之後會換成 ASP.NET 的 Helper -->
                             <!-- 此處判斷資料異常時顯示預設文字-->
                             <select class="form-select" id="HotelSelect" name="branchId">
 
@@ -175,7 +169,7 @@
             }
         }
 
-        // 房型人數欄位判斷   
+        // 入住人數欄位判斷
         if (RoomSelect.value === "") {
             RoomSelect.classList.add("is-invalid");
             isValid = false;
@@ -202,8 +196,6 @@
 
     });
 
-
-
     HotelSelect.addEventListener("change", function() 
     {
         let selectedBranchId = Number(this.value);
@@ -216,7 +208,6 @@
                 && roomType.isActive;
         });
 
-        // 清空原本的人數選項
         RoomSelect.innerHTML =
             '<option value="" disabled selected hidden>選擇入住人數</option>';
 
@@ -229,14 +220,9 @@
             )
         ];
 
-        // 建立下拉選項
         occupancies.forEach(function(num) {
-
-            // 建立一個 HTML <option> 元素
             let option = document.createElement("option");
             option.value = num;
-
-            // UI 顯示文字
             option.textContent = `${num} 人`;
 
             RoomSelect.appendChild(option);
@@ -267,8 +253,6 @@
 </script>
 
 
-<!--      html       -->
-
 <div class="container my-5">
     <!-- 1. 區域選擇按鈕區塊 -->
     <!-- 地區選擇按鈕區塊 (加入左右箭頭與包覆層) -->
@@ -280,8 +264,6 @@
 
         <!-- 按鈕滾動區塊 -->
         <div class="region-scroll" id="regionContainer">
-            <!-- 假設每個按鈕設定固定寬度或 flex-shrink-0 確保一次看得見約 4 個 -->
-            
             <!-- 全部分館 -->
             <button class="btn btn-outline-primary px-4 py-2 flex-shrink-0 region-btn active"
                     style="min-width: 140px;"
@@ -315,7 +297,6 @@
     </div>
 
     <!-- 2. 詳細介紹展開區塊 (預設隱藏 display: none) -->
-    <!-- Bootstrap Grid 12等分，6:4 找不到整數，我們用 7:5 (約 58% : 41%) 視覺上最接近你要的比例 -->
     <div id="detailView" class="mb-5 branch-detail-section" style="display: none;">
         <div class="row g-4">
             <!-- 左側 7 份：大圖與關閉按鈕 -->
@@ -396,7 +377,6 @@
 
 </div>
 
-<!--     Javascript     -->
 <script>
     
 
@@ -424,8 +404,6 @@
 
     });
 
-    
-    
     function switchCardGroup(regionName) {        
 
         // 1. 如果有展開詳細介紹，先關閉
@@ -487,7 +465,6 @@
     regionContainer.addEventListener('scroll', updateArrowVisibility);
 
 
-    //底下要加入判斷是否還有得按
     let movePx = 301;
     let isScrolling = false;
     // 點擊右箭頭：向右滾動一個區塊的距離
@@ -507,9 +484,6 @@
     });
 
 
-    // ==========================================
-    // 原有的分館卡片切換邏輯
-    // ==========================================
     let currentExpandedCard = null;
 
     document.querySelectorAll('.branch-img-trigger').forEach(function(img) {
@@ -532,7 +506,6 @@
             let targetAddress = clickedCard.querySelector('.branch-address').innerText;
             let targetPhone = clickedCard.querySelector('.branch-phone').innerText;
             let targetIntro = cardData.getAttribute('data-Intro');// 抓出專屬介紹文字
-            //若有其他資料 繼續新增
             document.getElementById('detailImg').src = targetImgSrc;
             document.getElementById('detailTitle').innerText = targetTitle;
             document.getElementById('detailIntro').innerText = targetIntro;

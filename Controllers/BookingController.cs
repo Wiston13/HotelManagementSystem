@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using HotelManagementSystem.Helper;
 
-
 namespace HotelManagementSystem.Controllers
 {
     public class BookingController : Controller
@@ -17,7 +16,6 @@ namespace HotelManagementSystem.Controllers
         private readonly NoShowService _noShowService;
         private readonly RoomAvailabilityService _roomAvailabilityService;
 
-
         public BookingController(HotelManagementContext context, TaipeiClock taipeiClock, NoShowService noShowService, RoomAvailabilityService roomAvailabilityService)
         {
             _context = context;
@@ -25,8 +23,6 @@ namespace HotelManagementSystem.Controllers
             _noShowService = noShowService;
             _roomAvailabilityService = roomAvailabilityService;
         }
-
-
 
         [HttpGet]
         public IActionResult RoomSelection(int branchId, DateOnly checkIn, DateOnly checkOut, int guestCount)
@@ -47,16 +43,13 @@ namespace HotelManagementSystem.Controllers
                 return NotFound("找不到指定的分館，或該分館目前不開放訂房。");
             }
 
-            // 查詢該分館 符合所選房型人數 且 啟用 的房型
+            // 查詢該分館符合入住人數且已啟用的房型
             var roomTypes = _context.RoomTypes
                 .Where(r =>
                     r.BranchId == branchId &&
                     r.MaxOccupancy == guestCount &&
                     r.IsActive
                 ).ToList();
-
-
-
 
             // 只留下目前仍有空房的房型
             var availableRoomTypes = roomTypes
@@ -84,7 +77,6 @@ namespace HotelManagementSystem.Controllers
                 .Where(r => r.AvailableRooms > 0)
                 .ToList();
 
-
             // 沒有任何可預訂房型，回到首頁
             if (!availableRoomTypes.Any())
             {
@@ -110,8 +102,6 @@ namespace HotelManagementSystem.Controllers
 
             return View(model);
         }
-
-
 
         private PaymentViewModel? GetPaymentViewModel(int branchId, DateOnly checkIn, DateOnly checkOut, int roomTypeId, int guestCount)
         {
@@ -195,8 +185,6 @@ namespace HotelManagementSystem.Controllers
 
             return View(model);
         }
-
-
 
         [HttpPost]
         public IActionResult Success(BookingPaymentInputViewModel input)
@@ -390,13 +378,10 @@ namespace HotelManagementSystem.Controllers
                     CreatedAt = _taipeiClock.Now
                 };
 
-                // 加入 DbContext
                 _context.Bookings.Add(booking);
 
-                // 寫入資料庫
                 _context.SaveChanges();
 
-                // 交易完成
                 transaction.Commit();
 
                 // 保存剛建立成功的訂單編號，供 GET Success 使用
@@ -433,8 +418,6 @@ namespace HotelManagementSystem.Controllers
             {
                 return NotFound("找不到指定的分館。");
             }
-
-
             var model = new SuccessViewModel
             {
                 BookingNumber = booking.BookingNumber,
@@ -446,11 +429,6 @@ namespace HotelManagementSystem.Controllers
 
             return View(model);
         }
-
-
-        // =========================
-        // Private Methods
-        // =========================
 
         // 信用卡卡號 Luhn 驗證
         private bool IsValidCardNumber(string cardNumber)
@@ -504,7 +482,6 @@ namespace HotelManagementSystem.Controllers
         {
             var model = new BookingData();
 
-            // 檢查bookingNum 和phone的值是否為空
             if (string.IsNullOrWhiteSpace(BookingNum) || string.IsNullOrWhiteSpace(Phone))
             {
                 return View(model);
@@ -519,10 +496,8 @@ namespace HotelManagementSystem.Controllers
                 return View(model);
             }
 
-            // 查詢
             var booking = await _context.Bookings.AsNoTracking().FirstOrDefaultAsync(b => b.BookingNumber == BookingNum && b.ContactPhone == normalizedPhone);
 
-            // 沒結果吐回空資料及noresult 
             if (booking == null)
             {
                 model.BookingNum = BookingNum;
@@ -531,10 +506,8 @@ namespace HotelManagementSystem.Controllers
                 return View(model);
             }
 
-            // 查詢訂單分館
             var branch = await _context.Branches.AsNoTracking().FirstOrDefaultAsync(b => b.BranchId == booking!.BranchId);
 
-            // 打包結果
             model.BookingNum = booking.BookingNumber;
             model.Phone = booking.ContactPhone;
             model.BranchName = branch?.BranchName;

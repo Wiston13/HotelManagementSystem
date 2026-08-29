@@ -20,7 +20,6 @@ namespace HotelManagementSystem.Controllers
             _clock = taipeiClock;
         }
 
-        // GET: /Branch/
         [HttpGet]
         public async Task<IActionResult> Index()
         {
@@ -32,18 +31,16 @@ namespace HotelManagementSystem.Controllers
             return View(branches);
         }
 
-        // POST: /Branch/Save
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Save(Branch branch)
         {
             var currentOperator = CurrentEmployeeNumber!;
 
-            // 💡 1. 移除導覽屬性驗證（避免 ModelState 因相關連的 Rooms / RoomTypes 為 null 而無效）
+            // 前端不提供導覽屬性，避免其驗證造成 ModelState 無效。
             ModelState.Remove("Rooms");
             ModelState.Remove("RoomTypes");
 
-            // 💡 2. 檢查圖片檔案是否存在 (針對相對路徑)
             if (!string.IsNullOrEmpty(branch.ImageUrl) && !branch.ImageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
             {
                 string cleanPath = branch.ImageUrl.TrimStart('~', '/', '\\');
@@ -51,13 +48,11 @@ namespace HotelManagementSystem.Controllers
 
                 if (!System.IO.File.Exists(physicalPath))
                 {
-                    // 格式化為與房型頁面相同的錯誤訊息格式
                     string normalizedPath = cleanPath.Replace('\\', '/');
                     ModelState.AddModelError("ImageUrl", $"伺服器找不到圖片檔案：wwwroot/{normalizedPath}");
                 }
             }
 
-            // 💡 3. 模型驗證未通過處理
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values
@@ -80,12 +75,10 @@ namespace HotelManagementSystem.Controllers
             OperationLog bookingStatusLog = new OperationLog();
             int isBookingOpenOrStopped = 0;
 
-            // 💡 4. 資料庫存取與 TempData 提示訊息
             try
             {
                 if (branch.BranchId == 0)
                 {
-                    // 【新增分館】
                     await using var transaction = await _context.Database.BeginTransactionAsync();
 
                     try
@@ -115,8 +108,6 @@ namespace HotelManagementSystem.Controllers
                 }
                 else
                 {
-
-                    // 【修改分館】
                     var existingBranch = await _context.Branches.FindAsync(branch.BranchId);
 
                     if (existingBranch == null)
@@ -134,30 +125,24 @@ namespace HotelManagementSystem.Controllers
                     existingBranch.Description != branch.Description;
                     bool bookingStatusChanged = existingBranch.AcceptsNewBookings != branch.AcceptsNewBookings;
 
-
-
                     existingBranch.BranchName = branch.BranchName;
                     existingBranch.Region = branch.Region;
                     existingBranch.Phone = branch.Phone;
                     existingBranch.Address = branch.Address;
-                    // 如果更改開放訂房狀態
                     if (bookingStatusChanged)
                     {
                         if (existingBranch.AcceptsNewBookings == false)
                         {
-                            //開放新訂房
                             isBookingOpenOrStopped = 3;
                         }
                         else
                         {
-                            //停止新訂房
                             isBookingOpenOrStopped = 4;
                         }
                     }
 
                     existingBranch.AcceptsNewBookings = branch.AcceptsNewBookings;
 
-                    // 如果名稱、電話、地址、區域、介紹、圖片有更改
                     if (hasGeneralChanges)
                     {
 
