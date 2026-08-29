@@ -97,7 +97,7 @@ namespace HotelManagementSystem.Controllers
                             OperatorEmployeeNumber = currentOperator,
                             OperationTypeId = 5,
                             TargetType = "RoomType",
-                            TargetIdentifier = model.RoomTypeId.ToString(),
+                            TargetIdentifier = model.RoomTypeName,
                             Description = $"新增房型：{model.RoomTypeName}"
                         };
                         _context.OperationLogs.Add(createLog);
@@ -130,6 +130,7 @@ namespace HotelManagementSystem.Controllers
                                           existingRoomType.ImageUrl != model.ImageUrl ||
                                           existingRoomType.Description != model.Description;
                     bool isActiveChanged = existingRoomType.IsActive != model.IsActive;
+                    bool isNameChanged = existingRoomType.RoomTypeName != model.RoomTypeName;
                     if (isOtherChanged)
                     {
 
@@ -140,8 +141,10 @@ namespace HotelManagementSystem.Controllers
                             OperatorEmployeeNumber = currentOperator,
                             OperationTypeId = 6,
                             TargetType = "RoomType",
-                            TargetIdentifier = existingRoomType.RoomTypeId.ToString(),
-                            Description = $"修改房型：{existingRoomType.RoomTypeName}。"
+                            TargetIdentifier = model.RoomTypeName,
+                            Description = isNameChanged
+                                ? $"修改房型名稱：{existingRoomType.RoomTypeName} → {model.RoomTypeName}。"
+                                : $"修改房型：{existingRoomType.RoomTypeName}。"
                         };
                         _context.OperationLogs.Add(updatedLog);
                     }
@@ -155,8 +158,8 @@ namespace HotelManagementSystem.Controllers
                             OperatorEmployeeNumber = currentOperator,
                             OperationTypeId = model.IsActive ? 8 : 7,
                             TargetType = "RoomType",
-                            TargetIdentifier = existingRoomType.RoomTypeId.ToString(),
-                            Description = $"{action} 房型：{existingRoomType.RoomTypeName}。"
+                            TargetIdentifier = model.RoomTypeName,
+                            Description = $"{action}房型：{model.RoomTypeName}。"
                         };
                         _context.OperationLogs.Add(roomActiveLog);
                     }

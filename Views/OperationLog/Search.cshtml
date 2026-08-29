@@ -60,8 +60,8 @@
                     </div>
 
                     <div class="col-12 col-md-4">
-                        <label class="form-label">識別編號 <span class="text-secondary">＊選填</span></label>
-                        <input type="text" class="form-control" id="targetInput" placeholder="編號 / 房號">
+                        <label class="form-label">識別資訊 <span class="text-secondary">＊選填</span></label>
+                        <input type="text" class="form-control" id="targetInput" placeholder="名稱 / 編號 / 房號">
                     </div>
 
                     <div class="col-12 col-md-4 d-grid">
@@ -84,7 +84,7 @@
                         <th style="width: 12%;">操作者</th>
                         <th style="width: 15%;">操作類型</th>
                         <th style="width: 12%;">操作對象</th>
-                        <th style="width: 12%;">識別編號</th>
+                        <th style="width: 12%;">識別資訊</th>
                         <th style="width: 22%;">說明</th>
                     </tr>
                 </thead>
@@ -116,6 +116,13 @@
             const typeSelect = document.getElementById("typeSelect");
             const operatorInput = document.getElementById("operatorInput");
             const targetInput = document.getElementById("targetInput");
+            const targetTypeLabels = {
+                Branch: "分館",
+                RoomType: "房型",
+                Room: "房間",
+                Booking: "訂單",
+                Employee: "員工"
+            };
 
             const today = new Date();
             const year = today.getFullYear();
@@ -184,7 +191,7 @@
                         const tdTargetType = document.createElement("td");
                         const spanTgtType = document.createElement("span");
                         spanTgtType.className = "badge bg-secondary-subtle text-secondary-emphasis";
-                        spanTgtType.textContent = item.targetType || "-";
+                        spanTgtType.textContent = targetTypeLabels[item.targetType] || item.targetType || "-";
                         tdTargetType.appendChild(spanTgtType);
                         tr.appendChild(tdTargetType);
 

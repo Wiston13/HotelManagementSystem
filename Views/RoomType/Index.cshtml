@@ -88,7 +88,7 @@
                                         data-name="@item.RoomTypeName"
                                         data-capacity="@item.MaxOccupancy"
                                         data-bed="@item.BedType"
-                                        data-price="@item.NightlyPrice"
+                                        data-price="@item.NightlyPrice.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)"
                                         data-status="@(item.IsActive.ToString().ToLower())"
                                         data-imageurl="@item.ImageUrl"
                                         data-description="@item.Description"
@@ -241,7 +241,7 @@
             const branchText = branchFilter.options[branchFilter.selectedIndex].text;
             const capacity = document.getElementById('maxOccupancy').value;
             const bed = document.getElementById('bedType').value;
-            const price = document.getElementById('nightlyPrice').value;
+            const price = Number(document.getElementById('nightlyPrice').value).toString();
             const status = document.getElementById('isActive').value === 'true' ? '啟用' : '停用';
             const imgUrl = document.getElementById('imageUrl').value.trim();
 
