@@ -6,13 +6,7 @@
     object-fit: cover;
     height: 250px;
     cursor: pointer;
-    transition: transform 0.3s ease, opacity 0.3s ease;
 }
-
-    .branch-img-trigger:hover {
-        transform: scale(1.02);
-        opacity: 0.9;
-    }
 
 /* 詳細介紹區塊的大圖 */
 .detail-img-cover {
@@ -103,3 +97,38 @@
         opacity: 0;
         pointer-events: none;
     }
+
+
+.branch-card-wrapper {
+    position: relative;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.branch-card-wrapper:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.12);
+}
+
+/* 停止訂房的分館卡片用遮罩 */
+.branch-card-wrapper {
+    position: relative;
+}
+
+.branch-closed-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.branch-closed-overlay span {
+    color: white;
+    font-weight: 600;
+    font-size: 1.05rem;
+    letter-spacing: 0.05em;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
