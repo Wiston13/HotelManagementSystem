@@ -1,13 +1,8 @@
 ﻿using HotelManagementSystem.Models;
 using HotelManagementSystem.Models.Entities;
 using HotelManagementSystem.Services;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace HotelManagementSystem.Controllers
 {
@@ -93,20 +88,33 @@ namespace HotelManagementSystem.Controllers
             {
                 if (branch.BranchId == 0)
                 {
-                    // 【新增分館】                   
-                    _context.Branches.Add(branch);
-                    TempData["SuccessMessage"] = $"新增分館【{branch.BranchName}】成功！";
-                    await _context.SaveChangesAsync();
+                    // 【新增分館】
+                    await using var transaction = await _context.Database.BeginTransactionAsync();
 
-                    bookingStatusLog.TargetBranchId = branch.BranchId;
-                    bookingStatusLog.OperatedAt = _Clock.Now;
-                    bookingStatusLog.OperatorEmployeeNumber = currentOperator;
-                    bookingStatusLog.OperationTypeId = 1;
-                    bookingStatusLog.TargetType = "Branch";
-                    bookingStatusLog.TargetIdentifier = branch.BranchId.ToString();
-                    bookingStatusLog.Description = $"建立{branch.BranchName}商旅";
+                    try
+                    {
+                        _context.Branches.Add(branch);
+                        await _context.SaveChangesAsync();
 
-                    _context.Add(bookingStatusLog);
+                        bookingStatusLog.TargetBranchId = branch.BranchId;
+                        bookingStatusLog.OperatedAt = _Clock.Now;
+                        bookingStatusLog.OperatorEmployeeNumber = currentOperator;
+                        bookingStatusLog.OperationTypeId = 1;
+                        bookingStatusLog.TargetType = "Branch";
+                        bookingStatusLog.TargetIdentifier = branch.BranchId.ToString();
+                        bookingStatusLog.Description = $"建立{branch.BranchName}商旅";
+
+                        _context.Add(bookingStatusLog);
+                        await _context.SaveChangesAsync();
+                        await transaction.CommitAsync();
+
+                        TempData["SuccessMessage"] = $"新增分館【{branch.BranchName}】成功！";
+                    }
+                    catch
+                    {
+                        await transaction.RollbackAsync();
+                        throw;
+                    }
                 }
                 else
                 {
@@ -130,47 +138,46 @@ namespace HotelManagementSystem.Controllers
                     bool bookingStatusChanged = existingBranch.AcceptsNewBookings != branch.AcceptsNewBookings;
 
 
-                   
-                        existingBranch.BranchName = branch.BranchName;
-                        existingBranch.Region = branch.Region;
-                        existingBranch.Phone = branch.Phone;
-                        existingBranch.Address = branch.Address;
-                        // 如果更改開放訂房狀態
-                        if (bookingStatusChanged)
+
+                    existingBranch.BranchName = branch.BranchName;
+                    existingBranch.Region = branch.Region;
+                    existingBranch.Phone = branch.Phone;
+                    existingBranch.Address = branch.Address;
+                    // 如果更改開放訂房狀態
+                    if (bookingStatusChanged)
+                    {
+                        if (existingBranch.AcceptsNewBookings == false)
                         {
-                            if (existingBranch.AcceptsNewBookings == false)
-                            {
-                                //開放新訂房
-                                isBookingOpenOrStopped = 3;
-                            }
-                            else
-                            {
-                                //停止新訂房
-                                isBookingOpenOrStopped = 4;
-                            }
+                            //開放新訂房
+                            isBookingOpenOrStopped = 3;
                         }
-
-                        existingBranch.AcceptsNewBookings = branch.AcceptsNewBookings;
-
-                        // 如果名稱、電話、地址、區域、介紹、圖片有更改
-                        if (hasGeneralChanges)
+                        else
                         {
-                            
-                            existingBranch.ImageUrl = branch.ImageUrl;
-                            existingBranch.Description = branch.Description;
-
-                            TempData["SuccessMessage"] = $"修改分館【{branch.BranchName}】成功！";
-                            await _context.SaveChangesAsync();
-
-                            bookingStatusLog.TargetBranchId = branch.BranchId;
-                            bookingStatusLog.OperatedAt = _Clock.Now;
-                            bookingStatusLog.OperatorEmployeeNumber = currentOperator;
-                            bookingStatusLog.OperationTypeId = 2;
-                            bookingStatusLog.TargetType = "Branch";
-                            bookingStatusLog.TargetIdentifier = branch.BranchId.ToString();
-                            bookingStatusLog.Description = $"修改{branch.BranchName}商旅資料";//考慮加入修改細節
-                            _context.Add(bookingStatusLog);
+                            //停止新訂房
+                            isBookingOpenOrStopped = 4;
                         }
+                    }
+
+                    existingBranch.AcceptsNewBookings = branch.AcceptsNewBookings;
+
+                    // 如果名稱、電話、地址、區域、介紹、圖片有更改
+                    if (hasGeneralChanges)
+                    {
+
+                        existingBranch.ImageUrl = branch.ImageUrl;
+                        existingBranch.Description = branch.Description;
+
+                        TempData["SuccessMessage"] = $"修改分館【{branch.BranchName}】成功！";
+
+                        bookingStatusLog.TargetBranchId = branch.BranchId;
+                        bookingStatusLog.OperatedAt = _Clock.Now;
+                        bookingStatusLog.OperatorEmployeeNumber = currentOperator;
+                        bookingStatusLog.OperationTypeId = 2;
+                        bookingStatusLog.TargetType = "Branch";
+                        bookingStatusLog.TargetIdentifier = branch.BranchId.ToString();
+                        bookingStatusLog.Description = $"修改{branch.BranchName}商旅資料";//考慮加入修改細節
+                        _context.Add(bookingStatusLog);
+                    }
                 }
                 if (isBookingOpenOrStopped != 0)
                 {
