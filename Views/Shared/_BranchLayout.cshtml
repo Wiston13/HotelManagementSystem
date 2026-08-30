@@ -108,6 +108,12 @@
                     <div class="text-secondary small">
                         <i class="bi bi-person-circle me-1"></i>
                         @branchName ・ <span class="fw-bold text-dark">@staffName</span>
+                        <button type="button"
+                                class="btn btn-sm btn-outline-secondary ms-2"
+                                data-bs-toggle="modal"
+                                data-bs-target="#changePasswordModal">
+                            <i class="bi bi-key me-1"></i>修改密碼
+                        </button>
                     </div>
                 </div>
 
@@ -119,9 +125,75 @@
         </div>
     </div>
 
+    <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <form id="changePasswordForm" asp-controller="EmployeeAccount" asp-action="ChangePassword" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div class="modal-header">
+                        <h2 class="modal-title h5 fw-bold" id="changePasswordModalLabel">修改登入密碼</h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="changePasswordError" class="alert alert-danger d-none mb-3" role="alert"></div>
+
+                        <div class="mb-3">
+                            <label for="CurrentPassword" class="form-label text-secondary">目前密碼</label>
+                            <input id="CurrentPassword" name="CurrentPassword" class="form-control" type="password" autocomplete="current-password" />
+                        </div>
+                        <div class="mb-3">
+                            <label for="NewPassword" class="form-label text-secondary">新密碼</label>
+                            <input id="NewPassword" name="NewPassword" class="form-control" type="password" autocomplete="new-password" />
+                        </div>
+                        <div>
+                            <label for="ConfirmNewPassword" class="form-label text-secondary">確認新密碼</label>
+                            <input id="ConfirmNewPassword" name="ConfirmNewPassword" class="form-control" type="password" autocomplete="new-password" />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="submit" class="btn btn-primary">修改密碼</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script>
+        (() => {
+            const form = document.getElementById('changePasswordForm');
+            const errorMessage = document.getElementById('changePasswordError');
+
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                errorMessage.classList.add('d-none');
+
+                try {
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        body: new FormData(form)
+                    });
+                    const result = await response.json();
+
+                    if (result.success && result.redirectUrl) {
+                        window.location.assign(result.redirectUrl);
+                        return;
+                    }
+
+                    errorMessage.textContent = result.message ?? '修改密碼失敗，請稍後再試。';
+                    errorMessage.classList.remove('d-none');
+                } catch {
+                    errorMessage.textContent = '修改密碼失敗，請稍後再試。';
+                    errorMessage.classList.remove('d-none');
+                }
+            });
+        })();
+    </script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>
