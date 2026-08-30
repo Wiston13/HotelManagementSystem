@@ -178,6 +178,12 @@
                         method: 'POST',
                         body: new FormData(form)
                     });
+
+                    if (response.redirected) {
+                        window.location.assign(response.url);
+                        return;
+                    }
+
                     const result = await response.json();
 
                     if (result.redirectUrl) {
@@ -185,10 +191,9 @@
                         return;
                     }
 
-                    errorMessage.textContent = result.message ?? '修改密碼失敗，請稍後再試。';
-                    errorMessage.classList.remove('d-none');
-                } catch {
-                    errorMessage.textContent = '修改密碼失敗，請稍後再試。';
+                    errorMessage.textContent =
+                        result.message ?? '修改密碼失敗，請稍後再試。';
+
                     errorMessage.classList.remove('d-none');
                 }
             });
