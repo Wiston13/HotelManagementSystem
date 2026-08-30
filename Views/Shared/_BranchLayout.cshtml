@@ -196,6 +196,12 @@
 
                     errorMessage.classList.remove('d-none');
                 }
+                catch {
+                    errorMessage.textContent =
+                        '修改密碼失敗，請稍後再試。';
+
+                    errorMessage.classList.remove('d-none');
+                }
             });
         })();
     </script>
