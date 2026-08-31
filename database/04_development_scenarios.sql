@@ -1,8 +1,12 @@
 /*
-    HotelManagementSystem - 第一版開發情境資料
+    HotelManagementSystem - 開發情境資料
     SQL Server
 
-    前置：先依序執行 01_create_hotel_management_schema.sql、02_sample_data.sql。
+    執行順序：
+    1. 01_create_hotel_management_schema.sql
+    2. 02_required_seed.sql
+    3. 03_demo_data.sql
+    4. 04_development_scenarios.sql（本檔）
 
     本檔責任：
     - 重設情境用房間供應／清潔狀態
@@ -10,10 +14,9 @@
     - 所有相對日期以執行當下的台灣日期為基準
 
     可重跑方式：
-    - 可在 02 之後重複單獨執行本檔。
-    - 本檔只清除情境表，並把 02 建立的 188 間房重設為固定情境；
+    - 可在 03_demo_data.sql 之後重複單獨執行本檔。
+    - 本檔只清除情境表，並把 03_demo_data.sql 建立的 188 間房重設為固定情境；
       不重建分館、房型、員工或操作類型。
-    - 本檔會清除 04 的營運量體；需要量體時請在本檔之後重跑 04。
 */
 
 USE [HotelManagementSystem];
@@ -41,9 +44,10 @@ BEGIN TRY
     IF (SELECT COUNT(*) FROM [dbo].[Branches]) <> 6
        OR (SELECT COUNT(*) FROM [dbo].[RoomTypes]) <> 24
        OR (SELECT COUNT(*) FROM [dbo].[Rooms]) <> 188
+       OR (SELECT COUNT(*) FROM [dbo].[Employees]) <> 19
        OR (SELECT COUNT(*) FROM [dbo].[OperationTypes]) <> 25
     BEGIN
-        THROW 50002, N'基準資料不完整，請先執行 02_sample_data.sql。', 1;
+        THROW 50002, N'展示基準資料不完整，請依序執行 01_create_hotel_management_schema.sql、02_required_seed.sql、03_demo_data.sql。', 1;
     END;
 
     DELETE FROM [dbo].[OperationLogs];
@@ -53,6 +57,7 @@ BEGIN TRY
     DECLARE @NowTaipei datetime2(0) =
         CONVERT(datetime2(0), SYSDATETIMEOFFSET() AT TIME ZONE 'Taipei Standard Time');
     DECLARE @Today date = CAST(@NowTaipei AS date);
+    DECLARE @CapacityRiskDate date = DATEADD(DAY,55,@Today);
     /*
        同入住日飯店因素取消必須已進入 16:00 後的合法 Check-in 區間。
        若本檔在 16:05 前執行，改用昨天，避免建立尚未發生的取消事件。
@@ -100,7 +105,7 @@ BEGIN TRY
     UPDATE [dbo].[Rooms] SET [CleaningStatus] = 'NeedsCleaning' WHERE [RoomId] IN (50, 84);
 
     /* =========================================================
-       2. Bookings：42 筆可辨識測試矩陣
+       2. Bookings：42 筆既有測試矩陣 + 4 筆容量臨界資料
 
        001～019：一般 Paid（合法入住、今日 16:00、未來、跨館、匯出）
        020～023：CheckedIn（一般、今日退房、逾期未退、提早退房）
@@ -109,6 +114,7 @@ BEGIN TRY
        027、028：仍為 Paid 的 NoShowService 候選
        030～033、039：兩種取消因素
        036～038：重疊與相鄰房量
+       043～046：容量臨界／供應異動風險（搭配既有 018）
        ========================================================= */
     INSERT INTO [dbo].[Bookings]
     (
@@ -252,7 +258,38 @@ BEGIN TRY
         DATEADD(MINUTE,630,CAST(DATEADD(DAY,-20,@Today) AS datetime2(0))), NULL,NULL,NULL,NULL),
     ('BK202608070042', 1, 1, N'簡郁雯', '0912345042', 'guest042@example.com',
         DATEADD(DAY,-20,@Today), DATEADD(DAY,-18,@Today), N'經典單人房', 1, 2300.00, 4600.00, 'Completed',
-        DATEADD(MINUTE,780,CAST(DATEADD(DAY,-28,@Today) AS datetime2(0))), NULL,NULL,NULL,NULL);
+        DATEADD(MINUTE,780,CAST(DATEADD(DAY,-28,@Today) AS datetime2(0))), NULL,NULL,NULL,NULL),
+
+    /*
+       容量臨界／供應異動風險：台中草悟館和風雙人房共有 5 間 Open 房。
+       既有 018 加上 043～046，在未來第 55～57 天形成 5 筆有效 Paid 需求。
+       房間 501（RoomId 99）可用於 Open → Reserved、Open → Disabled，
+       或由管理員變更 RoomType；前三者會分別觸發確認或硬性阻擋流程。
+    */
+    ('BK202608070043', 3,13, N'林育安', '0912345043', 'guest043@example.com',
+        @CapacityRiskDate, DATEADD(DAY,3,@CapacityRiskDate), N'和風雙人房', 2, 3500.00, 10500.00, 'Paid',
+        DATEADD(MINUTE,540,CAST(DATEADD(DAY,-1,@Today) AS datetime2(0))), NULL,NULL,NULL,NULL),
+    ('BK202608070044', 3,13, N'張庭瑜', '0912345044', 'guest044@example.com',
+        @CapacityRiskDate, DATEADD(DAY,3,@CapacityRiskDate), N'和風雙人房', 2, 3500.00, 10500.00, 'Paid',
+        DATEADD(MINUTE,600,CAST(DATEADD(DAY,-1,@Today) AS datetime2(0))), NULL,NULL,NULL,NULL),
+    ('BK202608070045', 3,13, N'吳承恩', '0912345045', 'guest045@example.com',
+        @CapacityRiskDate, DATEADD(DAY,3,@CapacityRiskDate), N'和風雙人房', 2, 3500.00, 10500.00, 'Paid',
+        DATEADD(MINUTE,660,CAST(DATEADD(DAY,-1,@Today) AS datetime2(0))), NULL,NULL,NULL,NULL),
+    ('BK202608070046', 3,13, N'陳品妍', '0912345046', 'guest046@example.com',
+        @CapacityRiskDate, DATEADD(DAY,3,@CapacityRiskDate), N'和風雙人房', 2, 3500.00, 10500.00, 'Paid',
+        DATEADD(MINUTE,720,CAST(DATEADD(DAY,-1,@Today) AS datetime2(0))), NULL,NULL,NULL,NULL);
+
+    IF (SELECT COUNT(*) FROM [dbo].[Rooms]
+        WHERE [BranchId] = 3 AND [RoomTypeId] = 13 AND [SupplyStatus] = 'Open') <> 5
+       OR (SELECT COUNT(*) FROM [dbo].[Bookings]
+           WHERE [BranchId] = 3
+             AND [RoomTypeId] = 13
+             AND [BookingStatus] IN ('Paid','CheckedIn')
+             AND [CheckInDate] <= @CapacityRiskDate
+             AND [CheckOutDate] > @CapacityRiskDate) <> 5
+    BEGIN
+        THROW 50003, N'容量臨界情境不完整：台中草悟館和風雙人房必須為 5 間 Open 對 5 筆有效需求。', 1;
+    END;
 
     /* =========================================================
        3. StayRecords：4 筆入住中、5 筆已完成
@@ -293,19 +330,19 @@ BEGIN TRY
         [OperationTypeId], [TargetType], [TargetIdentifier], [Description]
     )
     VALUES
-    ( 1,1,DATEADD(MINUTE,540,CAST(DATEADD(DAY,-60,@Today) AS datetime2(0))),'E20260807001', 1,'Branch',N'1',N'建立台北中山商旅。'),
-    ( 2,2,DATEADD(MINUTE,555,CAST(DATEADD(DAY,-60,@Today) AS datetime2(0))),'E20260807001', 1,'Branch',N'2',N'建立台北信義商旅。'),
-    ( 3,3,DATEADD(MINUTE,570,CAST(DATEADD(DAY,-60,@Today) AS datetime2(0))),'E20260807001', 1,'Branch',N'3',N'建立台中草悟商旅。'),
-    ( 4,4,DATEADD(MINUTE,585,CAST(DATEADD(DAY,-60,@Today) AS datetime2(0))),'E20260807001', 1,'Branch',N'4',N'建立台南安平商旅。'),
-    ( 5,5,DATEADD(MINUTE,600,CAST(DATEADD(DAY,-60,@Today) AS datetime2(0))),'E20260807001', 1,'Branch',N'5',N'建立高雄港灣商旅。'),
-    ( 6,6,DATEADD(MINUTE,615,CAST(DATEADD(DAY,-60,@Today) AS datetime2(0))),'E20260807001', 1,'Branch',N'6',N'建立花蓮站前商旅。'),
-    ( 7,6,DATEADD(MINUTE,820,CAST(DATEADD(DAY,-9,@Today) AS datetime2(0))),'E20260807001', 4,'Branch',N'6',N'將花蓮站前商旅設定為停止接受新訂房。'),
-    ( 8,1,DATEADD(MINUTE,770,CAST(DATEADD(DAY,-4,@Today) AS datetime2(0))),'E20260807002',18,'Room',N'202',N'將房間 202 設為保留。'),
-    ( 9,1,DATEADD(MINUTE,790,CAST(DATEADD(DAY,-4,@Today) AS datetime2(0))),'E20260807002',20,'Room',N'203',N'將房間 203 標記為待清潔。'),
-    (10,1,DATEADD(MINUTE,810,CAST(DATEADD(DAY,-4,@Today) AS datetime2(0))),'E20260807001',11,'Room',N'205',N'將房間 205 停用：空調主機異常。'),
+    ( 1,1,DATEADD(MINUTE,540,CAST(DATEADD(DAY,-60,@Today) AS datetime2(0))),'E20260807001', 1,'Branch',N'台北中山商旅',N'建立台北中山商旅商旅'),
+    ( 2,2,DATEADD(MINUTE,555,CAST(DATEADD(DAY,-60,@Today) AS datetime2(0))),'E20260807001', 1,'Branch',N'台北信義商旅',N'建立台北信義商旅商旅'),
+    ( 3,3,DATEADD(MINUTE,570,CAST(DATEADD(DAY,-60,@Today) AS datetime2(0))),'E20260807001', 1,'Branch',N'台中草悟商旅',N'建立台中草悟商旅商旅'),
+    ( 4,4,DATEADD(MINUTE,585,CAST(DATEADD(DAY,-60,@Today) AS datetime2(0))),'E20260807001', 1,'Branch',N'台南安平商旅',N'建立台南安平商旅商旅'),
+    ( 5,5,DATEADD(MINUTE,600,CAST(DATEADD(DAY,-60,@Today) AS datetime2(0))),'E20260807001', 1,'Branch',N'高雄港灣商旅',N'建立高雄港灣商旅商旅'),
+    ( 6,6,DATEADD(MINUTE,615,CAST(DATEADD(DAY,-60,@Today) AS datetime2(0))),'E20260807001', 1,'Branch',N'花蓮站前商旅',N'建立花蓮站前商旅商旅'),
+    ( 7,6,DATEADD(MINUTE,820,CAST(DATEADD(DAY,-9,@Today) AS datetime2(0))),'E20260807001', 4,'Branch',N'花蓮站前商旅',N'修改花蓮站前商旅商旅資料 將花蓮站前商旅商旅設定為停止接受新訂房。'),
+    ( 8,1,DATEADD(MINUTE,770,CAST(DATEADD(DAY,-4,@Today) AS datetime2(0))),'E20260807002',18,'Room',N'202',N'將房間 202 供應狀態更新為 Reserved。'),
+    ( 9,1,DATEADD(MINUTE,790,CAST(DATEADD(DAY,-4,@Today) AS datetime2(0))),'E20260807002',20,'Room',N'203',N'將房間 203 標記為 NeedsCleaning。'),
+    (10,1,DATEADD(MINUTE,810,CAST(DATEADD(DAY,-2,@Today) AS datetime2(0))),'E20260807002',11,'Room',N'205',N'將房間 205 停用，原因：空調主機異常，等待維修廠商到場。。'),
     (11,2,DATEADD(MINUTE,830,CAST(DATEADD(DAY,-3,@Today) AS datetime2(0))),'E20260807004',18,'Room',N'201',N'將台北信義館房間 201 設為保留。'),
     (12,5,DATEADD(MINUTE,850,CAST(DATEADD(DAY,-3,@Today) AS datetime2(0))),'E20260807016',20,'Room',N'201',N'將高雄港灣館房間 201 標記為待清潔。'),
-    (13,1,DATEADD(MINUTE,900,CAST(DATEADD(DAY,-2,@Today) AS datetime2(0))),'E20260807001',15,'Employee',N'E20260807003',N'停用員工帳號 E20260807003。'),
+    (13,1,DATEADD(MINUTE,900,CAST(DATEADD(DAY,-2,@Today) AS datetime2(0))),'E20260807001',15,'Employee',N'E20260807003',N'停用員工帳號：E20260807003(陳柏宇)。'),
     (14,4,DATEADD(MINUTE,910,CAST(DATEADD(DAY,-2,@Today) AS datetime2(0))),'E20260807001',15,'Employee',N'E20260807015',N'停用員工帳號 E20260807015。'),
     (15,6,DATEADD(MINUTE,920,CAST(DATEADD(DAY,-2,@Today) AS datetime2(0))),'E20260807001',15,'Employee',N'E20260807008',N'停用員工帳號 E20260807008。'),
 
@@ -315,29 +352,47 @@ BEGIN TRY
     (19,5,@SameDayHotelCancelledAt,'E20260807005',21,'Booking',N'BK202608070033',N'因飯店因素取消訂單 BK202608070033。'),
     (20,5,DATEADD(MINUTE,780,CAST(DATEADD(DAY,-1,@Today) AS datetime2(0))),'E20260807016',21,'Booking',N'BK202608070039',N'因顧客因素取消訂單 BK202608070039。'),
 
-    (21,1,DATEADD(MINUTE,990,CAST(DATEADD(DAY,-1,@Today) AS datetime2(0))),'E20260807002',22,'Booking',N'BK202608070020',N'完成 Check-in，指派房間 301。'),
-    (22,1,DATEADD(MINUTE,970,CAST(DATEADD(DAY,-2,@Today) AS datetime2(0))),'E20260807006',22,'Booking',N'BK202608070021',N'完成 Check-in，指派房間 601。'),
-    (23,3,DATEADD(MINUTE,1020,CAST(DATEADD(DAY,-5,@Today) AS datetime2(0))),'E20260807007',22,'Booking',N'BK202608070022',N'完成 Check-in，指派房間 201。'),
-    (24,4,DATEADD(MINUTE,1005,CAST(DATEADD(DAY,-1,@Today) AS datetime2(0))),'E20260807013',22,'Booking',N'BK202608070023',N'完成 Check-in，指派房間 201。'),
-    (25,2,DATEADD(MINUTE,980,CAST(DATEADD(DAY,-6,@Today) AS datetime2(0))),'E20260807004',22,'Booking',N'BK202608070024',N'完成 Check-in，指派房間 301。'),
-    (26,2,DATEADD(MINUTE,660,CAST(DATEADD(DAY,-4,@Today) AS datetime2(0))),'E20260807004',23,'Booking',N'BK202608070024',N'完成 Check-out，房間 301 轉為待清潔。'),
-    (27,5,DATEADD(MINUTE,1010,CAST(DATEADD(DAY,-10,@Today) AS datetime2(0))),'E20260807005',22,'Booking',N'BK202608070025',N'完成 Check-in，指派房間 301。'),
-    (28,5,DATEADD(MINUTE,640,CAST(DATEADD(DAY,-8,@Today) AS datetime2(0))),'E20260807005',23,'Booking',N'BK202608070025',N'完成 Check-out，房間 301 轉為待清潔。'),
+    (21,1,DATEADD(MINUTE,990,CAST(DATEADD(DAY,-1,@Today) AS datetime2(0))),'E20260807002',22,'Booking',N'BK202608070020',N'完成訂單 BK202608070020 的 Check-in，指派房間 301。'),
+    (22,1,DATEADD(MINUTE,970,CAST(DATEADD(DAY,-2,@Today) AS datetime2(0))),'E20260807006',22,'Booking',N'BK202608070021',N'完成訂單 BK202608070021 的 Check-in，指派房間 601。'),
+    (23,3,DATEADD(MINUTE,1020,CAST(DATEADD(DAY,-5,@Today) AS datetime2(0))),'E20260807007',22,'Booking',N'BK202608070022',N'完成訂單 BK202608070022 的 Check-in，指派房間 201。'),
+    (24,4,DATEADD(MINUTE,1005,CAST(DATEADD(DAY,-1,@Today) AS datetime2(0))),'E20260807013',22,'Booking',N'BK202608070023',N'完成訂單 BK202608070023 的 Check-in，指派房間 201。'),
+    (25,2,DATEADD(MINUTE,980,CAST(DATEADD(DAY,-6,@Today) AS datetime2(0))),'E20260807004',22,'Booking',N'BK202608070024',N'完成訂單 BK202608070024 的 Check-in，指派房間 301。'),
+    (26,2,DATEADD(MINUTE,660,CAST(DATEADD(DAY,-4,@Today) AS datetime2(0))),'E20260807004',23,'Booking',N'BK202608070024',N'完成訂單 BK202608070024 的 Check-Out，房間 301 已轉為待清潔。'),
+    (27,5,DATEADD(MINUTE,1010,CAST(DATEADD(DAY,-10,@Today) AS datetime2(0))),'E20260807005',22,'Booking',N'BK202608070025',N'完成訂單 BK202608070025 的 Check-in，指派房間 301。'),
+    (28,5,DATEADD(MINUTE,640,CAST(DATEADD(DAY,-8,@Today) AS datetime2(0))),'E20260807005',23,'Booking',N'BK202608070025',N'完成訂單 BK202608070025 的 Check-Out，房間 301 已轉為待清潔。'),
     (29,5,DATEADD(MINUTE,810,CAST(DATEADD(DAY,-8,@Today) AS datetime2(0))),'E20260807016',20,'Room',N'301',N'清潔完成，將房間 301 改為已清潔。'),
-    (30,6,DATEADD(MINUTE,995,CAST(DATEADD(DAY,-7,@Today) AS datetime2(0))),'E20260807018',22,'Booking',N'BK202608070029',N'完成 Check-in，指派房間 301。'),
-    (31,6,DATEADD(MINUTE,650,CAST(DATEADD(DAY,-5,@Today) AS datetime2(0))),'E20260807018',23,'Booking',N'BK202608070029',N'完成 Check-out，房間 301 轉為待清潔。'),
+    (30,6,DATEADD(MINUTE,995,CAST(DATEADD(DAY,-7,@Today) AS datetime2(0))),'E20260807018',22,'Booking',N'BK202608070029',N'完成訂單 BK202608070029 的 Check-in，指派房間 301。'),
+    (31,6,DATEADD(MINUTE,650,CAST(DATEADD(DAY,-5,@Today) AS datetime2(0))),'E20260807018',23,'Booking',N'BK202608070029',N'完成訂單 BK202608070029 的 Check-Out，房間 301 已轉為待清潔。'),
     (32,6,DATEADD(MINUTE,830,CAST(DATEADD(DAY,-5,@Today) AS datetime2(0))),'E20260807019',20,'Room',N'301',N'清潔完成，將房間 301 改為已清潔。'),
-    (33,3,DATEADD(MINUTE,985,CAST(DATEADD(DAY,-12,@Today) AS datetime2(0))),'E20260807011',22,'Booking',N'BK202608070041',N'完成 Check-in，指派房間 301。'),
-    (34,3,DATEADD(MINUTE,635,CAST(DATEADD(DAY,-10,@Today) AS datetime2(0))),'E20260807011',23,'Booking',N'BK202608070041',N'完成 Check-out，房間 301 轉為待清潔。'),
-    (35,1,DATEADD(MINUTE,975,CAST(DATEADD(DAY,-20,@Today) AS datetime2(0))),'E20260807002',22,'Booking',N'BK202608070042',N'完成 Check-in，指派房間 201。'),
-    (36,1,DATEADD(MINUTE,625,CAST(DATEADD(DAY,-18,@Today) AS datetime2(0))),'E20260807002',23,'Booking',N'BK202608070042',N'完成 Check-out，房間 201 轉為待清潔。'),
-    (37,1,DATEADD(MINUTE,800,CAST(DATEADD(DAY,-18,@Today) AS datetime2(0))),'E20260807006',20,'Room',N'201',N'清潔完成，將房間 201 改為已清潔。');
+    (33,3,DATEADD(MINUTE,985,CAST(DATEADD(DAY,-12,@Today) AS datetime2(0))),'E20260807011',22,'Booking',N'BK202608070041',N'完成訂單 BK202608070041 的 Check-in，指派房間 301。'),
+    (34,3,DATEADD(MINUTE,635,CAST(DATEADD(DAY,-10,@Today) AS datetime2(0))),'E20260807011',23,'Booking',N'BK202608070041',N'完成訂單 BK202608070041 的 Check-Out，房間 301 已轉為待清潔。'),
+    (35,1,DATEADD(MINUTE,975,CAST(DATEADD(DAY,-20,@Today) AS datetime2(0))),'E20260807002',22,'Booking',N'BK202608070042',N'完成訂單 BK202608070042 的 Check-in，指派房間 201。'),
+    (36,1,DATEADD(MINUTE,625,CAST(DATEADD(DAY,-18,@Today) AS datetime2(0))),'E20260807002',23,'Booking',N'BK202608070042',N'完成訂單 BK202608070042 的 Check-Out，房間 201 已轉為待清潔。'),
+    (37,1,DATEADD(MINUTE,800,CAST(DATEADD(DAY,-18,@Today) AS datetime2(0))),'E20260807006',20,'Room',N'201',N'清潔完成，將房間 201 改為已清潔。'),
+
+    /* 補齊目前 develop 實際成功寫入格式的 OperationType 1～25 coverage。 */
+    (38,1,DATEADD(MINUTE,600,CAST(DATEADD(DAY,-45,@Today) AS datetime2(0))),'E20260807001', 2,'Branch',N'台北中山商旅',N'修改台北中山商旅商旅資料'),
+    (39,6,DATEADD(MINUTE,780,CAST(DATEADD(DAY,-10,@Today) AS datetime2(0))),'E20260807001', 3,'Branch',N'花蓮站前商旅',N'修改花蓮站前商旅商旅資料 將花蓮站前商旅商旅設定為開放接受新訂房。'),
+    (40,1,DATEADD(MINUTE,660,CAST(DATEADD(DAY,-59,@Today) AS datetime2(0))),'E20260807001', 5,'RoomType',N'經典單人房',N'新增房型：經典單人房'),
+    (41,1,DATEADD(MINUTE,720,CAST(DATEADD(DAY,-40,@Today) AS datetime2(0))),'E20260807001', 6,'RoomType',N'經典單人房',N'修改房型：經典單人房。'),
+    (42,5,DATEADD(MINUTE,720,CAST(DATEADD(DAY,-8,@Today) AS datetime2(0))),'E20260807001', 7,'RoomType',N'全景三人房',N'停用房型：全景三人房。'),
+    (43,6,DATEADD(MINUTE,720,CAST(DATEADD(DAY,-7,@Today) AS datetime2(0))),'E20260807001', 8,'RoomType',N'山海雙人房',N'啟用房型：山海雙人房。'),
+    (44,1,DATEADD(MINUTE,720,CAST(DATEADD(DAY,-58,@Today) AS datetime2(0))),'E20260807001', 9,'Room',N'201',N'新增房間【201】(房型: 經典單人房, 樓層: 2, 初始狀態: Open)'),
+    (45,1,DATEADD(MINUTE,720,CAST(DATEADD(DAY,-30,@Today) AS datetime2(0))),'E20260807001',10,'Room',N'201',N'修改房間【200】(房號: 200 -> 201, 樓層: 2 -> 2, 房型: 經典單人房 -> 經典單人房)'),
+    (46,1,DATEADD(MINUTE,720,CAST(DATEADD(DAY,-6,@Today) AS datetime2(0))),'E20260807002',12,'Room',N'205',N'將房間 205 恢復開放販售。'),
+    (47,1,DATEADD(MINUTE,720,CAST(DATEADD(DAY,-30,@Today) AS datetime2(0))),'E20260807001',13,'Employee',N'E20260807002',N'建立分館員工 E20260807002(林怡君)。'),
+    (48,1,DATEADD(MINUTE,720,CAST(DATEADD(DAY,-20,@Today) AS datetime2(0))),'E20260807001',14,'Employee',N'E20260807006',N'修改員工資料：E20260807006(蔡佩珊)。'),
+    (49,1,DATEADD(MINUTE,720,CAST(DATEADD(DAY,-20,@Today) AS datetime2(0))),'E20260807001',16,'Employee',N'E20260807003',N'啟用員工帳號：E20260807003(陳柏宇)。'),
+    (50,1,DATEADD(MINUTE,720,CAST(DATEADD(DAY,-1,@Today) AS datetime2(0))),'E20260807001',17,'Employee',N'E20260807006',N'重設員工密碼：E20260807006(蔡佩珊)。'),
+    (51,1,DATEADD(MINUTE,720,CAST(DATEADD(DAY,-5,@Today) AS datetime2(0))),'E20260807002',19,'Room',N'202',N'將房間 202 供應狀態更新為 Open。'),
+    (52,1,DATEADD(MINUTE,780,CAST(DATEADD(DAY,-1,@Today) AS datetime2(0))),'E20260807002',24,'Room',N'205',N'將房間 205 的停用原因由「空調異音，等待初步檢查。」修改為「空調主機異常，等待維修廠商到場。」。'),
+    (53,1,DATEADD(MINUTE,840,CAST(DATEADD(DAY,-1,@Today) AS datetime2(0))),'E20260807002',25,'Employee',N'E20260807002',N'員工修改自己的登入密碼。');
 
     SET IDENTITY_INSERT [dbo].[OperationLogs] OFF;
     SET @IdentityInsertTable = NULL;
 
     DBCC CHECKIDENT ('dbo.StayRecords',   RESEED, 9)  WITH NO_INFOMSGS;
-    DBCC CHECKIDENT ('dbo.OperationLogs', RESEED, 37) WITH NO_INFOMSGS;
+    DBCC CHECKIDENT ('dbo.OperationLogs', RESEED, 53) WITH NO_INFOMSGS;
 
     COMMIT TRANSACTION;
 
