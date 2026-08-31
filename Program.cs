@@ -2,6 +2,7 @@ using HotelManagementSystem.Models;
 using HotelManagementSystem.Services;
 using Microsoft.EntityFrameworkCore;
 using HotelManagementSystem.Options;
+using HotelManagementSystem.Services.Email;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,6 +43,14 @@ builder.Services
         options => !string.IsNullOrWhiteSpace(options.WebhookSecret),
         "N8n:WebhookSecret 尚未設定。")
     .ValidateOnStart();
+
+builder.Services.AddHttpClient<
+    IBookingEmailService,
+    N8nBookingEmailService>(
+    client =>
+    {
+        client.Timeout = TimeSpan.FromSeconds(10);
+    });
 
 var app = builder.Build();
 
