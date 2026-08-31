@@ -1,22 +1,20 @@
 /*
-    HotelManagementSystem - 第一版展示資料
+    HotelManagementSystem - Demo 基礎資料
     SQL Server
 
     建議執行順序：
     1. 01_create_hotel_management_schema.sql
     2. 02_required_seed.sql（系統必要初始化資料）
-    3. 03_demo_data.sql（本檔：展示用基礎資料）
-    4. 03_development_scenarios.sql（動態開發情境）
-    5. 04_development_volume_data.sql（可選：營運量體資料）
-    6. 05_validate_sample_data.sql（唯讀驗證與摘要）
+    3. 03_demo_data.sql（本檔：Demo 基礎資料）
+    4. 04_development_scenarios.sql（動態開發情境）
 
     本檔責任：
-    - 分館、房型、實體房間、一般員工
+    - 分館、房型、房間、一般員工
     - 固定主鍵、密碼雜湊、Identity seed 與可重跑清除順序
 
     注意：
     - 本檔會清除既有展示／測試資料，但保留 02_required_seed.sql 建立的 SystemAdmin 與 OperationTypes。
-    - 核心開發資料須依序執行至 03_development_scenarios；需要查詢／匯出量體時再執行 04。
+    - 需要人工操作與 Smoke Test 情境時，再執行 04_development_scenarios.sql。
     - 全部測試帳號密碼固定為 Hotel@123。
     - 固定 PasswordHash 僅供本機開發／展示，不得用於正式環境。
 */
@@ -138,7 +136,7 @@ BEGIN TRY
        3. Rooms：每房型 5～12 間，共 188 間
 
        以固定計畫表產生可讀房號與固定 RoomId，避免維護 188 列
-       幾乎相同的 INSERT。03_development_scenarios.sql 會重設並套用情境用供應／清潔狀態。
+       幾乎相同的 INSERT。04_development_scenarios.sql 會重設並套用情境用供應／清潔狀態。
        ========================================================= */
     DECLARE @RoomPlan table
     (
@@ -160,7 +158,7 @@ BEGIN TRY
     (22, 6, 168, 201,  8), (23, 6, 176, 301,  7), (24, 6, 183, 401,  6);
 
     IF EXISTS (SELECT 1 FROM @RoomPlan WHERE [RoomCount] NOT BETWEEN 5 AND 20)
-        THROW 50001, N'每個房型的實體房間數必須介於 5 到 20。', 1;
+        THROW 50001, N'每個房型的房間數必須介於 5 到 20。', 1;
 
     SET @IdentityInsertTable = N'dbo.Rooms';
     SET IDENTITY_INSERT [dbo].[Rooms] ON;

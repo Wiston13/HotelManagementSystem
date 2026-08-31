@@ -6,6 +6,7 @@
     1. 01_create_hotel_management_schema.sql
     2. 02_required_seed.sql（本檔：系統必要初始化資料）
     3. 03_demo_data.sql（展示用基礎資料）
+    4. 04_development_scenarios.sql（開發情境資料）
 
     本檔責任：
     - OperationTypes 固定操作類型
@@ -13,8 +14,8 @@
 
     注意：
     - 本檔應在 01 重建 Schema 後執行。
-    - 初始帳號密碼固定為 Hotel@123。
-    - 固定 PasswordHash 僅供目前開發／展示設定，不得用於正式環境。
+    - Repository 內的初始帳號固定密碼 Hotel@123 與 PasswordHash 僅供本機／Demo 使用。
+    - 正式部署不得直接沿用此固定密碼；部署時的設定方式將由 deploy/README.md 定義。
 */
 
 USE [HotelManagementSystem];
