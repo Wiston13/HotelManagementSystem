@@ -11,7 +11,7 @@
     var isRoom = currentController == "Room" && currentAction == "Index";
     var isBookingExport = currentController == "BookingExport" && currentAction == "Export";
     var isOperationLog = currentController == "OperationLog" && currentAction == "Search";
-
+    var isAnnouncement = currentController == "Announcement" && currentAction == "Index";
     string Check(bool isActive)
     {
         return isActive ? "active bg-primary-subtle text-dark" : "text-dark";
@@ -88,6 +88,13 @@
                             <a class="nav-link rounded @(Check(isOperationLog))"
                                asp-controller="OperationLog" asp-action="Search">
                                 <i class="bi bi-pencil me-2"></i>操作紀錄
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link rounded @(Check(isAnnouncement))"
+                               asp-controller="Announcement"
+                               asp-action="Index">
+                                <i class="bi bi-megaphone me-2"></i>公告管理
                             </a>
                         </li>
                         <hr class="my-2">
