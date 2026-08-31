@@ -1,6 +1,7 @@
 using HotelManagementSystem.Models;
 using HotelManagementSystem.Services;
 using Microsoft.EntityFrameworkCore;
+using HotelManagementSystem.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +22,26 @@ builder.Services.AddDbContext<HotelManagementContext>(options =>
 
 builder.Services.AddScoped<NoShowService>();
 builder.Services.AddScoped<RoomAvailabilityService>();
+
+builder.Services
+    .AddOptions<N8nOptions>()
+    .Bind(builder.Configuration.GetSection(N8nOptions.SectionName))
+    .Validate(
+        options =>
+            Uri.TryCreate(
+                options.WebhookUrl,
+                UriKind.Absolute,
+                out var uri)
+            && (uri.Scheme == Uri.UriSchemeHttp
+                || uri.Scheme == Uri.UriSchemeHttps),
+        "N8n:WebhookUrl 必須是有效的 HTTP 或 HTTPS 網址。")
+    .Validate(
+        options => !string.IsNullOrWhiteSpace(options.HeaderName),
+        "N8n:HeaderName 尚未設定。")
+    .Validate(
+        options => !string.IsNullOrWhiteSpace(options.WebhookSecret),
+        "N8n:WebhookSecret 尚未設定。")
+    .ValidateOnStart();
 
 var app = builder.Build();
 
