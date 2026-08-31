@@ -1,21 +1,22 @@
 /*
-    HotelManagementSystem - 第一版穩定基準資料
+    HotelManagementSystem - 第一版展示資料
     SQL Server
 
     建議執行順序：
     1. 01_create_hotel_management_schema.sql
-    2. 02_sample_data.sql（本檔：穩定基礎資料）
-    3. 03_development_scenarios.sql（動態開發情境）
-    4. 04_development_volume_data.sql（可選：營運量體資料）
-    5. 05_validate_sample_data.sql（唯讀驗證與摘要）
+    2. 02_required_seed.sql（系統必要初始化資料）
+    3. 03_demo_data.sql（本檔：展示用基礎資料）
+    4. 03_development_scenarios.sql（動態開發情境）
+    5. 04_development_volume_data.sql（可選：營運量體資料）
+    6. 05_validate_sample_data.sql（唯讀驗證與摘要）
 
     本檔責任：
-    - 分館、房型、實體房間、員工、固定操作類型
+    - 分館、房型、實體房間、一般員工
     - 固定主鍵、密碼雜湊、Identity seed 與可重跑清除順序
 
     注意：
-    - 本檔會清除八張表的資料；只適用開發／測試資料庫。
-    - 核心開發資料須依序執行至 03；需要查詢／匯出量體時再執行 04。
+    - 本檔會清除既有展示／測試資料，但保留 02_required_seed.sql 建立的 SystemAdmin 與 OperationTypes。
+    - 核心開發資料須依序執行至 03_development_scenarios；需要查詢／匯出量體時再執行 04。
     - 全部測試帳號密碼固定為 Hotel@123。
     - 固定 PasswordHash 僅供本機開發／展示，不得用於正式環境。
 */
@@ -47,8 +48,7 @@ BEGIN TRY
     DELETE FROM [dbo].[StayRecords];
     DELETE FROM [dbo].[Bookings];
     DELETE FROM [dbo].[Rooms];
-    DELETE FROM [dbo].[Employees];
-    DELETE FROM [dbo].[OperationTypes];
+    DELETE FROM [dbo].[Employees] WHERE [Role] = 'BranchEmployee';
     DELETE FROM [dbo].[RoomTypes];
     DELETE FROM [dbo].[Branches];
 
@@ -138,7 +138,7 @@ BEGIN TRY
        3. Rooms：每房型 5～12 間，共 188 間
 
        以固定計畫表產生可讀房號與固定 RoomId，避免維護 188 列
-       幾乎相同的 INSERT。03 會重設並套用情境用供應／清潔狀態。
+       幾乎相同的 INSERT。03_development_scenarios.sql 會重設並套用情境用供應／清潔狀態。
        ========================================================= */
     DECLARE @RoomPlan table
     (
@@ -192,15 +192,13 @@ BEGIN TRY
     SET @IdentityInsertTable = NULL;
 
     /* =========================================================
-       4. Employees：1 位總系統管理員、每館 2～3 位啟用員工、3 位停用員工
+       4. Employees：每館 2～3 位啟用員工、3 位停用員工
        ========================================================= */
     INSERT INTO [dbo].[Employees]
     (
         [EmployeeNumber], [EmployeeName], [IsActive], [BranchId], [PasswordHash], [Role]
     )
     VALUES
-    ('E20260807001', N'系統管理員', 1, NULL, @SamplePasswordHash, 'SystemAdmin'),
-
     ('E20260807002', N'林怡君', 1, 1, @SamplePasswordHash, 'BranchEmployee'),
     ('E20260807006', N'蔡佩珊', 1, 1, @SamplePasswordHash, 'BranchEmployee'),
     ('E20260807009', N'陳冠廷', 1, 1, @SamplePasswordHash, 'BranchEmployee'),
@@ -225,63 +223,20 @@ BEGIN TRY
     ('E20260807019', N'楊宗翰', 1, 6, @SamplePasswordHash, 'BranchEmployee'),
     ('E20260807008', N'劉思妤', 0, 6, @SamplePasswordHash, 'BranchEmployee');
 
-    /* =========================================================
-       5. OperationTypes：固定 ID 1～25
-
-       StayController 目前以 22 / 23 寫入 Check-in / Check-out，
-       因此保留既有 ID 與代碼，避免種子資料和程式不相容。
-       ========================================================= */
-    SET @IdentityInsertTable = N'dbo.OperationTypes';
-    SET IDENTITY_INSERT [dbo].[OperationTypes] ON;
-
-    INSERT INTO [dbo].[OperationTypes]
-        ([OperationTypeId], [OperationTypeCode], [OperationTypeName])
-    VALUES
-    ( 1, 'BranchCreated',             N'建立分館'),
-    ( 2, 'BranchUpdated',             N'修改分館'),
-    ( 3, 'BranchBookingOpened',       N'開放新訂房'),
-    ( 4, 'BranchBookingStopped',      N'停止新訂房'),
-    ( 5, 'RoomTypeCreated',           N'建立房型'),
-    ( 6, 'RoomTypeUpdated',           N'修改房型'),
-    ( 7, 'RoomTypeDisabled',          N'停用房型'),
-    ( 8, 'RoomTypeEnabled',           N'啟用房型'),
-    ( 9, 'RoomCreated',               N'建立房間'),
-    (10, 'RoomUpdated',               N'修改房間'),
-    (11, 'RoomDisabled',              N'停用房間'),
-    (12, 'RoomEnabled',               N'啟用房間'),
-    (13, 'EmployeeCreated',           N'建立帳號'),
-    (14, 'EmployeeUpdated',           N'修改帳號'),
-    (15, 'EmployeeDisabled',          N'停用帳號'),
-    (16, 'EmployeeEnabled',           N'啟用帳號'),
-    (17, 'EmployeePasswordReset',     N'重設密碼'),
-    (18, 'RoomReserved',              N'設為保留'),
-    (19, 'RoomReservationReleased',   N'解除保留'),
-    (20, 'RoomCleaningStatusChanged', N'更新清潔狀態'),
-    (21, 'BookingCancelled',          N'取消訂單'),
-    (22, 'CheckIn',                   N'Check-in'),
-    (23, 'CheckOut',                  N'Check-out'),
-    (24, 'RoomDisabledReasonUpdated', N'修改房間停用原因'),
-    (25, 'EmployeePasswordChanged',   N'員工修改密碼');
-
-    SET IDENTITY_INSERT [dbo].[OperationTypes] OFF;
-    SET @IdentityInsertTable = NULL;
-
     /* 固定 ID 寫入後校正 seed，下一筆一般 INSERT 從 MAX + 1 接續。 */
     DBCC CHECKIDENT ('dbo.Branches',       RESEED, 6)   WITH NO_INFOMSGS;
     DBCC CHECKIDENT ('dbo.RoomTypes',      RESEED, 24)  WITH NO_INFOMSGS;
     DBCC CHECKIDENT ('dbo.Rooms',          RESEED, 188) WITH NO_INFOMSGS;
     DBCC CHECKIDENT ('dbo.StayRecords',    RESEED, 0)   WITH NO_INFOMSGS;
-    DBCC CHECKIDENT ('dbo.OperationTypes', RESEED, 25) WITH NO_INFOMSGS;
     DBCC CHECKIDENT ('dbo.OperationLogs',  RESEED, 0)   WITH NO_INFOMSGS;
 
     COMMIT TRANSACTION;
 
-    SELECT N'基準資料完成' AS [Result],
+    SELECT N'展示資料完成' AS [Result],
            (SELECT COUNT(*) FROM [dbo].[Branches]) AS [Branches],
            (SELECT COUNT(*) FROM [dbo].[RoomTypes]) AS [RoomTypes],
            (SELECT COUNT(*) FROM [dbo].[Rooms]) AS [Rooms],
-           (SELECT COUNT(*) FROM [dbo].[Employees]) AS [Employees],
-           (SELECT COUNT(*) FROM [dbo].[OperationTypes]) AS [OperationTypes];
+           (SELECT COUNT(*) FROM [dbo].[Employees] WHERE [Role] = 'BranchEmployee') AS [BranchEmployees];
 END TRY
 BEGIN CATCH
     IF @IdentityInsertTable = N'dbo.Branches'
@@ -290,9 +245,6 @@ BEGIN CATCH
         SET IDENTITY_INSERT [dbo].[RoomTypes] OFF;
     ELSE IF @IdentityInsertTable = N'dbo.Rooms'
         SET IDENTITY_INSERT [dbo].[Rooms] OFF;
-    ELSE IF @IdentityInsertTable = N'dbo.OperationTypes'
-        SET IDENTITY_INSERT [dbo].[OperationTypes] OFF;
-
     IF @@TRANCOUNT > 0
         ROLLBACK TRANSACTION;
 
