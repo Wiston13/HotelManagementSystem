@@ -432,6 +432,7 @@ namespace HotelManagementSystem.Controllers
                 // =================================================
                 // OperationLog：先判斷，再修改 entity
                 // =================================================
+                var oldDisabledReason = existingRoom.DisabledReason;
                 var isBasicInfoChanged =
                     existingRoom.RoomNumber != roomNumber ||
                     existingRoom.Floor != model.Floor ||
@@ -488,6 +489,23 @@ namespace HotelManagementSystem.Controllers
 
                         Description =
                             $"恢復開放房間【{roomNumber}】"
+                    });
+                }
+
+                if (currentStatus == "Disabled" &&
+                    requestedStatus == "Disabled" &&
+                    oldDisabledReason != disabledReason)
+                {
+                    logsToInsert.Add(new OperationLog
+                    {
+                        TargetBranchId = existingRoom.BranchId,
+                        OperatedAt = _clock.Now,
+                        OperatorEmployeeNumber = currentOperator,
+                        OperationTypeId = 24,
+                        TargetType = "Room",
+                        TargetIdentifier = roomNumber,
+                        Description =
+                            $"將房間 {roomNumber} 的停用原因由「{oldDisabledReason}」修改為「{disabledReason}」。"
                     });
                 }
 
