@@ -240,7 +240,7 @@
             const branchText = branchFilter.options[branchFilter.selectedIndex].text;
             const capacity = document.getElementById('maxOccupancy').value;
             const bed = document.getElementById('bedType').value;
-            const price = Number(document.getElementById('nightlyPrice').value).toString();
+            const price = Number(document.getElementById('nightlyPrice').value).toLocaleString('zh-TW', { maximumFractionDigits: 2 });
             const status = document.getElementById('isActive').value === 'true' ? '啟用' : '停用';
             const imgUrl = document.getElementById('imageUrl').value.trim();
 

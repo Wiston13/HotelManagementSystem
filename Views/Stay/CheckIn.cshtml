@@ -72,7 +72,7 @@
 					</div>
 					<div class="check-in-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
 						<p class="detail-label text-secondary mb-0">住宿</p>
-						<p class="detail-value during-the-stay fw-semibold text-end mb-0">@Model.CheckInDate.ToString() — @Model.CheckOutDate.ToString()</p>
+						<p class="detail-value during-the-stay fw-semibold text-end mb-0">@(Model.CheckInDate?.ToString("yyyy/MM/dd") ?? "") — @(Model.CheckOutDate?.ToString("yyyy/MM/dd") ?? "")</p>
 					</div>
 					<div class="check-in-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
 						<p class="detail-label text-secondary mb-0">訂單狀態</p>
@@ -87,7 +87,7 @@
 			<div class="col-lg-5">
 				<section class="check-in-panel card h-100 border-0 shadow-sm" aria-labelledby="room-assignment-title">
 					<div class="card-body p-4 p-md-5 d-flex flex-column">
-						<h2 id="room-assignment-title" class="h4 fw-bold mb-3">指派實體房間</h2>
+						<h2 id="room-assignment-title" class="h4 fw-bold mb-3">指派房間</h2>
 
 						<form id="checkInForm"
 							  asp-controller="Stay"

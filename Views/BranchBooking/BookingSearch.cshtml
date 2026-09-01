@@ -138,7 +138,7 @@
                                             data-bookingnum="@item.BookingNum"
                                             data-name="@item.Name"
                                             data-roomtype="@item.Roomtype"
-                                            data-createtime="@item.BookingDate"
+                                            data-createtime="@item.BookingDate.ToString("yyyy/MM/dd HH:mm")"
                                             data-bookingstatus="@item.BookingStatus"
                                             data-startdate="@item.StartDate.ToString("yyyy/MM/dd")"
                                             data-enddate="@item.EndDate.ToString("yyyy/MM/dd")"
@@ -214,7 +214,7 @@
                 <div id="cancelReasonSection" class="d-none mt-4 mx-1 p-3 bg-light border rounded">
                     <h6 class="fw-bold text-danger mb-3">請填寫取消原因</h6>
                     <div class="mb-3">
-                        <label class="form-label">選擇取消原因<span class="text-danger">*必填</span></label>
+                        <label class="form-label">選擇取消因素<span class="text-danger">*必填</span></label>
                         <select class="form-select" id="cancelReasonSelect">
                             <option value="請選擇..." disabled selected>請選擇...</option>
                             <option value="顧客因素">顧客因素</option>
@@ -231,7 +231,7 @@
                             顧客因素取消須於入住日前一日 23:59 前完成。
                         </div>
                         <div id="overInputWarnning" class="text-danger mt-1 me-1 d-none">
-                            取消理由不能超過500個字。
+                            取消理由不能超過 500 個字。
                     </div>
                         <button type="button" id="confirmCancelBtn" class="btn btn-danger btn-sm d-none px-3">
                             確認取消訂單

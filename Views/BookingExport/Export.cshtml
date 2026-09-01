@@ -111,6 +111,10 @@
         return '"' + str.replace(/"/g, '""') + '"';
     }
 
+    function formatCurrency(value) {
+        return "NT$ " + value.toLocaleString("zh-TW", { maximumFractionDigits: 2 });
+    }
+
     async function executeSearch() {
         var sDate = document.getElementById("dateStart").value;
         var eDate = document.getElementById("dateEnd").value;
@@ -149,9 +153,9 @@
                         item.booking_no, item.branch_name, item.created_at, item.guest_name,
                         item.phone, item.email, item.check_in, item.check_out, item.nights,
                         item.room_type_snapshot,
-                        typeof item.price_snapshot === 'number' ? "$" + item.price_snapshot.toFixed(2) : item.price_snapshot,
-                        typeof item.total_amount === 'number' ? "$" + item.total_amount.toFixed(2) : item.total_amount,
-                        typeof item.total_amount === 'number' ? "$" + item.total_amount.toFixed(2) : item.total_amount,
+                        typeof item.price_snapshot === 'number' ? formatCurrency(item.price_snapshot) : item.price_snapshot,
+                        typeof item.total_amount === 'number' ? formatCurrency(item.total_amount) : item.total_amount,
+                        typeof item.total_amount === 'number' ? formatCurrency(item.total_amount) : item.total_amount,
                         item.created_at || "-"
                     ];
 
@@ -171,7 +175,7 @@
 
                     var appendFields = [
                         item.cancel_cause || "-", item.cancel_reason || "-",
-                        typeof item.refund_amount === 'number' ? "$" + item.refund_amount.toFixed(2) : (item.refund_amount || "-"),
+                        typeof item.refund_amount === 'number' ? formatCurrency(item.refund_amount) : (item.refund_amount || "-"),
                         item.cancel_emp || "-", item.cancel_at || "-", item.room_no || "-",
                         item.act_occupancy !== "" && item.act_occupancy !== 0 ? item.act_occupancy : "-",
                         item.act_checkin_at || "-", item.checkin_emp || "-", item.act_checkout_at || "-",
