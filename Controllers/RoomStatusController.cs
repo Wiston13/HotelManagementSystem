@@ -442,7 +442,7 @@ namespace HotelManagementSystem.Controllers
                 TargetType = "Room",
                 TargetIdentifier = room.RoomNumber,
                 Description =
-                    $"將房間 {room.RoomNumber} 的停用原因由「{oldReason}」修改為「{newReason}」。"
+                    $"將房間 {room.RoomNumber} 的停用原因由「{oldReason?.TrimEnd('。')}」修改為「{newReason.TrimEnd('。')}」。"
             };
 
             try

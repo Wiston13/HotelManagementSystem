@@ -500,7 +500,7 @@ BEGIN TRY
     (49,1,DATEADD(MINUTE,720,CAST(DATEADD(DAY,-20,@Today) AS datetime2(0))),'E20260807001',16,'Employee',N'E20260807003',N'啟用員工帳號：E20260807003(陳柏宇)。'),
     (50,1,DATEADD(MINUTE,720,CAST(DATEADD(DAY,-1,@Today) AS datetime2(0))),'E20260807001',17,'Employee',N'E20260807006',N'重設員工密碼：E20260807006(蔡佩珊)。'),
     (51,1,DATEADD(MINUTE,720,CAST(DATEADD(DAY,-5,@Today) AS datetime2(0))),'E20260807002',19,'Room',N'202',N'將房間 202 供應狀態更新為開放販售。'),
-    (52,1,DATEADD(MINUTE,780,CAST(DATEADD(DAY,-1,@Today) AS datetime2(0))),'E20260807002',24,'Room',N'205',N'將房間 205 的停用原因由「空調異音，等待初步檢查。」修改為「空調主機異常，等待維修廠商到場。」。'),
+    (52,1,DATEADD(MINUTE,780,CAST(DATEADD(DAY,-1,@Today) AS datetime2(0))),'E20260807002',24,'Room',N'205',N'將房間 205 的停用原因由「空調異音，等待初步檢查」修改為「空調主機異常，等待維修廠商到場」。'),
     (53,1,DATEADD(MINUTE,840,CAST(DATEADD(DAY,-1,@Today) AS datetime2(0))),'E20260807002',25,'Employee',N'E20260807002',N'員工修改自己的登入密碼。');
 
     SET IDENTITY_INSERT [dbo].[OperationLogs] OFF;

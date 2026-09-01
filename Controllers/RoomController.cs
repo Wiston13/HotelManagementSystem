@@ -505,7 +505,7 @@ namespace HotelManagementSystem.Controllers
                         TargetType = "Room",
                         TargetIdentifier = roomNumber,
                         Description =
-                            $"將房間 {roomNumber} 的停用原因由「{oldDisabledReason}」修改為「{disabledReason}」。"
+                            $"將房間 {roomNumber} 的停用原因由「{oldDisabledReason?.TrimEnd('。')}」修改為「{disabledReason?.TrimEnd('。')}」。"
                     });
                 }
 

@@ -85,7 +85,7 @@
 							@if (room.IsOccupied && room.CheckOutDate.HasValue)
 							{
 								<span class="room-card__meta d-block">
-									退房日 @room.CheckOutDate.Value.ToString("MM/dd")
+									退房日 @room.CheckOutDate.Value.ToString("yyyy/MM/dd")
 								</span>
 							}
 							else if (room.SupplyStatus == "Disabled"
