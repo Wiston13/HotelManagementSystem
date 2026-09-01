@@ -1,9 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace HotelManagementSystem.Models.ViewModels
+namespace HotelManagementSystem.Models.ViewModels.Announcement
 {
-    public class AnnouncementCreateViewModel
+    public class AnnouncementEditViewModel
     {
+        public int AnnouncementId { get; set; }
+
         [Required(ErrorMessage = "請輸入公告標題")]
         [StringLength(100, ErrorMessage = "公告標題最多 100 個字")]
         public string Title { get; set; } = string.Empty;
@@ -18,6 +20,6 @@ namespace HotelManagementSystem.Models.ViewModels
         [Required(ErrorMessage = "請選擇結束時間")]
         public DateTime? EndAt { get; set; }
 
-        public bool IsActive { get; set; } = true;
+        public bool IsActive { get; set; }
     }
 }

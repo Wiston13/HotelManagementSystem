@@ -1,4 +1,4 @@
-﻿@model HotelManagementSystem.Models.ViewModels.AnnouncementCreateViewModel
+﻿@model HotelManagementSystem.Models.ViewModels.AnnouncementIndexViewModel
 @*
     For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 *@
@@ -11,6 +11,13 @@
 {
     <div class="alert alert-success">
         @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">
+        @TempData["ErrorMessage"]
     </div>
 }
 
@@ -27,7 +34,66 @@
         新增公告
     </button>
 </div>
+<div class="card shadow-sm mb-4">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>公告標題</th>
+                        <th>開始時間</th>
+                        <th>結束時間</th>
+                        <th>狀態</th>
+                        <th class="text-end">操作</th>
+                    </tr>
+                </thead>
 
+                <tbody>
+                    @foreach (var announcement in Model.Announcements)
+                    {
+                        <tr>
+                            <td>@announcement.Title</td>
+
+                            <td>
+                                @announcement.StartAt.ToString("yyyy/MM/dd HH:mm")
+                            </td>
+
+                            <td>
+                                @announcement.EndAt.ToString("yyyy/MM/dd HH:mm")
+                            </td>
+
+                            <td>
+                                @if (announcement.IsActive)
+                                {
+                                    <span class="badge bg-success">啟用</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">停用</span>
+                                }
+                            </td>
+
+                            <td class="text-end">
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-primary edit-announcement-btn"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#editAnnouncementModal"
+                                        data-id="@announcement.AnnouncementId"
+                                        data-title="@announcement.Title"
+                                        data-content="@announcement.Content"
+                                        data-start="@announcement.StartAt.ToString("yyyy-MM-ddTHH:mm")"
+                                        data-end="@announcement.EndAt.ToString("yyyy-MM-ddTHH:mm")"
+                                        data-active="@announcement.IsActive.ToString().ToLower()">
+                                    編輯
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 <div class="modal fade"
      id="createAnnouncementModal"
      tabindex="-1"
@@ -57,49 +123,49 @@
                 <div class="modal-body">
 
                     <div class="mb-3">
-                        <label asp-for="Title" class="form-label">公告標題</label>
-                        <input asp-for="Title"
+                        <label asp-for="Create.Title" class="form-label">公告標題</label>
+                        <input asp-for="Create.Title"
                                class="form-control"
                                placeholder="請輸入公告標題" />
-                        <span asp-validation-for="Title"
+                        <span asp-validation-for="Create.Title"
                               class="text-danger"></span>
                     </div>
 
                     <div class="mb-3">
-                        <label asp-for="Content" class="form-label">公告內容</label>
-                        <textarea asp-for="Content"
+                        <label asp-for="Create.Content" class="form-label">公告內容</label>
+                        <textarea asp-for="Create.Content"
                                   class="form-control"
                                   rows="5"
                                   placeholder="請輸入公告內容"></textarea>
-                        <span asp-validation-for="Content"
+                        <span asp-validation-for="Create.Content"
                               class="text-danger"></span>
                     </div>
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label asp-for="StartAt" class="form-label">開始時間</label>
-                            <input asp-for="StartAt"
+                            <label asp-for="Create.StartAt" class="form-label">開始時間</label>
+                            <input asp-for="Create.StartAt"
                                    type="datetime-local"
                                    class="form-control" />
-                            <span asp-validation-for="StartAt"
+                            <span asp-validation-for="Create.StartAt"
                                   class="text-danger"></span>
                         </div>
 
                         <div class="col-md-6 mb-3">
-                            <label asp-for="EndAt" class="form-label">結束時間</label>
-                            <input asp-for="EndAt"
+                            <label asp-for="Create.EndAt" class="form-label">結束時間</label>
+                            <input asp-for="Create.EndAt"
                                    type="datetime-local"
                                    class="form-control" />
-                            <span asp-validation-for="EndAt"
+                            <span asp-validation-for="Create.EndAt"
                                   class="text-danger"></span>
                         </div>
                     </div>
 
                     <div class="form-check">
-                        <input asp-for="IsActive"
+                        <input asp-for="Create.IsActive"
                                class="form-check-input" />
 
-                        <label asp-for="IsActive"
+                        <label asp-for="Create.IsActive"
                                class="form-check-label">
                             啟用公告
                         </label>
@@ -123,10 +189,189 @@
                 </div>
 
             </form>
-            @section Scripts {
-                <partial name="_ValidationScriptsPartial" />
-            }
+            
  
         </div>
     </div>
 </div>
+<div class="modal fade"
+     id="editAnnouncementModal"
+     tabindex="-1"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <form asp-controller="Announcement"
+                  asp-action="Edit"
+                  method="post">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">編輯公告</h5>
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal">
+                    </button>
+                </div>
+
+                <div class="modal-body">
+
+                    <input asp-for="Edit.AnnouncementId"
+                           type="hidden"
+                           id="editAnnouncementId" />
+
+                    <div class="mb-3">
+                        <label asp-for="Edit.Title" class="form-label">公告標題</label>
+
+                        <input asp-for="Edit.Title"
+                               id="editTitle"
+                               class="form-control" />
+
+                        <span asp-validation-for="Edit.Title"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Edit.Content" class="form-label">公告內容</label>
+
+                        <textarea asp-for="Edit.Content"
+                                  id="editContent"
+                                  class="form-control"
+                                  rows="5"></textarea>
+
+                        <span asp-validation-for="Edit.Content"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Edit.StartAt" class="form-label">開始時間</label>
+
+                            <input asp-for="Edit.StartAt"
+                                   type="datetime-local"
+                                   id="editStartAt"
+                                   class="form-control" />
+
+                            <span asp-validation-for="Edit.StartAt"
+                                  class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Edit.EndAt" class="form-label">結束時間</label>
+
+                            <input asp-for="Edit.EndAt"
+                                   type="datetime-local"
+                                   id="editEndAt"
+                                   class="form-control" />
+
+                            <span asp-validation-for="Edit.EndAt"
+                                  class="text-danger"></span>
+
+                            <div id="editEndAtCompareError"
+                                 class="text-danger"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-check">
+                        <input asp-for="Edit.IsActive"
+                               id="editIsActive"
+                               class="form-check-input" />
+
+                        <label asp-for="Edit.IsActive"
+                               class="form-check-label">
+                            啟用公告
+                        </label>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+                        取消
+                    </button>
+
+                    <button type="submit"
+                            class="btn btn-primary">
+                        儲存修改
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        document.querySelectorAll('.edit-announcement-btn')
+            .forEach(function(button) {
+
+                button.addEventListener('click', function() {
+
+                    document.getElementById('editAnnouncementId').value =
+                        this.dataset.id;
+
+                    document.getElementById('editTitle').value =
+                        this.dataset.title;
+
+                    document.getElementById('editContent').value =
+                        this.dataset.content;
+
+                    document.getElementById('editStartAt').value =
+                        this.dataset.start;
+
+                    document.getElementById('editEndAt').value =
+                        this.dataset.end;
+
+                    document.getElementById('editIsActive').checked =
+                        this.dataset.active === 'true';
+                });
+            });
+    </script>
+
+    <script>
+        const editStartAt =
+            document.getElementById('editStartAt');
+
+        const editEndAt =
+            document.getElementById('editEndAt');
+
+        const editEndAtCompareError =
+            document.getElementById('editEndAtCompareError');
+
+        const editForm =
+            document.querySelector('#editAnnouncementModal form');
+
+        function validateEditTime() {
+
+            const startAt = editStartAt.value;
+            const endAt = editEndAt.value;
+
+            if (startAt && endAt && endAt <= startAt) {
+
+                editEndAtCompareError.textContent =
+                    '結束時間必須晚於開始時間';
+
+                return false;
+            }
+
+            editEndAtCompareError.textContent = '';
+
+            return true;
+        }
+
+        editStartAt.addEventListener('change', validateEditTime);
+        editEndAt.addEventListener('change', validateEditTime);
+
+        editForm.addEventListener('submit', function(event) {
+
+            if (!validateEditTime()) {
+                event.preventDefault();
+            }
+        });
+    </script>
+}
