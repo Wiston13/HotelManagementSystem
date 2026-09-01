@@ -91,7 +91,7 @@ namespace HotelManagementSystem.Controllers
                     requestedStatus != "Disabled")
                 {
                     return Fail(
-                        "新增失敗：房間初始供應狀態只能為 Open 或 Disabled。");
+                        "新增失敗：房間初始供應狀態只能為「開放販售」或「停用」。");
                 }
 
                 // 驗證分館
@@ -164,6 +164,7 @@ namespace HotelManagementSystem.Controllers
                 };
 
                 _context.Rooms.Add(newRoom);
+                var initialStatusText = requestedStatus == "Open" ? "開放販售" : "停用";
 
                 logsToInsert.Add(new OperationLog
                 {
@@ -179,7 +180,7 @@ namespace HotelManagementSystem.Controllers
                         $"新增房間【{roomNumber}】" +
                         $"(房型: {roomType.RoomTypeName}, " +
                         $"樓層: {model.Floor}, " +
-                        $"初始狀態: {requestedStatus})"
+                        $"初始狀態: {initialStatusText})"
                 });
 
                 TempData["SuccessMessage"] =
@@ -266,8 +267,23 @@ namespace HotelManagementSystem.Controllers
 
                 if (!isValidTransition)
                 {
+                    var currentStatusText = currentStatus switch
+                    {
+                        "Open" => "開放販售",
+                        "Reserved" => "保留",
+                        "Disabled" => "停用",
+                        _ => "未知狀態"
+                    };
+                    var requestedStatusText = requestedStatus switch
+                    {
+                        "Open" => "開放販售",
+                        "Reserved" => "保留",
+                        "Disabled" => "停用",
+                        _ => "未知狀態"
+                    };
+
                     return Fail(
-                        $"非法狀態變更：無法將房間供應狀態從【{currentStatus}】變更為【{requestedStatus}】。");
+                        $"非法狀態變更：無法將房間供應狀態從【{currentStatusText}】變更為【{requestedStatusText}】。");
                 }
 
                 var isChangingToDisabled =
@@ -337,7 +353,7 @@ namespace HotelManagementSystem.Controllers
                     if (isChangingToOpen)
                     {
                         return Fail(
-                            "恢復失敗：該房間目前仍有尚未辦理退房的住客，無法恢復為 Open。");
+                            "恢復失敗：該房間目前仍有尚未辦理退房的住客，無法恢復為開放販售。");
                     }
                 }
                 var capacityCheckStartDate = _clock.Today;

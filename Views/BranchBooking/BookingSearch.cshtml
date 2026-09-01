@@ -126,7 +126,7 @@
                                 <td>@item.StartDate.ToString("yyyy/MM/dd") - @item.EndDate.ToString("yyyy/MM/dd")</td>
                                 <td>@item.Name</td>
                                 <td>@item.Roomtype</td>
-                                <td>@(item.Phone!=null&&item.Phone.Length>4?item.Phone.Insert(4, "-"):item.Phone)</td>
+                                <td>@item.Phone</td>
                                 <td><span class="badge @BookingStatusStyle(item.BookingStatus) px-2 py-1">@item.BookingStatus</span></td>
                                 <td class="text-end pe-4">
 
@@ -348,7 +348,7 @@
                     document.getElementById('modalRoomtype').textContent = roomtype;
                     document.getElementById('modalStatus').textContent = bookingStatus;
                     document.getElementById('modalBookingDate').textContent = startDate + " - " + endDate;
-                    document.getElementById('modalPhone').textContent = phone && phone.length > 4 ? phone.slice(0, 4) + "-" + phone.slice(4) : (phone ?? "");
+                    document.getElementById('modalPhone').textContent = phone ?? "";
                     document.getElementById('modalCreateTime').textContent = createTime;
                     document.getElementById('modalPrice').textContent = price;
 
