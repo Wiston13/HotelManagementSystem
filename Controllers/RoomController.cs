@@ -338,6 +338,12 @@ namespace HotelManagementSystem.Controllers
 
                 if (hasActiveStay)
                 {
+                    if (existingRoom.RoomNumber != roomNumber)
+                    {
+                        return Fail(
+                            "修改失敗：目前有住客的房間不得修改房號。");
+                    }
+
                     if (isRoomTypeChanging)
                     {
                         return Fail(
