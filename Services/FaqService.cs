@@ -20,22 +20,41 @@ namespace HotelManagementSystem.Services
         {
             string? webhookUrl =
                 _configuration["N8n:FaqWebhookUrl"];
+            string? apiKey =
+                _configuration["N8n:ApiKey"];
 
             if (string.IsNullOrWhiteSpace(webhookUrl))
             {
                 throw new InvalidOperationException(
                     "找不到 n8n FAQ Webhook URL 設定。");
             }
-
-            var request = new FaqAskRequest
+            if (string.IsNullOrWhiteSpace(apiKey))
+            {
+                throw new InvalidOperationException(
+                    "找不到 n8n FAQ API Key 設定。");
+            }
+            var payload = new FaqAskRequest
             {
                 Message = message
             };
 
-            HttpResponseMessage response =
-                await _httpClient.PostAsJsonAsync(
-                    webhookUrl,
-                    request);
+            using var httpRequest =
+            new HttpRequestMessage(
+            HttpMethod.Post,
+            webhookUrl);
+            
+            httpRequest.Headers.Add(
+                "X-FAQ-API-Key",
+                apiKey);
+            httpRequest.Headers.Add(
+            "ngrok-skip-browser-warning",
+            "true");
+
+            httpRequest.Content =
+                JsonContent.Create(payload);
+
+            using HttpResponseMessage response =
+                await _httpClient.SendAsync(httpRequest);
 
             response.EnsureSuccessStatusCode();
 
