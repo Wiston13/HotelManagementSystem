@@ -488,7 +488,7 @@ BEGIN TRY
     /* 補齊目前 develop 實際成功寫入格式的 OperationType 1～25 coverage。 */
     (38,1,DATEADD(MINUTE,600,CAST(DATEADD(DAY,-45,@Today) AS datetime2(0))),'E20260807001', 2,'Branch',N'台北中山商旅',N'修改分館資料：台北中山商旅。'),
     (39,6,DATEADD(MINUTE,780,CAST(DATEADD(DAY,-10,@Today) AS datetime2(0))),'E20260807001', 3,'Branch',N'花蓮站前商旅',N'將分館 花蓮站前商旅 設定為開放接受新訂房。'),
-    (40,1,DATEADD(MINUTE,660,CAST(DATEADD(DAY,-59,@Today) AS datetime2(0))),'E20260807001', 5,'RoomType',N'經典單人房',N'新增房型：經典單人房'),
+    (40,1,DATEADD(MINUTE,660,CAST(DATEADD(DAY,-59,@Today) AS datetime2(0))),'E20260807001', 5,'RoomType',N'經典單人房',N'新增房型：經典單人房。'),
     (41,1,DATEADD(MINUTE,720,CAST(DATEADD(DAY,-40,@Today) AS datetime2(0))),'E20260807001', 6,'RoomType',N'經典單人房',N'修改房型：經典單人房。'),
     (42,5,@PanoramicTripleDisabledAt,'E20260807001', 7,'RoomType',N'全景三人房',N'停用房型：全景三人房。'),
     (43,6,DATEADD(MINUTE,720,CAST(DATEADD(DAY,-7,@Today) AS datetime2(0))),'E20260807001', 8,'RoomType',N'山海雙人房',N'啟用房型：山海雙人房。'),

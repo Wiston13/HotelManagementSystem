@@ -40,7 +40,7 @@
 					</div>
 
 					<div class="col-12 col-lg-5">
-						<label asp-for="Phone" class="form-label">聯絡電話<span class="text-danger">*</span></label>
+						<label for="phone" class="form-label">聯絡電話<span class="text-danger">*</span></label>
 
 						<!-- 改用 asp-for -->
 						<input asp-for="Phone" class="form-control" id="phone" placeholder="例如：0912345678" />
@@ -225,6 +225,7 @@
 			// 輸入框驗證通過
 			phone.classList.remove("is-invalid");  // 移除錯誤樣式
 			phoneError.classList.remove("show");  // 隱藏錯誤訊息
+			phoneError.textContent = "";
 
 			// 回傳驗證成功
 			return true;
