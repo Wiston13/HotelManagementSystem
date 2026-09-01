@@ -1,10 +1,12 @@
-﻿using HotelManagementSystem.Models;
+﻿using HotelManagementSystem.Helper;
+using HotelManagementSystem.Models;
 using HotelManagementSystem.Models.BookingSearchModel;
 using HotelManagementSystem.Models.Entities;
 using HotelManagementSystem.Services;
-using HotelManagementSystem.Helper;
+using HotelManagementSystem.Services.Email;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace HotelManagementSystem.Controllers
 {
@@ -14,13 +16,17 @@ namespace HotelManagementSystem.Controllers
         private readonly HotelManagementContext _context;
         private readonly NoShowService _noShowService;
         private readonly ILogger<BranchBookingController> _logger;
-        public BranchBookingController(HotelManagementContext context, TaipeiClock clock, NoShowService noShowService, ILogger<BranchBookingController> logger)
+        private readonly IBookingEmailService _bookingEmailService;
+        private readonly IMemoryCache _memoryCache;
+        public BranchBookingController(HotelManagementContext context, TaipeiClock clock, NoShowService noShowService, ILogger<BranchBookingController> logger, IBookingEmailService bookingEmailService, IMemoryCache memoryCache)
             : base(context)
         {
             _context = context;
             _clock = clock;
             _noShowService = noShowService;
             _logger = logger;
+            _bookingEmailService = bookingEmailService;
+            _memoryCache = memoryCache;
         }
 
         // 將前端中文篩選值轉為資料庫狀態碼。
@@ -204,6 +210,138 @@ namespace HotelManagementSystem.Controllers
                 email = booking.Email,
                 message = "Email 已修改完成。"
             });
+        }
+
+        // 將訂房確認信補寄至訂單目前儲存的 Email。
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResendConfirmationEmail([FromBody] ResendConfirmationEmailInputViewModel? input)
+        {
+            if (input == null)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "未收到補寄確認信所需的資料。"
+                });
+            }
+            // 移除訂單編號前後空白
+            input.BookingNumber = input.BookingNumber?.Trim() ?? string.Empty;
+            // 使用整理後的內容重新驗證 ViewModel
+            ModelState.Clear();
+
+            if (!TryValidateModel(input))
+            {
+                var errorMessage = ModelState.Values
+                    .SelectMany(value => value.Errors)
+                    .Select(error => error.ErrorMessage)
+                    .FirstOrDefault(message =>
+                        !string.IsNullOrWhiteSpace(message))
+                    ?? "輸入資料格式不正確。";
+                return BadRequest(new
+                {
+                    success = false,
+                    message = errorMessage
+                });
+            }
+            // 後端重新查詢訂單，並限制只能操作目前員工所屬分館
+            var booking = await _context.Bookings
+                .AsNoTracking()
+                .FirstOrDefaultAsync(booking =>
+                    booking.BookingNumber == input.BookingNumber &&
+                    booking.BranchId == CurrentBranchId);
+            if (booking == null)
+            {
+                return NotFound(new
+                {
+                    success = false,
+                    message = "找不到指定訂單，或無法執行此操作。"
+                });
+            }
+            // 訂房成功確認信只適用於已付款訂單
+            if (booking.BookingStatus != "Paid")
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "只有已付款訂單可以補寄確認信。"
+                });
+            }
+            // 確認資料庫目前有可使用的收件 Email
+            if (string.IsNullOrWhiteSpace(booking.Email))
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "此訂單尚未設定可使用的聯絡 Email。"
+                });
+            }
+            // 查詢訂單所屬分館資料，提供 n8n 郵件內容使用
+            var branch = await _context.Branches
+                .AsNoTracking()
+                .FirstOrDefaultAsync(branch =>
+                    branch.BranchId == booking.BranchId &&
+                    branch.BranchId == CurrentBranchId);
+            if (branch == null)
+            {
+                return NotFound(new
+                {
+                    success = false,
+                    message = "找不到訂單所屬分館，無法補寄確認信。"
+                });
+            }
+            // 防止同一筆訂單在 10 秒內重複補寄
+            var cacheKey = $"BookingConfirmationEmailResend:{CurrentBranchId}:{booking.BookingNumber}";
+            if (_memoryCache.TryGetValue(cacheKey, out _))
+            {
+                return StatusCode(
+                    StatusCodes.Status429TooManyRequests,
+                    new
+                    {
+                        success = false,
+                        message = "確認信剛剛已送出補寄請求，請稍候再試。"
+                    });
+            }
+
+            _memoryCache.Set(cacheKey, true, TimeSpan.FromSeconds(10));
+
+            try
+            {
+                var emailSendSucceeded = await _bookingEmailService.SendConfirmationAsync(booking, branch);
+
+                if (!emailSendSucceeded)
+                {
+                    return StatusCode(
+                        StatusCodes.Status502BadGateway,
+                        new
+                        {
+                            success = false,
+                            message = "確認信暫時無法補寄，請稍後再試。"
+                        });
+                }
+                _logger.LogInformation(
+                    "訂房確認信補寄成功。BookingNumber: {BookingNumber}",
+                    booking.BookingNumber);
+                return Ok(new
+                {
+                    success = true,
+                    message = "確認信已成功補寄。"
+                });
+            }
+            catch (Exception exception)
+            {
+                _logger.LogError(
+                    exception,
+                    "補寄訂房確認信時發生未預期錯誤。BookingNumber: {BookingNumber}",
+                    booking.BookingNumber);
+                return StatusCode(
+                    StatusCodes.Status502BadGateway,
+                    new
+                    {
+                        success = false,
+                        message = "確認信暫時無法補寄，請稍後再試。"
+                    });
+            }
         }
 
 

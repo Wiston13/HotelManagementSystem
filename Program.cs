@@ -7,6 +7,8 @@ using HotelManagementSystem.Services.Email;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
+// 提供短時間的記憶體快取，用於防止重複補寄確認信
+builder.Services.AddMemoryCache();
 
 builder.Services
     .AddAuthentication("HotelCookie")

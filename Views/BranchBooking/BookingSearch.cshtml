@@ -144,7 +144,8 @@
                                             data-enddate="@item.EndDate.ToString("yyyy/MM/dd")"
                                             data-phone="@item.Phone"
                                             data-price="@item.Price" 
-                                            data-email="@item.Email">
+                                            data-email="@item.Email" 
+                                            data-lastemailsentat="@(item.LastConfirmationEmailSentAt?.ToString("yyyy/MM/dd HH:mm") ?? "")">
                                         查看
                                     </button>
 
@@ -228,6 +229,7 @@
                                         修改 Email
                                     </button>
                                 </div>
+                                
                                 <!-- Email 編輯狀態 -->
                                 <div id="emailEditArea" class="d-none mt-2">
                                     <label for="newEmailInput"
@@ -257,6 +259,25 @@
                                         </button>
                                     </div>
                                 </div>
+
+                                <!-- 最近寄送時間及補寄按鈕 -->
+                                <div class="d-flex align-items-center justify-content-between gap-3 mt-3">
+                                    <div>
+                                        <span class="text-secondary small">
+                                            最近一次寄送時間
+                                        </span>
+                                        <p id="modalLastEmailSentAt" class="mb-0">
+                                            尚無紀錄
+                                        </p>
+                                    </div>
+                                    <button type="button"
+                                            id="resendEmailBtn"
+                                            class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-envelope me-1"></i>
+                                        補寄確認信
+                                    </button>
+                                </div>
+
                                 <p id="emailUpdateMessage"
                                    class="d-none small mt-2 mb-0"
                                    role="status"
@@ -342,6 +363,59 @@
     @Html.AntiForgeryToken()
 </form>
 
+<!-- 補寄確認信確認視窗 -->
+<div class="modal fade"
+     id="resendEmailConfirmModal"
+     tabindex="-1"
+     aria-labelledby="resendEmailConfirmModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold"
+                    id="resendEmailConfirmModalLabel">
+                    補寄確認信
+                </h5>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="關閉">
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <p class="mb-2">
+                    確認要將訂房確認信補寄至以下 Email？
+                </p>
+                <p id="resendEmailTarget"
+                   class="fw-semibold text-primary text-break mb-0">
+                    -
+                </p>
+                <p id="resendEmailResult"
+                   class="d-none small mt-3 mb-0"
+                   role="status"
+                   aria-live="polite">
+                </p>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button"
+                        id="cancelResendEmailBtn"
+                        class="btn btn-outline-secondary"
+                        data-bs-dismiss="modal">
+                    取消
+                </button>
+                <button type="button"
+                        id="confirmResendEmailBtn"
+                        class="btn btn-primary">
+                    確認補寄
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
 
 
 
@@ -393,11 +467,22 @@
                 const emailUpdateMessage = document.getElementById('emailUpdateMessage');
                 const updateBookingEmailUrl = '@Url.Action("UpdateBookingEmail", "BranchBooking")';
                 const emailActionToken = document.querySelector('#bookingEmailActionForm input[name="__RequestVerificationToken"]').value;
+                const modalLastEmailSentAt = document.getElementById("modalLastEmailSentAt");
+
+                const resendEmailConfirmModalElement = document.getElementById("resendEmailConfirmModal");
+                const resendEmailTarget = document.getElementById("resendEmailTarget");
+                const resendEmailResult = document.getElementById("resendEmailResult");
+                const confirmResendEmailBtn = document.getElementById("confirmResendEmailBtn");
+                const cancelResendEmailBtn = document.getElementById("cancelResendEmailBtn");
+                const bookingDetailModalInstance = bootstrap.Modal.getOrCreateInstance(bookingDetailModal);
+                const resendEmailConfirmModal = bootstrap.Modal.getOrCreateInstance(resendEmailConfirmModalElement);
+                const resendConfirmationEmailUrl = '@Url.Action("ResendConfirmationEmail", "BranchBooking")';
 
                 let currentStartDate = null;
                 let currentBookingNumber = "";
                 let currentEmail = "";
                 let currentDetailButton = null;
+                let canManageConfirmationEmail = false;  //-->宣告是否可以管理確認信
                 // 表單開啟時
                 bookingDetailModal.addEventListener("show.bs.modal", function(event) {
                     const button = event.relatedTarget;
@@ -413,6 +498,7 @@
                     const endDate = button.getAttribute('data-enddate');
                     const price = button.getAttribute('data-price');
                     const email = button.getAttribute('data-email');
+                    const lastEmailSentAt = button.getAttribute("data-lastemailsentat");
 
                     currentStartDate = startDate;
                     currentBookingNumber = bookingNum;
@@ -420,6 +506,7 @@
                     currentDetailButton = button;
 
                     modalEmail.textContent = currentEmail || "-";
+                    modalLastEmailSentAt.textContent = lastEmailSentAt || "尚無紀錄";   
                     emailUpdateMessage.classList.add("d-none");
                     emailDisplayArea.classList.remove("d-none");
                     emailEditArea.classList.add("d-none");
@@ -427,7 +514,9 @@
                     newEmailInput.classList.remove("is-invalid");
                     emailEditError.textContent = "";
                     // 只有已付款訂單可以修改確認信 Email
-                    editEmailBtn.disabled = bookingStatus !== "已付款";
+                    canManageConfirmationEmail = bookingStatus === "已付款";
+                    editEmailBtn.disabled = !canManageConfirmationEmail;
+                    resendEmailBtn.disabled = !canManageConfirmationEmail;
                     
 
                     document.getElementById('modalBookingNum').textContent = bookingNum;
@@ -438,7 +527,6 @@
                     document.getElementById('modalPhone').textContent = phone && phone.length > 4 ? phone.slice(0, 4) + "-" + phone.slice(4) : (phone ?? "");
                     document.getElementById('modalCreateTime').textContent = createTime;
                     document.getElementById('modalPrice').textContent = price;
-
                     
                     if (bookingStatus === "已付款") {
                         goToCancelBtn.classList.add("btn-outline-danger");
@@ -449,10 +537,9 @@
                         goToCancelBtn.classList.add("btn-outline-secondary");
                         goToCancelBtn.classList.remove("btn-outline-danger");
                         goToCancelBtn.disabled = true;
-                    }
-
-                
+                    }                
                 });
+
                 // 表單關閉時
                 bookingDetailModal.addEventListener('hidden.bs.modal', function() {
                     // 隱藏取消原因區塊
@@ -480,6 +567,8 @@
                     newEmailInput.value = currentEmail;
                     newEmailInput.classList.remove("is-invalid");
                     emailEditError.textContent = "";
+                    // Email 尚未儲存時，不允許補寄
+                    resendEmailBtn.disabled = true;
 
                     newEmailInput.focus();
                 });
@@ -492,6 +581,8 @@
 
                     emailEditArea.classList.add("d-none");
                     emailDisplayArea.classList.remove("d-none");
+
+                    resendEmailBtn.disabled = !canManageConfirmationEmail;
                 });
 
                 // 儲存新的 Email
@@ -538,10 +629,10 @@
                         // 同步更新原本「查看」按鈕的 Email，
                         // 關閉並重新開啟 Modal 時仍會顯示新資料
                         currentDetailButton?.setAttribute("data-email", currentEmail);
-
                         emailEditArea.classList.add("d-none");
-                        emailDisplayArea.classList.remove("d-none");
-
+                        emailDisplayArea.classList.remove("d-none");                        
+                        // Email 儲存完成後恢復補寄按鈕
+                        resendEmailBtn.disabled = !canManageConfirmationEmail;
                         emailUpdateMessage.textContent = result.message;
                         emailUpdateMessage.className = "small mt-2 mb-0 text-success";
                     }
@@ -554,6 +645,76 @@
                         saveEmailBtn.textContent = "儲存";
                     }
                 });
+
+                // 開啟補寄確認視窗
+                resendEmailBtn.addEventListener("click", function () {
+                    if (!canManageConfirmationEmail || currentBookingNumber === "" || currentEmail === "") {
+                        return;
+                    }
+                    resendEmailTarget.textContent = currentEmail;
+                    resendEmailResult.textContent = "";
+                    resendEmailResult.className = "d-none small mt-3 mb-0";
+
+                    confirmResendEmailBtn.classList.remove("d-none");
+                    confirmResendEmailBtn.disabled = false;
+                    confirmResendEmailBtn.textContent = "確認補寄";
+                    cancelResendEmailBtn.textContent = "取消";
+                    // 訂單 Modal 完全關閉後，再開啟補寄確認 Modal
+                    bookingDetailModal.addEventListener("hidden.bs.modal", function () {
+                            resendEmailConfirmModal.show();
+                        },
+                        { once: true }
+                    );
+                    // 補寄確認 Modal 關閉後，重新顯示訂單詳細資訊
+                    resendEmailConfirmModalElement.addEventListener("hidden.bs.modal", function () {
+                            bookingDetailModalInstance.show();
+                        },
+                        { once: true }
+                    );
+                    bookingDetailModalInstance.hide();
+                });
+
+                // 確認補寄訂房確認信
+                confirmResendEmailBtn.addEventListener("click", async function () {
+                        confirmResendEmailBtn.disabled = true;
+                        confirmResendEmailBtn.textContent = "補寄中...";
+                        resendEmailResult.textContent = "";
+                        resendEmailResult.className = "d-none small mt-3 mb-0";
+
+                        try {
+                            const response = await fetch(resendConfirmationEmailUrl,
+                                {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                        "RequestVerificationToken":
+                                            emailActionToken
+                                    },
+                                    body: JSON.stringify({
+                                        bookingNumber:
+                                            currentBookingNumber
+                                    })
+                                }
+                            );
+                            const result = await response.json().catch(() => null);
+                            if (!response.ok || result?.success !== true) 
+                            {
+                                throw new Error(result?.message ?? "確認信暫時無法補寄，請稍後再試。");
+                            }
+                            resendEmailResult.textContent = result.message;
+                            resendEmailResult.className = "small mt-3 mb-0 text-success";
+                            // 成功後不再顯示確認補寄按鈕
+                            confirmResendEmailBtn.classList.add("d-none");
+                            cancelResendEmailBtn.textContent = "返回訂單";
+                        }
+                        catch (error) {
+                            resendEmailResult.textContent = error.message ?? "確認信暫時無法補寄，請稍後再試。";
+                            resendEmailResult.className = "small mt-3 mb-0 text-danger";
+                            confirmResendEmailBtn.disabled = false;
+                            confirmResendEmailBtn.textContent = "重新嘗試";
+                        }
+                    }
+                );
 
 
                 // 驗證合法輸入
