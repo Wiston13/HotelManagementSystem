@@ -40,12 +40,28 @@
         </p>
     </div>
 
-    @* <div class="booking-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
-        <p class="detail-label text-secondary mb-0">確認信</p>
-        <p class="detail-value email fw-semibold text-end mb-0">
-            已寄送至 @Model.Email
-        </p>
-    </div> *@
+    @if (Model.ConfirmationEmailSent == true)
+    {
+        <div class="booking-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
+            <p class="detail-label text-secondary mb-0">確認信</p>
+            <p class="detail-value email fw-semibold text-success text-end mb-0">
+                已寄送至 @Model.MaskedEmail
+            </p>
+        </div>
+    }
+    else if (Model.ConfirmationEmailSent == false)
+    {
+        <div class="booking-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
+            <p class="detail-label text-secondary mb-0">確認信</p>
+            <p class="detail-value email text-danger text-end mb-0">
+                <span class="fw-semibold">暫時未能寄出</span>
+                <br />
+                <span class="small text-secondary">
+                    收件信箱：@Model.MaskedEmail
+                </span>
+            </p>
+        </div>
+    }
 
     <div class="mt-4 text-center">
         <p class="mb-2 text-secondary">
@@ -56,8 +72,15 @@
             您可點選下方「查看訂單」，或由「訂單查詢」查看完整訂單資訊。
         </p>
 
+        <p class="mb-2 text-secondary">
+            如有訂單或確認信相關問題，請聯繫
+            <span class="fw-semibold text-dark">@Model.BranchName</span>
+            （電話：
+            <span class="fw-semibold text-dark">@Model.BranchPhone</span>）。
+        </p>
+
         <p class="mb-0 text-secondary">
-            如有取消訂單需求，請於入住前一天 23：59 前，電話聯絡訂房分館處理。
+            如有取消訂單需求，請於入住前一天 23：59 前聯繫訂房分館辦理。
         </p>
     </div>
 

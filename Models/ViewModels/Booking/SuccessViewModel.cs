@@ -12,5 +12,9 @@ public class SuccessViewModel
 
     public DateOnly CheckOutDate { get; set; }
 
-    //public string Email { get; set; } = "";
+    public string MaskedEmail { get; set; } = string.Empty;
+
+    public bool? ConfirmationEmailSent { get; set; }
+
+    public string BranchPhone { get; set; } = string.Empty;
 }

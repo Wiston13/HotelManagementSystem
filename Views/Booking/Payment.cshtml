@@ -168,6 +168,11 @@
 							<button type="submit" id="btnSubmitPayment" class="btn btn-primary w-100 py-2 fw-semibold">
 								確認付款並送出訂房
 							</button>
+							
+							<!-- 隱藏提示 -->
+							<p id="paymentProcessingMessage" class="d-none mt-3 mb-0 text-secondary small" role="status" aria-live="polite">
+								請稍候，完成前請勿重新整理或關閉此頁面。
+							</p>
 
 						</div>
 					</div>
@@ -424,10 +429,13 @@
 
 			// 驗證全過才送出表單
 			var submitButton = document.getElementById('btnSubmitPayment');
+			var processingMessage = document.getElementById('paymentProcessingMessage');
 
 			if (isValid) {
 				submitButton.disabled = true;
 				submitButton.textContent = '處理中...';
+
+				processingMessage.classList.remove('d-none');
 
 				form.submit();
 			}

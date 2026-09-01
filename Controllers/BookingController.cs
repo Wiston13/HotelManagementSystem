@@ -1,11 +1,12 @@
-﻿using HotelManagementSystem.Models;
+﻿using HotelManagementSystem.Helper;
+using HotelManagementSystem.Models;
 using HotelManagementSystem.Models.BookingSearchModel;
 using HotelManagementSystem.Models.Entities;
 using HotelManagementSystem.Models.ViewModels.Booking;
 using HotelManagementSystem.Services;
+using HotelManagementSystem.Services.Email;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using HotelManagementSystem.Helper;
 
 namespace HotelManagementSystem.Controllers
 {
@@ -15,13 +16,17 @@ namespace HotelManagementSystem.Controllers
         private readonly TaipeiClock _taipeiClock;
         private readonly NoShowService _noShowService;
         private readonly RoomAvailabilityService _roomAvailabilityService;
+        private readonly IBookingEmailService _bookingEmailService;
+        private readonly ILogger<BookingController> _logger;
 
-        public BookingController(HotelManagementContext context, TaipeiClock taipeiClock, NoShowService noShowService, RoomAvailabilityService roomAvailabilityService)
+        public BookingController(HotelManagementContext context, TaipeiClock taipeiClock, NoShowService noShowService, RoomAvailabilityService roomAvailabilityService, IBookingEmailService bookingEmailService, ILogger<BookingController> logger)
         {
             _context = context;
             _taipeiClock = taipeiClock;
             _noShowService = noShowService;
             _roomAvailabilityService = roomAvailabilityService;
+            _bookingEmailService = bookingEmailService;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -187,7 +192,7 @@ namespace HotelManagementSystem.Controllers
         }
 
         [HttpPost]
-        public IActionResult Success(BookingPaymentInputViewModel input)
+        public async Task<IActionResult> Success(BookingPaymentInputViewModel input)
         {
             // ViewModel 基本驗證
             if (!ModelState.IsValid)
@@ -384,6 +389,22 @@ namespace HotelManagementSystem.Controllers
 
                 transaction.Commit();
 
+                // 訂單交易成功後嘗試寄送確認信；寄信失敗不影響已成立的訂單
+                var emailSendSucceeded = false;
+                try
+                {
+                    emailSendSucceeded = await _bookingEmailService.SendConfirmationAsync(booking, branch);
+                }
+                catch (Exception exception)
+                {
+                    _logger.LogError(
+                        exception,
+                        "訂單已建立，但寄送確認信時發生未預期錯誤。BookingNumber: {BookingNumber}",
+                        booking.BookingNumber);
+                }
+                // 暫存本次寄信結果，供 GET Success 顯示寄送狀態
+                TempData["ConfirmationEmailSent"] = emailSendSucceeded;
+
                 // 保存剛建立成功的訂單編號，供 GET Success 使用
                 TempData["CreatedBookingNumber"] = bookingNumber;
 
@@ -418,13 +439,23 @@ namespace HotelManagementSystem.Controllers
             {
                 return NotFound("找不到指定的分館。");
             }
+
+            // 取得 POST Success 暫存的本次確認信寄送結果
+            bool? confirmationEmailSent = null;
+            if (TempData.Peek("ConfirmationEmailSent") is bool sent)
+            {
+                confirmationEmailSent = sent;
+            }
             var model = new SuccessViewModel
             {
                 BookingNumber = booking.BookingNumber,
                 BranchName = branch.BranchName,
+                BranchPhone = branch.Phone,
                 RoomTypeName = booking.RoomTypeNameSnapshot,
                 CheckInDate = booking.CheckInDate,
                 CheckOutDate = booking.CheckOutDate,
+                MaskedEmail = MaskEmail(booking.Email),
+                ConfirmationEmailSent = confirmationEmailSent                
             };
 
             return View(model);
@@ -475,6 +506,32 @@ namespace HotelManagementSystem.Controllers
 
             return expiryYear < currentYear ||
                    (expiryYear == currentYear && expiryMonth < currentMonth);
+        }
+
+        // 遮罩 Email 的帳號部分
+        private static string MaskEmail(string? email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return string.Empty;
+            }
+            email = email.Trim();
+
+            var atIndex = email.IndexOf('@');
+            if (atIndex <= 0 || atIndex == email.Length - 1)
+            {
+                return "***";
+            }
+
+            var localPart = email[..atIndex];
+            var domainPart = email[atIndex..];
+            var maskedLocalPart = localPart.Length switch
+            {
+                1 => "*",
+                2 => $"{localPart[0]}*",
+                _ => $"{localPart[0]}***{localPart[^1]}"
+            };
+            return $"{maskedLocalPart}{domainPart}";
         }
 
         [HttpGet]
