@@ -59,8 +59,10 @@ BEGIN TRY
     DECLARE @Today date = CAST(@NowTaipei AS date);
     DECLARE @CapacityRiskDate date = DATEADD(DAY,55,@Today);
     /*
-       同入住日飯店因素取消必須已進入 16:00 後的合法 Check-in 區間。
-       若本檔在 16:05 前執行，改用昨天，避免建立尚未發生的取消事件。
+       此情境刻意安排在入住日 16:05，驗證已進入合法 Check-in 時段後，
+       只要訂單仍為 Paid、尚無 StayRecord，且尚未到原退房日 12:00，
+       飯店因素取消仍可成立。
+       若本檔在 16:05 前執行，改用昨天，避免建立未來時間的 CancelledAt。
     */
     DECLARE @SameDayHotelCancellationDate date =
         CASE
@@ -452,7 +454,7 @@ BEGIN TRY
     ( 7,6,@HualienBookingStoppedAt,'E20260807001', 4,'Branch',N'花蓮站前商旅',N'將分館 花蓮站前商旅 設定為停止接受新訂房。'),
     ( 8,1,DATEADD(MINUTE,770,CAST(DATEADD(DAY,-4,@Today) AS datetime2(0))),'E20260807002',18,'Room',N'202',N'將房間 202 供應狀態更新為 Reserved。'),
     ( 9,1,DATEADD(MINUTE,790,CAST(DATEADD(DAY,-4,@Today) AS datetime2(0))),'E20260807002',20,'Room',N'203',N'將房間 203 標記為 NeedsCleaning。'),
-    (10,1,DATEADD(MINUTE,810,CAST(DATEADD(DAY,-2,@Today) AS datetime2(0))),'E20260807002',11,'Room',N'205',N'將房間 205 停用，原因：空調主機異常，等待維修廠商到場。'),
+    (10,1,DATEADD(MINUTE,810,CAST(DATEADD(DAY,-2,@Today) AS datetime2(0))),'E20260807002',11,'Room',N'205',N'將房間 205 停用，原因：空調異音，等待初步檢查。'),
     (11,2,DATEADD(MINUTE,830,CAST(DATEADD(DAY,-3,@Today) AS datetime2(0))),'E20260807004',18,'Room',N'201',N'將房間 201 供應狀態更新為 Reserved。'),
     (12,5,DATEADD(MINUTE,850,CAST(DATEADD(DAY,-3,@Today) AS datetime2(0))),'E20260807016',20,'Room',N'201',N'將房間 201 標記為 NeedsCleaning。'),
     (13,1,DATEADD(MINUTE,900,CAST(DATEADD(DAY,-2,@Today) AS datetime2(0))),'E20260807001',15,'Employee',N'E20260807003',N'停用員工帳號：E20260807003(陳柏宇)。'),
@@ -490,7 +492,7 @@ BEGIN TRY
     (41,1,DATEADD(MINUTE,720,CAST(DATEADD(DAY,-40,@Today) AS datetime2(0))),'E20260807001', 6,'RoomType',N'經典單人房',N'修改房型：經典單人房。'),
     (42,5,@PanoramicTripleDisabledAt,'E20260807001', 7,'RoomType',N'全景三人房',N'停用房型：全景三人房。'),
     (43,6,DATEADD(MINUTE,720,CAST(DATEADD(DAY,-7,@Today) AS datetime2(0))),'E20260807001', 8,'RoomType',N'山海雙人房',N'啟用房型：山海雙人房。'),
-    (44,1,DATEADD(MINUTE,720,CAST(DATEADD(DAY,-58,@Today) AS datetime2(0))),'E20260807001', 9,'Room',N'201',N'新增房間【201】(房型: 經典單人房, 樓層: 2, 初始狀態: Open)'),
+    (44,1,DATEADD(MINUTE,720,CAST(DATEADD(DAY,-58,@Today) AS datetime2(0))),'E20260807001', 9,'Room',N'200',N'新增房間【200】(房型: 經典單人房, 樓層: 2, 初始狀態: Open)'),
     (45,1,DATEADD(MINUTE,720,CAST(DATEADD(DAY,-30,@Today) AS datetime2(0))),'E20260807001',10,'Room',N'201',N'修改房間【200】(房號: 200 -> 201, 樓層: 2 -> 2, 房型: 經典單人房 -> 經典單人房)'),
     (46,1,DATEADD(MINUTE,720,CAST(DATEADD(DAY,-6,@Today) AS datetime2(0))),'E20260807002',12,'Room',N'205',N'將房間 205 恢復開放販售。'),
     (47,1,CONVERT(datetime2(0),'2026-08-07T12:00:00'),'E20260807001',13,'Employee',N'E20260807002',N'建立分館員工 E20260807002(林怡君)。'),
