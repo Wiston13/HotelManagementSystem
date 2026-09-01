@@ -104,6 +104,7 @@ namespace HotelManagementSystem.Controllers
             }
 
             room.CleaningStatus = targetStatus;
+            var cleaningStatusText = targetStatus == "Clean" ? "已清潔" : "待清潔";
 
             var operationLog = new OperationLog()
             {
@@ -113,7 +114,7 @@ namespace HotelManagementSystem.Controllers
                 OperationTypeId = 20,
                 TargetType = "Room",
                 TargetIdentifier = room.RoomNumber,
-                Description = $"將房間 {room.RoomNumber} 標記為 {room.CleaningStatus}。"
+                Description = $"將房間 {room.RoomNumber} 標記為{cleaningStatusText}。"
 
             };
 
@@ -212,6 +213,7 @@ namespace HotelManagementSystem.Controllers
 
 
             room.SupplyStatus = targetStatus;
+            var supplyStatusText = targetStatus == "Reserved" ? "保留" : "開放販售";
 
             var operationLog = new OperationLog()
             {
@@ -221,7 +223,7 @@ namespace HotelManagementSystem.Controllers
                 OperationTypeId = (room.SupplyStatus == "Reserved") ? 18 : 19,
                 TargetType = "Room",
                 TargetIdentifier = room.RoomNumber,
-                Description = $"將房間 {room.RoomNumber} 供應狀態更新為 {room.SupplyStatus}。"
+                Description = $"將房間 {room.RoomNumber} 供應狀態更新為{supplyStatusText}。"
 
             };
 
@@ -440,7 +442,7 @@ namespace HotelManagementSystem.Controllers
                 TargetType = "Room",
                 TargetIdentifier = room.RoomNumber,
                 Description =
-                    $"將房間 {room.RoomNumber} 的停用原因由「{oldReason}」修改為「{newReason}」。"
+                    $"將房間 {room.RoomNumber} 的停用原因由「{oldReason?.TrimEnd('。')}」修改為「{newReason.TrimEnd('。')}」。"
             };
 
             try

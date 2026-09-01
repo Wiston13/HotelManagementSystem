@@ -32,15 +32,15 @@
 				<div class="row g-3 align-items-end">
 
 					<div class="col-12 col-lg-5">
-						<label asp-for="BookingNum" class="form-label">訂單編號<span class="text-danger">*</span></label>
-						<small class="text-secondary fw-normal ms-1">請輸入完整訂單編號（英文字母區分大小寫）。</small>
+						<label for="orderNo" class="form-label">訂單編號<span class="text-danger">*</span></label>
+						<small class="text-secondary fw-normal ms-1">請輸入完整訂單編號。</small>
 
 						<!-- 改用 asp-for，它會自動生成 id="OrderNo" name="OrderNo" value="..." -->
-						<input asp-for="BookingNum" class="form-control" id="orderNo" placeholder="例如：BK20260810018" />
+						<input asp-for="BookingNum" class="form-control" id="orderNo" placeholder="例如：BK26090100020001" />
 					</div>
 
 					<div class="col-12 col-lg-5">
-						<label asp-for="Phone" class="form-label">聯絡電話<span class="text-danger">*</span></label>
+						<label for="phone" class="form-label">聯絡電話<span class="text-danger">*</span></label>
 
 						<!-- 改用 asp-for -->
 						<input asp-for="Phone" class="form-control" id="phone" placeholder="例如：0912345678" />
@@ -60,7 +60,7 @@
 					</div>
 
 					<div class="col-12 col-lg-5">
-						<span id="phoneError" class="text-danger small"></span>
+						<span id="phoneError" class="text-danger small">@ViewBag.PhoneError</span>
 					</div>
 
 					<div class="col-lg-2"></div>
@@ -81,7 +81,7 @@
 
 
 	<!-- 查詢結果顯示區 -->
-	@if(!string.IsNullOrEmpty(Model?.BookingNum) && ViewBag.NoResult != true)
+	@if(!string.IsNullOrEmpty(Model?.BookingNum) && ViewBag.NoResult != true && ViewBag.PhoneError == null)
 	{
 		<div class="card mt-4" id="orderResult">
 
@@ -108,7 +108,7 @@
 						<div class="row border-bottom pb-2">
 							<div class="col-md-4 text-secondary">入住／退房</div>
 							<!-- 顯示 入住日期 ~ 退房日期 區塊 -->
-							<div class="col-md-8 fw-semibold text-md-end" id="resultDate">@Model.StartDate. ・ @Model.EndDate</div>
+							<div class="col-md-8 fw-semibold text-md-end" id="resultDate">@Model.StartDate.ToString("yyyy/MM/dd") ・ @Model.EndDate.ToString("yyyy/MM/dd")</div>
 						</div>
 					</div>
 					<div class="col-12">
@@ -225,6 +225,7 @@
 			// 輸入框驗證通過
 			phone.classList.remove("is-invalid");  // 移除錯誤樣式
 			phoneError.classList.remove("show");  // 隱藏錯誤訊息
+			phoneError.textContent = "";
 
 			// 回傳驗證成功
 			return true;

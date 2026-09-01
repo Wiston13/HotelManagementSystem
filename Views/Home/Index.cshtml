@@ -1,5 +1,5 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "查詢房型";
 }
 
 @section Styles {
@@ -258,7 +258,7 @@
     <!-- 地區選擇按鈕區塊 (加入左右箭頭與包覆層) -->
     <div class="region-wrapper mb-5">
         <!-- 左箭頭 (預設隱藏) -->
-        <button class="scroll-arrow left-arrow hidden" id="scrollLeftBtn">
+        <button class="scroll-arrow left-arrow hidden" id="scrollLeftBtn" aria-label="上一張">
             <i class="bi bi-arrow-left"></i>
         </button>
 
@@ -291,7 +291,7 @@
         </div>
 
         <!-- 右箭頭 -->
-        <button class="scroll-arrow right-arrow" id="scrollRightBtn">
+        <button class="scroll-arrow right-arrow" id="scrollRightBtn" aria-label="下一張">
             <i class="bi bi-arrow-right"></i>
         </button>
     </div>
@@ -301,10 +301,10 @@
         <div class="row g-4">
             <!-- 左側 7 份：大圖與關閉按鈕 -->
             <div class="col-md-7 position-relative">
-                <button id="closeDetailBtn" class="close-detail-btn">
+                <button id="closeDetailBtn" class="close-detail-btn" aria-label="關閉">
                     <i class="bi bi-x-lg"></i>
                 </button>
-                <img id="detailImg" src="" class="img-fluid rounded-3 detail-img-cover shadow-sm">
+                <img id="detailImg" src="" class="img-fluid rounded-3 detail-img-cover shadow-sm" alt="">
             </div>
 
             <!-- 右側 5 份：詳細資訊 -->
@@ -507,6 +507,7 @@
             let targetPhone = clickedCard.querySelector('.branch-phone').innerText;
             let targetIntro = cardData.getAttribute('data-Intro');// 抓出專屬介紹文字
             document.getElementById('detailImg').src = targetImgSrc;
+            document.getElementById('detailImg').alt = targetTitle + '分館照片';
             document.getElementById('detailTitle').innerText = targetTitle;
             document.getElementById('detailIntro').innerText = targetIntro;
             document.getElementById('detailAddress').innerText = targetAddress;

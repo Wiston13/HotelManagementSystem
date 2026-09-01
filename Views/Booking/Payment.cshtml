@@ -34,7 +34,8 @@
 
 	<!-- 新增流程提醒 -->
 	<p class="text-secondary ms-3 mb-4">
-		*付款成功後，訂房才算完成。
+		*付款成功後，訂房才算完成。<br />
+		本系統使用模擬付款流程，不會實際扣款。
 	</p>
 
 
@@ -160,7 +161,7 @@
 								</span>
 
 								<span class="h4 fw-bold mb-0">
-									NT$ @Model.TotalPrice.ToString("N0")
+									NT$ @Model.TotalPrice.ToString("#,##0.##", System.Globalization.CultureInfo.GetCultureInfo("zh-TW"))
 								</span>
 							</div>
 
@@ -214,7 +215,7 @@
 								每晚房價
 							</div>
 							<div id="pricePerNight" class="col-8 col-md-9 fw-semibold text-end">
-								NT$ @Model.NightlyPrice.ToString("N0")
+								NT$ @Model.NightlyPrice.ToString("#,##0.##", System.Globalization.CultureInfo.GetCultureInfo("zh-TW"))
 							</div>
 						</div>
 						
@@ -224,7 +225,7 @@
 								入住日期
 							</div>
 							<div id="checkInDate" class="col-8 col-md-9 fw-semibold text-end">
-								@Model.CheckInDate
+								@Model.CheckInDate.ToString("yyyy/MM/dd")
 							</div>
 						</div>
 						
@@ -234,7 +235,7 @@
 								退房日期
 							</div>
 							<div id="checkOutDate" class="col-8 col-md-9 fw-semibold text-end">
-								@Model.CheckOutDate
+								@Model.CheckOutDate.ToString("yyyy/MM/dd")
 							</div>
 						</div>
 						
@@ -255,7 +256,7 @@
 								總金額
 							</div>
 							<div id="totalAmount" class="col-8 col-md-9 h4 fw-bold mb-0 text-end">
-								NT$ @Model.TotalPrice.ToString("N0")
+								NT$ @Model.TotalPrice.ToString("#,##0.##", System.Globalization.CultureInfo.GetCultureInfo("zh-TW"))
 							</div>
 						</div>
 
