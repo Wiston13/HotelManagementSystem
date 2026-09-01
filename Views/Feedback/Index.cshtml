@@ -1,0 +1,126 @@
+﻿@model IEnumerable<HotelManagementSystem.Models.Entities.Feedback>
+@using System.Text.Encodings.Web
+@{
+    Layout = "_ManagerLayout";
+}
+
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <p class="text-muted small mb-0">💡 提示：在任一橫列上【滑鼠按兩下】，即可彈出小視窗閱讀完整的顧客意見內容。</p>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive" style="max-height: 580px; overflow-y: auto;">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light text-secondary small sticky-top">
+                        <tr>
+                            <th class="ps-4 py-3" style="width: 15%;">填寫時間</th>
+                            <th class="py-3" style="width: 15%;">所屬分館</th>
+                            <th class="py-3" style="width: 15%;">顧客姓名</th>
+                            <th class="py-3" style="width: 25%;">聯絡信箱 / 電話</th>
+                            <th class="py-3 pe-4" style="width: 30%;">顧客意見描述</th>
+                        </tr>
+                    </thead>
+                    <tbody class="small">
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var item in Model)
+                            {
+                                <tr style="cursor: pointer;"
+                                    ondblclick="showFeedbackDetail('@item.CustomerName', '@(item.Branch?.BranchName ?? "未指定")', '@item.CreatedAt.ToString("yyyy/MM/dd HH:mm")', '@item.Email', '@(string.IsNullOrWhiteSpace(item.Phone) ? "未提供" : item.Phone)', '@UrlEncoder.Default.Encode(item.Content)')">
+                                    <td class="ps-4 text-secondary">@item.CreatedAt.ToString("yyyy/MM/dd HH:mm")</td>
+                                    <td>
+                                        <span class="badge bg-primary-subtle text-primary px-2 py-1 border border-primary-subtle">
+                                            @item.Branch?.BranchName
+                                        </span>
+                                    </td>
+                                    <td class="fw-bold text-dark">@item.CustomerName</td>
+                                    <td>
+                                        <div class="text-dark">@item.Email</div>
+                                        <div class="text-secondary small">@(string.IsNullOrWhiteSpace(item.Phone) ? "未提供電話" : item.Phone)</div>
+                                    </td>
+                                    <td class="pe-4">
+                                        <div class="text-muted text-truncate" style="max-width: 350px;">
+                                            @item.Content
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center py-5 text-muted">
+                                    <div class="text-secondary mb-3" style="font-size: 2.5rem;">🔍</div>
+                                    <h5 class="fw-bold mb-2">目前尚無任何顧客意見資料</h5>
+                                    <p class="text-muted small mb-0">當官網顧客從前台提交聯絡表單後，資訊將會即時呈現在此處。</p>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="feedbackDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold text-dark">顧客意見詳細資訊</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <span class="text-secondary small">顧客姓名</span>
+                        <p id="modalName" class="fw-bold mb-0 text-dark">-</p>
+                    </div>
+                    <div class="col-sm-6">
+                        <span class="text-secondary small">所屬分館</span>
+                        <p id="modalBranch" class="fw-bold mb-0 text-dark">-</p>
+                    </div>
+                    <div class="col-sm-6">
+                        <span class="text-secondary small">填寫時間</span>
+                        <p id="modalTime" class="text-muted mb-0">-</p>
+                    </div>
+                    <div class="col-sm-6">
+                        <span class="text-secondary small">聯絡電話</span>
+                        <p id="modalPhone" class="text-dark mb-0">-</p>
+                    </div>
+                    <div class="col-12">
+                        <span class="text-secondary small">電子信箱</span>
+                        <p id="modalEmail" class="text-dark mb-0">-</p>
+                    </div>
+                    <div class="col-12 border-top pt-2 mt-3">
+                        <span class="text-secondary small fw-bold text-primary">完整意見內容描述</span>
+                        <div id="modalContent" class="p-3 bg-light rounded mt-2 text-dark text-break" style="max-height: 250px; overflow-y: auto; white-space: pre-line;">-</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 justify-content-center pb-4">
+                <button type="button" class="btn btn-secondary px-5" data-bs-dismiss="modal">關閉</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showFeedbackDetail(name, branch, time, email, phone, content) {
+            document.getElementById('modalName').textContent = name;
+            document.getElementById('modalBranch').textContent = branch;
+            document.getElementById('modalTime').textContent = time;
+            document.getElementById('modalEmail').textContent = email;
+            document.getElementById('modalPhone').textContent = phone;
+            document.getElementById('modalContent').textContent = decodeURIComponent(content);
+
+            var myModal = new bootstrap.Modal(document.getElementById('feedbackDetailModal'));
+            myModal.show();
+        }
+    </script>
+}
