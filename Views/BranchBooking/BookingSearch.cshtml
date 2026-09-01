@@ -143,7 +143,8 @@
                                             data-startdate="@item.StartDate.ToString("yyyy/MM/dd")"
                                             data-enddate="@item.EndDate.ToString("yyyy/MM/dd")"
                                             data-phone="@item.Phone"
-                                            data-price="@item.Price">
+                                            data-price="@item.Price" 
+                                            data-email="@item.Email">
                                         查看
                                     </button>
 
@@ -207,6 +208,63 @@
                             <span class="text-secondary small">目前狀態</span>
                             <p id="modalStatus" class="mb-0">-</p>
                         </div>
+                        
+                        <!-- 確認信相關功能 -->
+                        <div class="col-12 mt-3">
+                            <div class="border-top pt-3">
+                                <p class="small fw-semibold text-secondary mb-2">
+                                    確認信
+                                </p>
+                                <!-- Email 純文字顯示狀態 -->
+                                <div id="emailDisplayArea"
+                                     class="d-flex align-items-center justify-content-between gap-3">
+                                    <div class="flex-grow-1">
+                                        <span class="text-secondary small">Email</span>
+                                        <p id="modalEmail" class="mb-0 text-break">-</p>
+                                    </div>
+                                    <button type="button"
+                                            id="editEmailBtn"
+                                            class="btn btn-sm btn-outline-primary">
+                                        修改 Email
+                                    </button>
+                                </div>
+                                <!-- Email 編輯狀態 -->
+                                <div id="emailEditArea" class="d-none mt-2">
+                                    <label for="newEmailInput"
+                                           class="form-label small text-secondary">
+                                        新的 Email
+                                    </label>
+                                    <input type="email"
+                                           id="newEmailInput"
+                                           class="form-control"
+                                           autocomplete="email"
+                                           form="bookingEmailActionForm">
+
+                                    <div id="emailEditError"
+                                         class="invalid-feedback">
+                                    </div>
+
+                                    <div class="d-flex justify-content-end gap-2 mt-2">
+                                        <button type="button"
+                                                id="cancelEmailEditBtn"
+                                                class="btn btn-sm btn-outline-secondary">
+                                            取消
+                                        </button>
+                                        <button type="button"
+                                                id="saveEmailBtn"
+                                                class="btn btn-sm btn-primary">
+                                            儲存
+                                        </button>
+                                    </div>
+                                </div>
+                                <p id="emailUpdateMessage"
+                                   class="d-none small mt-2 mb-0"
+                                   role="status"
+                                   aria-live="polite">
+                                </p>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
@@ -280,9 +338,9 @@
         </div>
     </div>
 </form>
-
-
-
+<form id="bookingEmailActionForm" class="d-none">
+    @Html.AntiForgeryToken()
+</form>
 
 
 
@@ -323,8 +381,23 @@
                 const cancelMemo = document.getElementById('cancelMemo');
                 //modal帶入資料
                 const bookingDetailModal = document.getElementById("bookingDetailModal");
+                
+                const modalEmail = document.getElementById('modalEmail');
+                const emailDisplayArea = document.getElementById('emailDisplayArea');
+                const emailEditArea = document.getElementById('emailEditArea');
+                const editEmailBtn = document.getElementById('editEmailBtn');
+                const newEmailInput = document.getElementById('newEmailInput');
+                const emailEditError = document.getElementById('emailEditError');
+                const cancelEmailEditBtn = document.getElementById('cancelEmailEditBtn');
+                const saveEmailBtn = document.getElementById('saveEmailBtn');
+                const emailUpdateMessage = document.getElementById('emailUpdateMessage');
+                const updateBookingEmailUrl = '@Url.Action("UpdateBookingEmail", "BranchBooking")';
+                const emailActionToken = document.querySelector('#bookingEmailActionForm input[name="__RequestVerificationToken"]').value;
 
                 let currentStartDate = null;
+                let currentBookingNumber = "";
+                let currentEmail = "";
+                let currentDetailButton = null;
                 // 表單開啟時
                 bookingDetailModal.addEventListener("show.bs.modal", function(event) {
                     const button = event.relatedTarget;
@@ -339,9 +412,23 @@
                     const startDate = button.getAttribute('data-startdate');
                     const endDate = button.getAttribute('data-enddate');
                     const price = button.getAttribute('data-price');
-
+                    const email = button.getAttribute('data-email');
 
                     currentStartDate = startDate;
+                    currentBookingNumber = bookingNum;
+                    currentEmail = email ?? "";
+                    currentDetailButton = button;
+
+                    modalEmail.textContent = currentEmail || "-";
+                    emailUpdateMessage.classList.add("d-none");
+                    emailDisplayArea.classList.remove("d-none");
+                    emailEditArea.classList.add("d-none");
+                    newEmailInput.value = currentEmail;
+                    newEmailInput.classList.remove("is-invalid");
+                    emailEditError.textContent = "";
+                    // 只有已付款訂單可以修改確認信 Email
+                    editEmailBtn.disabled = bookingStatus !== "已付款";
+                    
 
                     document.getElementById('modalBookingNum').textContent = bookingNum;
                     document.getElementById('modalName').textContent = name;
@@ -383,6 +470,92 @@
                     cancelReasonSelect.value = "請選擇...";
                     cancelMemo.value = "";
                 });
+
+                
+                // 進入 Email 編輯狀態
+                editEmailBtn.addEventListener("click", function () {
+                    emailDisplayArea.classList.add("d-none");
+                    emailEditArea.classList.remove("d-none");
+
+                    newEmailInput.value = currentEmail;
+                    newEmailInput.classList.remove("is-invalid");
+                    emailEditError.textContent = "";
+
+                    newEmailInput.focus();
+                });
+
+                // 取消修改 Email
+                cancelEmailEditBtn.addEventListener("click", function () {
+                    newEmailInput.value = currentEmail;
+                    newEmailInput.classList.remove("is-invalid");
+                    emailEditError.textContent = "";
+
+                    emailEditArea.classList.add("d-none");
+                    emailDisplayArea.classList.remove("d-none");
+                });
+
+                // 儲存新的 Email
+                saveEmailBtn.addEventListener("click", async function () {
+                    const newEmail = newEmailInput.value.trim();
+
+                    newEmailInput.value = newEmail;
+                    newEmailInput.classList.remove("is-invalid");
+                    emailEditError.textContent = "";
+                    emailUpdateMessage.classList.add("d-none");
+                    if (newEmail === "") {
+                        newEmailInput.classList.add("is-invalid");
+                        emailEditError.textContent = "請輸入新的 Email。";
+                        return;
+                    }
+                    if (!newEmailInput.checkValidity()) {
+                        newEmailInput.classList.add("is-invalid");
+                        emailEditError.textContent = "Email 格式不正確。";
+                        return;
+                    }
+                    saveEmailBtn.disabled = true;
+                    saveEmailBtn.textContent = "儲存中...";
+
+                    try {
+                        const response = await fetch(updateBookingEmailUrl, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "RequestVerificationToken": emailActionToken
+                            },
+                            body: JSON.stringify({
+                                bookingNumber: currentBookingNumber,
+                                newEmail: newEmail
+                            })
+                        });
+                        const result = await response.json().catch(() => null);
+                        if (!response.ok || result?.success !== true) {
+                            throw new Error(
+                                result?.message ?? "Email 暫時無法修改，請稍後再試。"
+                            );
+                        }
+                        currentEmail = result.email;
+                        modalEmail.textContent = currentEmail;
+                        // 同步更新原本「查看」按鈕的 Email，
+                        // 關閉並重新開啟 Modal 時仍會顯示新資料
+                        currentDetailButton?.setAttribute("data-email", currentEmail);
+
+                        emailEditArea.classList.add("d-none");
+                        emailDisplayArea.classList.remove("d-none");
+
+                        emailUpdateMessage.textContent = result.message;
+                        emailUpdateMessage.className = "small mt-2 mb-0 text-success";
+                    }
+                    catch (error) {
+                        newEmailInput.classList.add("is-invalid");
+                        emailEditError.textContent = error.message ?? "Email 暫時無法修改，請稍後再試。";
+                    }
+                    finally {
+                        saveEmailBtn.disabled = false;
+                        saveEmailBtn.textContent = "儲存";
+                    }
+                });
+
+
                 // 驗證合法輸入
                 searchForm.addEventListener("submit", function(e) {
                     if (keyword.value.trim() == "") {

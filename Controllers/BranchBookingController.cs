@@ -13,12 +13,14 @@ namespace HotelManagementSystem.Controllers
         private readonly TaipeiClock _clock;
         private readonly HotelManagementContext _context;
         private readonly NoShowService _noShowService;
-        public BranchBookingController(HotelManagementContext context, TaipeiClock clock, NoShowService noShowService)
+        private readonly ILogger<BranchBookingController> _logger;
+        public BranchBookingController(HotelManagementContext context, TaipeiClock clock, NoShowService noShowService, ILogger<BranchBookingController> logger)
             : base(context)
         {
             _context = context;
             _clock = clock;
             _noShowService = noShowService;
+            _logger = logger;
         }
 
         // 將前端中文篩選值轉為資料庫狀態碼。
@@ -88,7 +90,8 @@ namespace HotelManagementSystem.Controllers
                 BookingStatus = x.BookingStatus,
                 StartDate = new DateTime(x.CheckInDate.Year, x.CheckInDate.Month, x.CheckInDate.Day),
                 EndDate = new DateTime(x.CheckOutDate.Year, x.CheckOutDate.Month, x.CheckOutDate.Day),
-                Price = "NT$ " + x.TotalAmount.ToString("N0")
+                Price = "NT$ " + x.TotalAmount.ToString("N0"),
+                Email = x.Email
             }).ToListAsync();
 
             foreach (var b in bookingData)
@@ -98,6 +101,111 @@ namespace HotelManagementSystem.Controllers
 
             return View(bookingData);
         }
+
+
+        // 修改指定訂單的 Email
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateBookingEmail([FromBody] UpdateBookingEmailInputViewModel? input)
+        {
+            // 無法取得前端傳入的資料
+            if (input == null)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "未收到修改 Email 所需的資料。"
+                });
+            }
+
+            // 移除訂單編號及 Email 前後的空白
+            input.BookingNumber = input.BookingNumber?.Trim() ?? string.Empty;
+            input.NewEmail = input.NewEmail?.Trim() ?? string.Empty;
+
+            // 使用整理後的內容重新執行 ViewModel 驗證
+            ModelState.Clear();
+            if (!TryValidateModel(input))
+            {
+                var errorMessage = ModelState.Values
+                    .SelectMany(value => value.Errors)
+                    .Select(error => error.ErrorMessage)
+                    .FirstOrDefault(message =>
+                        !string.IsNullOrWhiteSpace(message))
+                    ?? "輸入資料格式不正確。";
+                return BadRequest(new
+                {
+                    success = false,
+                    message = errorMessage
+                });
+            }
+
+            // 只允許查詢並修改目前員工所屬分館的訂單
+            var booking = await _context.Bookings
+                .FirstOrDefaultAsync(booking =>
+                    booking.BookingNumber == input.BookingNumber &&
+                    booking.BranchId == CurrentBranchId);
+            if (booking == null)
+            {
+                return NotFound(new
+                {
+                    success = false,
+                    message = "找不到指定訂單，或無法執行此操作。"
+                });
+            }
+
+            // 訂房確認信目前只適用於已付款訂單
+            if (booking.BookingStatus != "Paid")
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "只有已付款訂單可以修改確認信 Email。"
+                });
+            }
+
+            // 新 Email 與目前 Email 相同時，不需要更新資料庫
+            if (string.Equals(
+                booking.Email,
+                input.NewEmail,
+                StringComparison.OrdinalIgnoreCase))
+            {
+                return Ok(new
+                {
+                    success = true,
+                    email = booking.Email,
+                    message = "Email 未變更。"
+                });
+            }
+
+            // 更新訂單的 Email
+            booking.Email = input.NewEmail;
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException exception)
+            {
+                // 不記錄完整 Email，避免個資出現在 Log 中
+                _logger.LogError(
+                    exception,
+                    "修改訂單 Email 時發生資料庫錯誤。BookingNumber: {BookingNumber}",
+                    booking.BookingNumber);
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    new
+                    {
+                        success = false,
+                        message = "Email 暫時無法修改，請稍後再試。"
+                    });
+            }
+            return Ok(new
+            {
+                success = true,
+                email = booking.Email,
+                message = "Email 已修改完成。"
+            });
+        }
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]
