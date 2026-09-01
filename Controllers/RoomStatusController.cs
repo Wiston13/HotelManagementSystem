@@ -356,7 +356,7 @@ namespace HotelManagementSystem.Controllers
                 TargetType = "Room",
                 TargetIdentifier = room.RoomNumber,
                 Description = room.SupplyStatus == "Disabled"
-                    ? $"將房間 {room.RoomNumber} 停用，原因：{room.DisabledReason}。"
+                    ? $"將房間 {room.RoomNumber} 停用，原因：{room.DisabledReason?.TrimEnd('。')}。"
                     : $"將房間 {room.RoomNumber} 恢復開放販售。"
             };
 
