@@ -68,7 +68,7 @@
                             <td class="ps-4 fw-bold">@item.RoomTypeName</td>
                             <td>@item.MaxOccupancy 人</td>
                             <td>@item.BedType</td>
-                            <td>NT$ @item.NightlyPrice.ToString("N0")</td>
+                            <td>NT$ @item.NightlyPrice.ToString("#,##0.##", System.Globalization.CultureInfo.GetCultureInfo("zh-TW"))</td>
                             <td>
                                 @if (item.IsActive)
                                 {
@@ -187,6 +187,10 @@
             const rows = document.querySelectorAll('#roomTypeTableBody tr');
 
             rows.forEach(row => {
+                if (!row.hasAttribute('data-branch-id')) {
+                    return;
+                }
+
                 if (row.getAttribute('data-branch-id') === selectedBranchId) {
                     row.style.display = '';
                 } else {

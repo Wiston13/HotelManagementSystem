@@ -32,7 +32,7 @@
 				<div class="row g-3 align-items-end">
 
 					<div class="col-12 col-lg-5">
-						<label asp-for="BookingNum" class="form-label">訂單編號<span class="text-danger">*</span></label>
+						<label for="orderNo" class="form-label">訂單編號<span class="text-danger">*</span></label>
 						<small class="text-secondary fw-normal ms-1">請輸入完整訂單編號。</small>
 
 						<!-- 改用 asp-for，它會自動生成 id="OrderNo" name="OrderNo" value="..." -->
@@ -60,7 +60,7 @@
 					</div>
 
 					<div class="col-12 col-lg-5">
-						<span id="phoneError" class="text-danger small"></span>
+						<span id="phoneError" class="text-danger small">@ViewBag.PhoneError</span>
 					</div>
 
 					<div class="col-lg-2"></div>
@@ -81,7 +81,7 @@
 
 
 	<!-- 查詢結果顯示區 -->
-	@if(!string.IsNullOrEmpty(Model?.BookingNum) && ViewBag.NoResult != true)
+	@if(!string.IsNullOrEmpty(Model?.BookingNum) && ViewBag.NoResult != true && ViewBag.PhoneError == null)
 	{
 		<div class="card mt-4" id="orderResult">
 

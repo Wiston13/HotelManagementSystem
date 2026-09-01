@@ -54,7 +54,7 @@
 
                 <!-- 2. 入住日期區間 (簡單 input，供後續套用日曆插件) -->
                 <div class="col-md-3">
-                    <label for="dateRange" class="form-label small fw-bold text-secondary">
+                    <label for="dateTime" class="form-label small fw-bold text-secondary">
                         入住日期區間 <span class="text-muted fw-normal">(選填)</span>
                     </label>
                     <div class="input-group">
@@ -97,8 +97,12 @@
 
     
 
-    <!-- 查詢結果列表區塊 -->
-    <div class="@(Model != null && Model.Any() ? "" : "d-none")">
+	<!-- 查詢結果列表區塊 -->
+	@if (!string.IsNullOrWhiteSpace(ViewBag.Keyword as string) && (Model == null || !Model.Any()))
+	{
+		<div class="alert alert-secondary">查無符合條件的訂單資料。</div>
+	}
+	<div class="@(Model != null && Model.Any() ? "" : "d-none")">
         <h5>查詢訂單數量：@Model.Count 筆</h5>
         </div>
     <div id="resultList" class="card border-0 shadow-sm @(Model != null && Model.Any() ? "" : "d-none")">

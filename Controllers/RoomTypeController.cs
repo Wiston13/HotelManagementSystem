@@ -89,7 +89,7 @@ namespace HotelManagementSystem.Controllers
                             OperationTypeId = 5,
                             TargetType = "RoomType",
                             TargetIdentifier = model.RoomTypeName,
-                            Description = $"新增房型：{model.RoomTypeName}"
+                            Description = $"新增房型：{model.RoomTypeName}。"
                         };
                         _context.OperationLogs.Add(createLog);
 
