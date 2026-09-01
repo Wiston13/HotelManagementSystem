@@ -21,6 +21,10 @@ builder.Services.AddDbContext<HotelManagementContext>(options =>
 
 builder.Services.AddScoped<NoShowService>();
 builder.Services.AddScoped<RoomAvailabilityService>();
+builder.Services.AddHttpClient<FaqService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(60);
+});
 
 var app = builder.Build();
 
