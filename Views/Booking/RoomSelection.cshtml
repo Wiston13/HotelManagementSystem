@@ -79,7 +79,7 @@
                         <div class="text-end align-self-end">
                             @* 價格 *@
                             <h4 class="text-primary fw-bold mb-2">
-                                NT$ @room.NightlyPrice.ToString("N0")
+                                NT$ @room.NightlyPrice.ToString("#,##0.##", System.Globalization.CultureInfo.GetCultureInfo("zh-TW"))
                                 <small class="fs-6 fw-normal">／晚</small>
                             </h4>
 
@@ -167,7 +167,7 @@
                     // 更新畫面
                     document.getElementById('displayRoomName').textContent = roomName;
                     document.getElementById('displayTotalPrice').textContent =
-                        'NT$ ' + total.toLocaleString();
+                        'NT$ ' + total.toLocaleString('zh-TW', { maximumFractionDigits: 2 });
 
                     // 設定要送到 Payment 的 RoomTypeId
                     document.getElementById('inputRoomTypeId').value = roomId;

@@ -1,12 +1,12 @@
 /*
-    HotelManagementSystem - 第一版完整資料庫 DDL
+    HotelManagementSystem - 資料庫 Schema
     SQL Server
 
     注意：
     1. 此腳本為開發／測試用可重建版本。
     2. 若資料表已存在，會依相依順序 DROP 後重新建立，因此原資料會被刪除。
-    3. OperationTypes 的固定類型與其他測試資料請放在 SampleData 腳本中。
-    4. 第一版所有業務日期與時間以台灣時間（Asia/Taipei）為準。
+    3. OperationTypes 固定類型由 02_required_seed.sql 建立。
+    4. 所有業務日期與時間以台灣時間（Asia/Taipei）為準。
 */
 
 USE [master];
@@ -109,7 +109,7 @@ CREATE TABLE [dbo].[RoomTypes]
 GO
 
 /* =========================================================
-   3. Rooms 實體房間
+   3. Rooms 房間
    ========================================================= */
 CREATE TABLE [dbo].[Rooms]
 (
@@ -199,11 +199,11 @@ GO
 /* =========================================================
    5. Bookings 訂單
 
-   第一版簡化：
+   目前資料模型：
    - 付款方式固定信用卡，不另存欄位
    - 付款金額 = TotalAmount
    - 付款時間 = CreatedAt
-   - Email 只執行一次寄送動作，不保存寄送結果／時間
+   - Email 欄位目前保存訂房聯絡 Email；寄送時機、結果保存與其他資料需求待 Email 功能規格定案
    - NoShow 不另存 NoShowAt，由 CheckOutDate 當日 12:00 推導
    ========================================================= */
 CREATE TABLE [dbo].[Bookings]
@@ -302,7 +302,7 @@ GO
 
 /* =========================================================
    6. StayRecords 住房紀錄
-   一張訂單第一版最多一筆住房紀錄
+   一張訂單最多一筆住房紀錄
    ========================================================= */
 CREATE TABLE [dbo].[StayRecords]
 (
@@ -361,7 +361,7 @@ CREATE TABLE [dbo].[StayRecords]
 GO
 
 /*
-   保證同一間實體房間同一時間最多一筆「尚未退房」住房紀錄。
+   保證同一間房間同一時間最多一筆「尚未退房」住房紀錄。
    歷史已退房紀錄不受此限制。
 */
 CREATE UNIQUE INDEX [UX_StayRecords_ActiveRoom]
@@ -427,7 +427,7 @@ CREATE TABLE [dbo].[OperationLogs]
 GO
 
 /* =========================================================
-   第一版常用查詢索引
+   常用查詢索引
    ========================================================= */
 
 /* 查房／房量計算 */
@@ -448,7 +448,7 @@ ON [dbo].[Bookings] ([BookingStatus], [CheckOutDate])
 INCLUDE ([BookingNumber]);
 GO
 
-/* 管理員依分館＋成立日期區間匯出 CSV */
+/* 依分館與成立時間查詢訂單 */
 CREATE INDEX [IX_Bookings_Branch_CreatedAt]
 ON [dbo].[Bookings] ([BranchId], [CreatedAt]);
 GO
