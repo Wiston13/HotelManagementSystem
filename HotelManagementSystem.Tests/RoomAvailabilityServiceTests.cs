@@ -318,8 +318,70 @@ public class RoomAvailabilityServiceTests
         Assert.Equal(2, result[startDate.AddDays(2)]);
     }
 
-    #region helper
+    [Fact]
+    public void CalculateDailyRemainingRooms_OverdueStayAfterCheckoutTime_ReducesTodayAvailability()
+    {
+        using var context = CreateContext();
 
+        var bookingCheckInDate = new DateOnly(2099, 1, 1);
+        var bookingCheckOutDate = bookingCheckInDate.AddDays(2);
+        var startDate = bookingCheckInDate.AddDays(1);
+        var endDate = startDate.AddDays(2);
+
+        var room = CreateRoom(1, "Open");
+        context.Rooms.AddRange(
+            room,
+            CreateRoom(2, "Open"),
+            CreateRoom(3, "Open")
+        );
+
+        var booking = CreateBooking(
+            "CheckedIn",
+            bookingCheckInDate,
+            bookingCheckOutDate);
+
+        context.Bookings.Add(booking);
+
+        context.StayRecords.Add(
+            CreateStayRecord(booking, room)
+        );
+
+        context.SaveChanges();
+
+        var fakeTaipeiClock = new FakeTaipeiClock(new DateTime(2099, 1, 3, 13, 0, 0));
+        var service = new RoomAvailabilityService(fakeTaipeiClock, context);
+
+        var result = service.CalculateDailyRemainingRooms(1, startDate, endDate);
+
+        Assert.Equal(2, result.Count);
+
+        Assert.Equal(2, result[startDate]);
+        Assert.Equal(2, result[startDate.AddDays(1)]);
+    }
+
+    [Fact]
+    public void CalculateDailyRemainingRooms_StayBeforeCheckoutTime_DoesNotReduceTodayAvailability()
+    {
+        // TODO:
+        // 1. 建立測試 Context
+        // 2. 建立 3 間 RoomType 1 的 Open 房
+        // 3. 建立一筆 CheckedIn Booking：
+        //    - 2099/01/01 入住
+        //    - 2099/01/03 退房
+        // 4. 建立對應 StayRecord：
+        //    - ActualCheckOutAt = null
+        // 5. 使用 FakeTaipeiClock 固定現在時間：
+        //    - 2099/01/03 11:00
+        // 6. 查詢 2099/01/03 ～ 2099/01/04
+        // 7. 驗證今天剩餘房量仍為 3
+        //
+        // 原因：
+        // Booking 在退房日已不算正常占房，
+        // 而現在 11:00 尚未超過 12:00 退房時間，
+        // 所以也不應被算進 overdueCount。
+    }
+
+    #region helper
     private static HotelManagementContext CreateContext()
     {
         var options = new DbContextOptionsBuilder<HotelManagementContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options;
@@ -374,6 +436,44 @@ public class RoomAvailabilityServiceTests
         };
     }
 
+    private static StayRecord CreateStayRecord(
+        Booking booking,
+        Room room,
+        int stayRecordId = 1,
+        DateTime? actualCheckOutAt = null)
+    {
+        return new StayRecord
+        {
+            StayRecordId = stayRecordId,
+            BookingNumber = booking.BookingNumber,
+            RoomId = room.RoomId,
+
+            BookingNumberNavigation = booking,
+            Room = room,
+
+            RoomNumberSnapshot = room.RoomNumber,
+            ActualCheckInAt = booking.CheckInDate.ToDateTime(new TimeOnly(16, 0)),
+            ActualCheckOutAt = actualCheckOutAt,
+
+            PrimaryGuestName = "TEST",
+            ActualGuestCount = 2,
+            CheckedInByEmployeeNumber = "TESTE001",
+            CheckedOutByEmployeeNumber = actualCheckOutAt == null ? null : "TESTE001"
+        };
+    }
+
+    private class FakeTaipeiClock : TaipeiClock
+    {
+        private readonly DateTime _now;
+
+        public FakeTaipeiClock(DateTime now)
+        {
+            _now = now;
+        }
+
+        public override DateTime Now => _now;
+    }
     #endregion
+
 }
 
