@@ -182,12 +182,23 @@ document.addEventListener("DOMContentLoaded", () => {
                 signal: requestController.signal
             });
 
-            if (!response.ok) {
-                throw new Error(`FAQ request failed with status ${response.status}.`);
+            const data = await response.json();
+
+            const reply =
+                typeof data?.reply === "string"
+                    ? data.reply.trim()
+                    : "";
+
+            if (response.status === 429 && reply) {
+                addMessage(reply, "bot");
+                return;
             }
 
-            const data = await response.json();
-            const reply = typeof data?.reply === "string" ? data.reply.trim() : "";
+            if (!response.ok) {
+                throw new Error(
+                    `FAQ request failed with status ${response.status}.`
+                );
+            }
 
             if (data?.success !== true || !reply) {
                 throw new Error("FAQ response did not contain a reply.");

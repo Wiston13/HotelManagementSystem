@@ -1,5 +1,6 @@
 ﻿using HotelManagementSystem.Models.ViewModels;
 using HotelManagementSystem.Services;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HotelManagementSystem.Controllers
@@ -16,6 +17,7 @@ namespace HotelManagementSystem.Controllers
         }
 
         [HttpPost]
+        [EnableRateLimiting("FaqPolicy")]
         public async Task<IActionResult> Ask(
             [FromBody] FaqAskRequest? request)
         {
