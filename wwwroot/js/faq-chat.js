@@ -90,7 +90,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             welcomeTimer = null;
-        }, 250);
+        }, 450);
     }
 
     function openChat() {
