@@ -1,0 +1,108 @@
+{
+  "name": "飯店訂房成功通知－Webhook",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "hotel-booking-confirmed",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -208,
+        0
+      ],
+      "id": "6472f928-b290-416a-b94c-e747c88b7c37",
+      "name": "Webhook",
+      "webhookId": "e0610c9f-d416-4ffd-9882-2a1290abb7dc",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0ocgM1VLfvV2K6MB",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "htlmgmtsys@gmail.com",
+        "toEmail": "={{ $('Webhook').first().json.body.email }}",
+        "subject": "=【{{ $('Webhook').first().json.body.branchName }}】訂房成功通知",
+        "html": "=<h2>訂房成功通知</h2>\n\n<p>{{ $('Webhook').first().json.body.bookerName }} 您好，</p>\n\n<p>以下為您的訂房資訊：</p>\n\n<ul>\n  <li>訂單編號：{{ $('Webhook').first().json.body.bookingNumber }}</li>\n  <li>入住分館：{{ $('Webhook').first().json.body.branchName }}</li>\n  <li>房型：{{ $('Webhook').first().json.body.roomTypeName }}</li>\n  <li>入住日期：{{ $('Webhook').first().json.body.checkInDate }}</li>\n  <li>退房日期：{{ $('Webhook').first().json.body.checkOutDate }}</li>\n  <li>訂單總金額：NT$ {{ $('Webhook').first().json.body.totalAmount }}</li>\n  <li>付款狀態：已付款</li>\n</ul>\n\n<h4 style=\"margin-top: 32px; margin-bottom: 12px;\">分館資訊</h4>\n\n<ul>\n  <li>地址：{{ $('Webhook').first().json.body.branchAddress }}</li>\n  <li>電話：{{ $('Webhook').first().json.body.branchPhone }}</li>\n</ul>\n\n<p style=\"margin-top: 32px;\">\n  如需查看訂單詳細資訊，請至官網的「訂單查詢」頁面，\n  輸入訂單編號及訂房時填寫的聯絡電話進行查詢。\n</p>\n\n<p>\n  如有訂單相關問題，請聯繫\n  <strong>{{ $('Webhook').first().json.body.branchName }}</strong>\n  （電話：\n  <a href=\"tel:{{ $('Webhook').first().json.body.branchPhone }}\">\n    {{ $('Webhook').first().json.body.branchPhone }}\n  </a>）。\n</p>\n\n<p>感謝您的預訂。</p>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        -16,
+        0
+      ],
+      "id": "1d665816-a71b-44ed-86f2-eaffd2266d2a",
+      "name": "Send an Email",
+      "webhookId": "4b4aba54-b811-4ba5-9d8c-3ec6dcbe6c05",
+      "credentials": {
+        "smtp": {
+          "id": "Zj6mJoNAFFCIftFr",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ ({\n  success: true,\n  bookingNumber: $('Webhook').first().json.body.bookingNumber,\n  emailAccepted: true,\n  n8nCompletedAtUtc: $now.toUTC().toISO()\n}) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        208,
+        0
+      ],
+      "id": "54062800-2c19-426f-a23d-1bdea20b86ff",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Send an Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send an Email": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "aeecfa73-dc5b-4a50-9f4c-3494eab2fa33",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d3edbe9b0bf7b021bd96cdfbf013349a7e456c9ba991f3bc9ce5c328d6935a25"
+  },
+  "nodeGroups": [],
+  "id": "X8K0WRq016ygaXzm",
+  "tags": []
+}
