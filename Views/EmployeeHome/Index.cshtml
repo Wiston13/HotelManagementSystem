@@ -45,6 +45,42 @@
         </div>
     </section>
 
+    @if (Model.Announcements.Count > 0)
+    {
+        <section class="mt-4" aria-label="系統公告">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-megaphone me-2"></i>
+                        系統公告
+                    </h5>
+                </div>
+
+                <div class="card-body">
+                    @foreach (var announcement in Model.Announcements)
+                    {
+                        <div class="mb-3">
+                            <h6 class="fw-bold mb-1">
+                                @announcement.Title
+                            </h6>
+
+                            <p class="mb-1">
+                                @announcement.Content
+                            </p>
+
+                            <small class="text-muted">
+                                公告期間：
+                                @announcement.StartAt.ToString("yyyy/MM/dd HH:mm")
+                                ～
+                                @announcement.EndAt.ToString("yyyy/MM/dd HH:mm")
+                            </small>
+                        </div>
+                    }
+                </div>
+            </div>
+        </section>
+    }
+
     <section class="employee-home-tasks mt-4 mt-md-5" aria-labelledby="work-list-title">
         <h2 id="work-list-title" class="visually-hidden">工作清單</h2>
 
