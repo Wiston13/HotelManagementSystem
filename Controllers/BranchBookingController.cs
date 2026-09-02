@@ -86,7 +86,21 @@ namespace HotelManagementSystem.Controllers
                 query = query.Where(x => x.BookingStatus == GetBookingStatusCode(bookingStatus));
             }
 
-            bookingData = await query.Select(x => new BookingData
+            var culture = System.Globalization.CultureInfo.GetCultureInfo("zh-TW");
+            var rawBookingData = await query.Select(x => new
+            {
+                x.BookingNumber,
+                x.CreatedAt,
+                x.BookerName,
+                x.ContactPhone,
+                x.RoomTypeNameSnapshot,
+                x.BookingStatus,
+                x.CheckInDate,
+                x.CheckOutDate,
+                x.TotalAmount,
+                x.Email
+            }).ToListAsync();
+            bookingData = rawBookingData.Select(x => new BookingData
             {
                 BookingNum = x.BookingNumber,
                 BookingDate = x.CreatedAt,
@@ -96,9 +110,9 @@ namespace HotelManagementSystem.Controllers
                 BookingStatus = x.BookingStatus,
                 StartDate = new DateTime(x.CheckInDate.Year, x.CheckInDate.Month, x.CheckInDate.Day),
                 EndDate = new DateTime(x.CheckOutDate.Year, x.CheckOutDate.Month, x.CheckOutDate.Day),
-                Price = "NT$ " + x.TotalAmount.ToString("#,##0.##"),
+                Price = "NT$ " + x.TotalAmount.ToString("#,##0.##", culture),
                 Email = x.Email
-            }).ToListAsync();
+            }).ToList();
 
             foreach (var b in bookingData)
             {
