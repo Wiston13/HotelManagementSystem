@@ -3,34 +3,51 @@
     Layout = "_CustomerLayout";
 }
 
+
+@section Styles {
+    <style>
+       
+        .was-validated .form-control:valid,
+        .was-validated .form-select:valid {
+            border-color: #dee2e6 !important;
+            background-image: none !important;
+            padding-right: .75rem !important;
+        }
+            /* 防止焦點停留在通過欄位時變成綠色 */
+            .was-validated .form-control:valid:focus,
+            .was-validated .form-select:valid:focus {
+                border-color: #86b7fe !important;
+                box-shadow: 0 0 0 .25rem rgba(13, 110, 253, .25) !important;
+            }
+    </style>
+}
+
 <div class="container py-5">
-    <div class="card border-0 shadow-sm mx-auto bg-white rounded-4" style="max-width: 950px;">
+    <div class="card border-0 shadow-sm mx-auto bg-white rounded-4" style="max-width: 1100px;">
         <div class="card-body p-5">
             <div class="row g-5">
-                
-      
-                <div class="col-md-4 border-start border-4 ps-4" style="border-color: #1e4620 !important;">
-                    <h1 class="h2 fw-light tracking-wide mb-3" style="color: #1e4620; font-family: 'Times New Roman', serif; letter-spacing: 2px;">GET IN TOUCH</h1>
+
+                <!-- 左側高質感亮藍引導欄 -->
+                <div class="col-md-4 border-start border-4 ps-4" style="border-color: #0d6efd !important;">
+                    <h1 class="h2 fw-bold tracking-wide mb-3 text-primary" style="letter-spacing: 1px;">GET IN TOUCH</h1>
                     <p class="text-secondary small lh-lg mb-4">
-                        若您有任何意見、疑問或回饋，請透過此表格提供您的訊息，我們將儘速為您處理。
+                        歡迎留下您的寶貴意見、疑問或回饋，您的聲音是我們進步的動力，我們將儘速為您處理。
                     </p>
                     <hr class="text-muted opacity-25 my-4" />
                     <div class="small text-muted">
-                        <i class="bi bi-envelope-fill me-2" style="color: #1e4620;"></i>
+                        <i class="bi bi-envelope-fill me-2 text-primary"></i>
                         <a href="mailto:kindness.hotel@msa.hinet.net" class="text-secondary text-decoration-none">kindness.hotel@msa.hinet.net</a>
                     </div>
                 </div>
 
                 <!-- 右側表單內容 -->
                 <div class="col-md-8">
-                    <form id="feedbackForm" onsubmit="return false;">
-                        
-                     
+                    <form id="feedbackForm" class="needs-validation" novalidate onsubmit="return false;">
+
                         <div class="mb-4">
                             <label class="form-label small fw-bold text-secondary mb-2">分館選擇 <span class="text-danger">*</span></label>
-                            <select name="BranchId" class="form-select border-light-subtle py-2 shadow-sm" required>
+                            <select name="BranchId" class="form-select border-light-subtle py-2 shadow-sm rounded-3" required>
                                 <option value="" disabled selected>請選擇對應分館</option>
-                                
                                 @if (ViewBag.Branches != null)
                                 {
                                     foreach (var branch in ViewBag.Branches)
@@ -39,32 +56,36 @@
                                     }
                                 }
                             </select>
+                            <div class="invalid-feedback small">請選擇要反映意見的商旅分館。</div>
                         </div>
 
                         <div class="row mb-4">
                             <div class="col-md-6">
                                 <label class="form-label small fw-bold text-secondary mb-2">訪客姓名 <span class="text-danger">*</span></label>
-                                <input type="text" name="CustomerName" class="form-control border-light-subtle py-2 shadow-sm" placeholder="請輸入您的全名" required>
+                                <input type="text" name="CustomerName" class="form-control border-light-subtle py-2 shadow-sm rounded-3" placeholder="請輸入您的全名" required>
+                                <div class="invalid-feedback small">訪客姓名為必填項目。</div>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-bold text-secondary mb-2">聯絡電話</label>
-                                <input type="tel" name="Phone" class="form-control border-light-subtle py-2 shadow-sm" placeholder="請輸入您的聯絡電話(選填)">
+                                <input type="tel" name="Phone" class="form-control border-light-subtle py-2 shadow-sm rounded-3" placeholder="請輸入您的聯絡電話(選填)">
                             </div>
                         </div>
 
                         <div class="mb-4">
                             <label class="form-label small fw-bold text-secondary mb-2">電子信箱 <span class="text-danger">*</span></label>
-                            <input type="email" name="Email" class="form-control border-light-subtle py-2 shadow-sm" placeholder="例如：example@mail.com" required>
+                            <input type="email" name="Email" class="form-control border-light-subtle py-2 shadow-sm rounded-3" placeholder="例如：example@mail.com" required>
+                            <div class="invalid-feedback small">請輸入正確格式的電子信箱。</div>
                         </div>
 
                         <div class="mb-4">
                             <label class="form-label small fw-bold text-secondary mb-2">您的寶貴意見 <span class="text-danger">*</span></label>
-                            <textarea name="Content" class="form-control border-light-subtle py-2 shadow-sm" rows="5" placeholder="請輸入您的建議或反映內容..." maxlength="500" required></textarea>
+                            <textarea name="Content" class="form-control border-light-subtle py-2 shadow-sm rounded-3" rows="12" placeholder="請輸入您的建議或反映內容..." maxlength="500" required></textarea>
+                            <div class="invalid-feedback small">意見內容描述不可留白。</div>
                             <div class="form-text text-end text-muted small mt-1">限 500 字以內</div>
                         </div>
 
                         <div class="text-end pt-2">
-                            <button type="button" id="btnSubmitFeedback" class="btn text-white px-5 py-2 fw-semibold shadow border-0" style="background-color: #1e4620; border-radius: 6px;">
+                            <button type="button" id="btnSubmitFeedback" class="btn btn-primary px-5 py-2 fw-semibold shadow border-0 rounded-3">
                                 送出訊息
                             </button>
                         </div>
@@ -76,14 +97,31 @@
     </div>
 </div>
 
+<!-- 提交成功提示視窗 -->
+<div class="modal fade" id="successNoticeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow rounded-4 text-center p-4">
+            <div class="modal-body">
+                <div class="mx-auto mb-3 d-flex align-items-center justify-content-center text-primary rounded-circle bg-primary-subtle border border-primary-subtle" style="width: 60px; height: 60px;">
+                    <i class="bi bi-check-lg fs-2"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-2">提交成功</h5>
+                <p class="text-secondary small mb-0">我們已收到您的寶貴意見，將會儘速指派專人巡查並優化處理。</p>
+            </div>
+            <div class="modal-footer border-0 justify-content-center pt-2">
+                <button type="button" class="btn btn-primary w-100 fw-bold border-0 shadow-sm py-2 rounded-3" data-bs-dismiss="modal">確 定</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 @section Scripts {
     <script>
-        document.getElementById('btnSubmitFeedback').addEventListener('click', function () {
+        document.getElementById('btnSubmitFeedback').addEventListener('click', function() {
             const form = document.getElementById('feedbackForm');
-            
+
             if (!form.checkValidity()) {
-                form.reportValidity();
+                form.classList.add('was-validated');
                 return;
             }
 
@@ -93,17 +131,19 @@
                 method: 'POST',
                 body: formData
             })
-            .then(response => {
-                if (response.ok) return response.json();
-                throw new Error('送出失敗');
-            })
-            .then(data => {
-                alert(data.message || '意見已成功送出！');
-                form.reset();
-            })
-            .catch(error => {
+                .then(response => {
+                    if (response.ok) return response.json();
+                    throw new Error('送出失敗');
+                })
+                .then(data => {
+                    form.reset();
+                    form.classList.remove('was-validated');
+                    var successModal = new bootstrap.Modal(document.getElementById('successNoticeModal'));
+                    successModal.show();
+                    })
+                .catch(error => {
                 alert('系統錯誤，請稍後再試。');
-            });
-        });
+                });
+                });
     </script>
 }

@@ -6,7 +6,6 @@ namespace HotelManagementSystem.Models.Entities
 {
     public class Feedback
     {
-        
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
@@ -23,7 +22,11 @@ namespace HotelManagementSystem.Models.Entities
 
         public DateTime CreatedAt { get; set; }
 
-      
+     
+        public string Status { get; set; } = "未處理";
+
+        public string? AdminReply { get; set; }
+
         public virtual Branch Branch { get; set; } = null!;
     }
 }
