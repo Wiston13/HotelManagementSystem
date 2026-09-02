@@ -1,19 +1,41 @@
-﻿<div id="faqChat">
-    <div id="faqMessages">
-        <div class="faq-message bot">
-            您好！請問有什麼住宿或訂房問題嗎？
+﻿<div id="faqChatWidget">
+    <button id="faqToggleButton"
+            type="button"
+            aria-expanded="false"
+            aria-controls="faqChatPanel">
+        FAQ 客服
+    </button>
+
+    <section id="faqChatPanel"
+             aria-label="FAQ 客服對話視窗"
+             hidden>
+
+        <header id="faqChatHeader">
+            <span>FAQ 客服</span>
+
+            <button id="faqCloseButton"
+                    type="button"
+                    aria-label="關閉客服對話視窗">
+                關閉
+            </button>
+        </header>
+
+        <div id="faqMessages">
+            <div class="faq-message bot">
+                您好！請問有什麼住宿或訂房問題嗎？
+            </div>
         </div>
-    </div>
 
-    <div id="faqInputArea">
-        <input id="faqInput"
-               type="text"
-               maxlength="100"
-               placeholder="請輸入問題"
-               autocomplete="off" />
+        <div id="faqInputArea">
+            <input id="faqInput"
+                   type="text"
+                   maxlength="100"
+                   placeholder="請輸入問題"
+                   autocomplete="off" />
 
-        <button id="faqSendButton" type="button">
-            送出
-        </button>
-    </div>
+            <button id="faqSendButton" type="button">
+                送出
+            </button>
+        </div>
+    </section>
 </div>

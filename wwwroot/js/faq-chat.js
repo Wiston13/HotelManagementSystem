@@ -2,8 +2,18 @@
     const input = document.getElementById("faqInput");
     const sendButton = document.getElementById("faqSendButton");
     const messages = document.getElementById("faqMessages");
+    const toggleButton = document.getElementById("faqToggleButton");
+    const closeButton = document.getElementById("faqCloseButton");
+    const chatPanel = document.getElementById("faqChatPanel");
 
-    if (!input || !sendButton || !messages) {
+    if (
+        !input ||
+        !sendButton ||
+        !messages ||
+        !toggleButton ||
+        !closeButton ||
+        !chatPanel
+    ) {
         return;
     }
 
@@ -14,6 +24,17 @@
         messageElement.textContent = text;
 
         messages.appendChild(messageElement);
+    }
+
+    function openChat() {
+        chatPanel.hidden = false;
+        toggleButton.setAttribute("aria-expanded", "true");
+        input.focus();
+    }
+
+    function closeChat() {
+        chatPanel.hidden = true;
+        toggleButton.setAttribute("aria-expanded", "false");
     }
 
     async function sendMessage() {
@@ -56,6 +77,8 @@
     }
 
     sendButton.addEventListener("click", sendMessage);
+    toggleButton.addEventListener("click", openChat);
+    closeButton.addEventListener("click", closeChat);
 
     input.addEventListener("keydown", event => {
         if (event.key === "Enter") {
