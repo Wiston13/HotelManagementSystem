@@ -1,41 +1,65 @@
-﻿<div id="faqChatWidget">
-    <button id="faqToggleButton"
-            type="button"
-            aria-expanded="false"
-            aria-controls="faqChatPanel">
-        FAQ 客服
-    </button>
+<link rel="stylesheet"
+      href="~/css/faq-chat.css"
+      asp-append-version="true" />
 
+<div id="faqChatWidget" class="faq-chat-widget">
     <section id="faqChatPanel"
-             aria-label="FAQ 客服對話視窗"
-             hidden>
+             class="faq-chat-panel"
+             aria-label="旅宿小助手對話視窗"
+             aria-hidden="true">
+        <header class="faq-chat-header">
+            <img class="faq-chat-header__avatar"
+                 src="https://www.gstatic.com/images/branding/product/2x/googleg_48dp.png"
+                 alt=""
+                 aria-hidden="true" />
 
-        <header id="faqChatHeader">
-            <span>FAQ 客服</span>
-
-            <button id="faqCloseButton"
-                    type="button"
-                    aria-label="關閉客服對話視窗">
-                關閉
-            </button>
+            <div class="faq-chat-header__text">
+                <strong class="faq-chat-header__title">旅宿小助手</strong>
+                <span class="faq-chat-header__status">提供訂房與住宿資訊</span>
+            </div>
         </header>
 
-        <div id="faqMessages">
-            <div class="faq-message bot">
-                您好！請問有什麼住宿或訂房問題嗎？
-            </div>
-        </div>
+        <div id="faqMessages"
+             class="faq-chat-messages"
+             role="log"
+             aria-live="polite"
+             aria-relevant="additions"></div>
 
-        <div id="faqInputArea">
+        <div class="faq-chat-input-area">
+            <button id="faqResetButton"
+                    class="faq-chat-reset"
+                    type="button"
+                    title="重新對談"
+                    aria-label="重新對談">
+                <span aria-hidden="true">↻</span>
+            </button>
+
             <input id="faqInput"
+                   class="faq-chat-input"
                    type="text"
-                   maxlength="100"
-                   placeholder="請輸入問題"
-                   autocomplete="off" />
+                   maxlength="50"
+                   placeholder="請輸入問題(50個字以內)"
+                   autocomplete="off"
+                   aria-label="輸入要詢問旅宿小助手的問題" />
 
-            <button id="faqSendButton" type="button">
+            <button id="faqSendButton"
+                    class="faq-chat-send"
+                    type="button">
                 送出
             </button>
         </div>
     </section>
+
+    <button id="faqToggleButton"
+            class="faq-chat-toggle"
+            type="button"
+            aria-expanded="false"
+            aria-controls="faqChatPanel"
+            aria-label="開啟旅宿小助手">
+        <img class="faq-chat-toggle__robot"
+             src="https://www.gstatic.com/images/branding/product/2x/googleg_48dp.png"
+             alt=""
+             aria-hidden="true" />
+        <span class="faq-chat-toggle__chevron" aria-hidden="true"></span>
+    </button>
 </div>

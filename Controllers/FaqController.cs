@@ -30,12 +30,12 @@ namespace HotelManagementSystem.Controllers
 
             string message = request.Message.Trim();
 
-            if (message.Length > 100)
+            if (message.Length > 50)
             {
                 return BadRequest(new FaqAskResponse
                 {
                     Success = false,
-                    Reply = "問題內容不能超過 100 個字。"
+                    Reply = "問題內容不能超過 50 個字。"
                 });
             }
             try
