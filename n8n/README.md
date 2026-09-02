@@ -2,12 +2,12 @@
 
 本目錄提供「飯店訂房成功通知」功能所需的 n8n 工作流程、Docker 環境範例及測試工具。
 
-目的為讓其他組員在功能分支合併後，可以：
+目前開發階段由一台開發主機執行 Docker、n8n 與 ngrok，
+其他組員可透過固定的 ngrok Webhook URL 呼叫同一套 n8n 工作流程，
+不需要在各自電腦另外安裝或設定 n8n。
 
-1. 在自己的電腦建立本機 n8n。
-2. 匯入訂房確認信工作流程。
-3. 完成 ASP.NET Core 與 n8n 的整合驗收。
-4. 後續使用相同工作流程建立遠端 n8n。
+本目錄同時保留本機 n8n 建置與 Workflow 匯入說明，
+供環境重建、獨立驗收及後續遠端部署使用。
 
 ---
 
@@ -31,6 +31,39 @@ n8n/
 - `docker-compose.yml`：建立本機 n8n 容器及保存 SQLite 資料的 Docker Volume。
 - `.env.example`：本機環境變數範例，不包含真實密碼。
 - `README.md`：本機驗收及遠端部署說明。
+
+---
+
+# 目前開發測試架構
+
+目前開發階段使用一台電腦作為 n8n 開發主機：
+
+```text
+其他組員 ASP.NET Core MVC
+        ↓
+ngrok HTTPS Webhook URL
+        ↓
+開發主機
+        ↓
+Docker / n8n
+        ↓
+Send an Email（SMTP）
+        ↓
+Gmail
+```
+
+測試寄信功能前，需確認提供 n8n 的開發主機：
+
+- 已啟動 Docker Desktop。
+- n8n Container 正常執行。
+- ngrok Agent 與 Endpoint 為 Online。
+- 「飯店訂房成功通知－Webhook」工作流程已 Published。
+
+其他組員不需要另外安裝 n8n、匯入 Workflow 或建立 SMTP Credential；
+ASP.NET Core 會透過設定檔中的 ngrok Webhook URL 呼叫開發主機上的 n8n。
+
+> 此 ngrok Endpoint 僅供開發與整合測試使用，不作為正式部署環境。  
+> 若開發主機關機、Docker 或 n8n 停止、ngrok 離線，其他裝置將暫時無法使用寄信功能。
 
 ---
 
@@ -84,14 +117,17 @@ n8n/
 
 ---
 
-# 一、本機環境建立
+# 一、本機 n8n 環境建立
+
+> 第一至五章適用於需要自行建立、重建或獨立驗收 n8n 環境的情況。  
+> 一般組員若使用目前共用的 ngrok 開發測試環境，不需要執行第一至五章的環境建立與 Credential 設定。
 
 ## 1. 前置需求
 
-開始前請先準備：
+自行建立 n8n 環境前請先準備：
 
 - Docker Desktop。
-- 已拉取最新主分支的 ASP.NET Core 專案。
+- 已拉取專案 Repository。
 - 專案測試寄件 Gmail。
 - 專案測試 Gmail 的應用程式密碼。
 - 可接收測試信的 Email。
@@ -152,7 +188,7 @@ docker compose up -d
 docker compose ps
 ```
 
-n8n 容器應顯示為執行中。
+確認 n8n 容器顯示為執行中後，再進行後續設定。
 
 ---
 
@@ -251,11 +287,13 @@ From Email：專案寄件 Gmail
 
 # 四、建立 Webhook Header Auth Credential
 
-## 1. 產生本機 Webhook Secret
+## 1. 準備 Webhook Secret
 
-每位組員的本機環境應自行產生一組 Webhook Secret。
+若自行建立獨立的本機 n8n，應自行產生一組 Webhook Secret。
 
-本機測試密鑰不得與遠端正式密鑰共用。
+若使用目前共用的 ngrok 開發測試環境，ASP.NET Core 必須使用與共用 n8n Header Auth Credential 相同的測試用 Webhook Secret，並透過團隊認可的安全方式私下取得。
+
+開發測試用 Webhook Secret 不得提交至 GitHub，也不得與遠端正式環境的密鑰共用。
 
 ## 2. 建立 Header Auth Credential
 
@@ -270,7 +308,7 @@ Authentication：Header Auth
 ```text
 Credential 顯示名稱：Hotel Booking Webhook Header Auth
 Name：X-Hotel-Webhook-Key
-Value：填入自行產生的本機 Webhook Secret
+Value：填入此 n8n 環境使用的 Webhook Secret
 ```
 
 注意：
@@ -298,62 +336,85 @@ Authentication：Header Auth
 Respond：Using 'Respond to Webhook' Node
 ```
 
-Production URL 應為：
+若使用自行建立的本機 n8n，Production URL 為：
 
 ```text
 http://localhost:5678/webhook/hotel-booking-confirmed
 ```
 
-測試 URL 則為：
+若使用目前共用的 ngrok 開發測試環境，ASP.NET Core 應呼叫：
+
+```text
+https://<ngrok-domain>/webhook/hotel-booking-confirmed
+```
+
+實際 ngrok Domain 以目前開發環境設定為準。
+
+本機 n8n 的 Test URL 則為：
 
 ```text
 http://localhost:5678/webhook-test/hotel-booking-confirmed
 ```
 
-兩者用途不同：
+Production URL 與 Test URL 用途不同：
 
-- `/webhook-test/`：按下 `Listen for test event` 時使用。
-- `/webhook/`：工作流程 Publish 後，由 ASP.NET Core 正式呼叫。
+- `/webhook-test/`：在 n8n 中按下 `Listen for test event` 時使用。
+- `/webhook/`：工作流程 Publish 後，由 ASP.NET Core 呼叫。
 
 ---
 
-# 六、ASP.NET Core 本機設定
+# 六、ASP.NET Core 開發環境設定
 
-## 1. 非機密設定
+ASP.NET Core 透過 `N8n` 設定取得 Webhook URL、Header 名稱與 Webhook Secret。
 
-本機 `appsettings.Development.json` 應包含：
+## 1. 設定 Webhook URL
+
+若使用目前共用的 ngrok 開發測試環境，在 `appsettings.Development.json` 設定：
 
 ```json
-{
-  "N8n": {
-    "WebhookUrl": "http://localhost:5678/webhook/hotel-booking-confirmed",
-    "HeaderName": "X-Hotel-Webhook-Key"
-  }
+"N8n": {
+  "WebhookUrl": "https://<ngrok-domain>/webhook/hotel-booking-confirmed",
+  "HeaderName": "X-Hotel-Webhook-Key"
 }
 ```
 
-若檔案中已存在其他設定，請將 `N8n` 區段合併進原本 JSON，不要刪除其他設定。
+`<ngrok-domain>` 請替換為目前共用開發環境實際使用的 ngrok Domain。
 
-## 2. Webhook Secret
+若自行建立並使用本機 n8n，則改為：
 
-在 ASP.NET Core 專案根目錄開啟 PowerShell，執行：
-
-```powershell
-dotnet user-secrets set "N8n:WebhookSecret" "填入與Header Auth相同的本機密鑰"
+```json
+"N8n": {
+  "WebhookUrl": "http://localhost:5678/webhook/hotel-booking-confirmed",
+  "HeaderName": "X-Hotel-Webhook-Key"
+}
 ```
 
-確認設定：
+## 2. 設定 Webhook Secret
+
+`WebhookSecret` 不可寫入 `appsettings.Development.json`，請使用 ASP.NET Core User Secrets：
+
+```powershell
+dotnet user-secrets init
+dotnet user-secrets set "N8n:WebhookSecret" "你的 Webhook Secret"
+```
+
+若使用共用的 ngrok 開發測試環境，這裡設定的 Webhook Secret 必須與共用 n8n 的 Header Auth Credential 相同。
+
+若自行建立本機 n8n，則必須與自己建立的 Header Auth Credential 相同。
+
+設定完成後，可使用以下指令確認：
 
 ```powershell
 dotnet user-secrets list
 ```
 
-禁止將 Webhook Secret 寫入：
+應可看到：
 
-- `appsettings.json`
-- `appsettings.Development.json`
-- README
-- GitHub
+```text
+N8n:WebhookSecret = ...
+```
+
+> Webhook Secret 僅存放於各自電腦的 User Secrets，不得寫入程式碼、設定檔或提交至 GitHub。
 
 ---
 
@@ -421,111 +482,169 @@ Response 必須與 ASP.NET Core 的 `N8nEmailResponse` 對應。
 
 ---
 
-# 九、Publish 工作流程
+# 九、Publish Workflow
 
-完成 Credential 與節點設定後：
+完成 Workflow 設定與測試後，必須 Publish Workflow。
 
-1. 儲存工作流程。
-2. 按下 `Publish`。
-3. 確認使用 Production URL。
-4. 不需要勾選 Production Checklist 的選項即可進行目前測試。
+Publish 後，ASP.NET Core 才能透過 Production Webhook URL（`/webhook/`）呼叫。
 
-未 Publish 時，ASP.NET Core 呼叫 Production URL 可能無法觸發工作流程。
+若使用共用的 ngrok 開發測試環境，需確認開發主機上的「飯店訂房成功通知－Webhook」工作流程已 Published。
 
 ---
 
-# 十、直接測試 n8n Webhook
+# 十、直接測試 Webhook
 
-可使用：
+可先不經過 ASP.NET Core，直接使用 PowerShell 測試 n8n Webhook 是否能正常接收請求並寄送 Email。
 
-```text
-scripts/test-webhook.ps1
-```
+## 1. 設定測試參數
 
-執行時傳入：
-
-- Webhook URL。
-- Webhook Secret。
-- 測試收件 Email。
-
-預期執行方式：
+若使用目前共用的 ngrok 開發測試環境：
 
 ```powershell
-.\scripts\test-webhook.ps1 `
-    -WebhookUrl "http://localhost:5678/webhook/hotel-booking-confirmed" `
-    -WebhookSecret "填入本機Webhook密鑰" `
-    -RecipientEmail "填入測試收件信箱"
+$webhookUrl = "https://<ngrok-domain>/webhook/hotel-booking-confirmed"
 ```
 
-成功時應顯示：
+若使用自行建立的本機 n8n：
 
-```text
-success              : True
-bookingNumber        : TEST-HANDOFF-001
-emailAccepted        : True
-n8nCompletedAtUtc    : UTC時間
+```powershell
+$webhookUrl = "http://localhost:5678/webhook/hotel-booking-confirmed"
 ```
 
-並確認測試信箱收到訂房確認信。
+設定 Header：
+
+```powershell
+$headers = @{
+    "X-Hotel-Webhook-Key" = "你的 Webhook Secret"
+}
+```
+
+設定測試資料：
+
+```powershell
+$body = @{
+    bookingNumber = "TEST-001"
+    bookerName = "王小明"
+    email = "test@example.com"
+    roomTypeName = "豪華雙人房"
+    checkInDate = "2026-09-10"
+    checkOutDate = "2026-09-12"
+    totalAmount = 6000
+    branchName = "台北分館"
+    branchAddress = "台北市中正區測試路100號"
+    branchPhone = "0212345678"
+} | ConvertTo-Json
+```
+
+送出 POST：
+
+```powershell
+Invoke-RestMethod `
+    -Uri $webhookUrl `
+    -Method Post `
+    -Headers $headers `
+    -ContentType "application/json" `
+    -Body $body
+```
+
+若執行成功，應：
+
+- n8n 出現新的 Workflow Execution。
+- 指定的收件 Email 收到訂房成功通知信。
+- PowerShell 收到成功 Response。
+
+> 若使用共用 ngrok 開發測試環境，Webhook Secret 必須與共用 n8n 的 Header Auth Credential 相同。
 
 ---
 
-# 十一、ASP.NET Core 完整驗收
+# 十一、完整驗收流程
 
-至少執行以下測試：
+依使用情境，可分為「共用 ngrok 開發環境驗收」與「獨立本機 n8n 驗收」。
 
-## 正常訂房
+## 1. 共用 ngrok 開發環境驗收
 
-- 付款成功後建立訂單。
-- n8n Executions 顯示成功。
-- 顧客收到訂房確認信。
-- 郵件中的訂單編號、姓名、分館、房型、日期及金額正確。
-- 訂房成功頁顯示確認信寄送成功。
-- 訂房成功頁顯示遮罩後的 Email。
+一般組員進行功能整合測試時，建議使用此方式。
 
-## Email 格式錯誤
+### Step 1：確認共用 n8n 環境
 
-- 付款頁阻擋錯誤 Email 格式。
-- 後台修改 Email 時阻擋錯誤格式。
+確認提供 n8n 的開發主機：
 
-錯誤範例：
+- Docker Desktop 已啟動。
+- n8n Container 正常執行。
+- ngrok Agent 與 Endpoint 為 Online。
+- 「飯店訂房成功通知－Webhook」工作流程已 Published。
+
+### Step 2：確認 ASP.NET Core 設定
+
+確認 `appsettings.Development.json` 的：
 
 ```text
-abc
-abc@
-abc@gmail
-@gmail.com
-abc gmail.com
+N8n:WebhookUrl
 ```
 
-## n8n 停止
+使用目前共用的 ngrok Production Webhook URL：
 
-- 停止 n8n 後建立測試訂單。
-- 訂單仍然成功建立。
-- 成功頁顯示確認信暫時無法寄送。
-- Visual Studio Output 或 Log 出現 n8n 連線錯誤。
+```text
+https://<ngrok-domain>/webhook/hotel-booking-confirmed
+```
 
-## 後台修改 Email
+並確認：
 
-- 開啟已付款訂單。
-- 修改 Email。
-- Modal 不重新整理即可顯示新 Email。
-- 關閉後重新查詢仍顯示新 Email。
-- 資料庫中的 `Booking.Email` 已更新。
+```text
+N8n:HeaderName = X-Hotel-Webhook-Key
+```
 
-## 後台補寄
+### Step 3：確認 User Secrets
 
-- 已付款訂單可以補寄。
-- 修改 Email 後可以寄到新 Email。
-- 收件信箱確實收到確認信。
-- 短時間內重複點擊會被阻擋。
-- 已取消訂單不可補寄。
+確認本機已設定：
 
-## SMTP 錯誤
+```text
+N8n:WebhookSecret
+```
 
-- SMTP Credential 錯誤時，訂單仍然成立。
-- n8n Executions 顯示寄信失敗。
-- ASP.NET Core 不把寄信失敗當成付款失敗。
+此 Secret 必須與共用 n8n 的 Header Auth Credential 相同。
+
+### Step 4：執行 ASP.NET Core 專案
+
+啟動 ASP.NET Core MVC 專案，完成一次完整訂房流程。
+
+### Step 5：確認結果
+
+驗收以下項目：
+
+- 訂房流程正常完成。
+- n8n 出現新的 Workflow Execution。
+- Workflow Execution 執行成功。
+- 指定的 Email 收到訂房成功通知信。
+- Email 內容中的訂房資料正確。
+
+---
+
+## 2. 獨立本機 n8n 驗收
+
+若需要自行建立、重建或獨立驗收 n8n 環境，先依第一至五章完成：
+
+1. 建立 `.env`。
+2. 啟動 Docker n8n。
+3. 建立 n8n Owner。
+4. 匯入 Workflow。
+5. 建立 SMTP Credential。
+6. 建立 Header Auth Credential。
+7. Publish Workflow。
+
+接著將 ASP.NET Core 的 Webhook URL 設為：
+
+```text
+http://localhost:5678/webhook/hotel-booking-confirmed
+```
+
+並依照前述流程完成一次訂房測試。
+
+驗收結果同樣應確認：
+
+- ASP.NET Core 訂房流程正常完成。
+- n8n Workflow Execution 成功。
+- 指定的 Email 收到訂房成功通知信。
+- Email 內容中的訂房資料正確。
 
 ---
 
@@ -549,15 +668,29 @@ abc gmail.com
 - PowerShell Request 尚未真正送出。
 - `Respond to Webhook` 節點沒有完成。
 
-## ASP.NET Core 顯示 n8n 網路錯誤
+### ASP.NET Core 出現網路錯誤
 
-檢查：
+若使用共用 ngrok 開發測試環境，確認：
 
-- Docker Desktop 是否啟動。
-- n8n 容器是否執行中。
-- `WebhookUrl` 是否正確。
-- 工作流程是否已 Publish。
-- 是否誤用 `/webhook-test/`。
+- 提供 n8n 的開發主機是否開機並保持網路連線。
+- Docker Desktop 是否已啟動。
+- n8n Container 是否正常執行。
+- ngrok Agent 是否正常執行，且 Endpoint 為 Online。
+- `N8n:WebhookUrl` 是否為目前正確的 ngrok Production Webhook URL。
+- Webhook URL 是否使用 `/webhook/`，而不是 `/webhook-test/`。
+
+若使用自行建立的本機 n8n，確認：
+
+- Docker Desktop 是否已啟動。
+- n8n Container 是否正常執行。
+- `N8n:WebhookUrl` 是否為：
+
+```text
+http://localhost:5678/webhook/hotel-booking-confirmed
+```
+
+- Docker Port `5678` 是否正常對應至 n8n。
+
 
 ## 無法解析 n8n 回應
 
@@ -594,44 +727,33 @@ abc gmail.com
 
 ---
 
-# 十三、停止本機環境
+# 十三、停止本機 n8n 環境
 
-停止容器：
-
-```powershell
-docker compose stop
-```
-
-重新啟動：
-
-```powershell
-docker compose start
-```
-
-停止並移除容器，但保留具名 Volume：
+若只是暫時停止本機 n8n，可在 `n8n` 目錄執行：
 
 ```powershell
 docker compose down
 ```
 
-除非確定要刪除全部本機 n8n 資料，否則不要執行：
+此指令會停止並移除 Container，但會保留 `n8n_data` Docker Volume，因此 n8n 的設定與 SQLite 資料仍會保留。
 
-```text
+若確定要連同本機 n8n 資料一起刪除，可執行：
+
+```powershell
 docker compose down -v
 ```
 
-因為 `-v` 會移除 Volume，可能刪除：
+> `-v` 會刪除 `n8n_data` Docker Volume，其中包含本機 n8n 的 SQLite 資料、Workflow、Credential 等設定。  
+> 除非確定要重建環境，否則不要使用 `docker compose down -v`。
 
-- n8n Owner 帳號。
-- 工作流程。
-- Credential。
-- Executions。
-- n8n SQLite 資料。
+若目前使用的是共用 ngrok 開發測試環境，一般組員不需要執行上述指令；只有執行 n8n 的開發主機需要管理 Docker Container。
 
 ---
 
 # 十四、遠端部署原則
 
+> 目前使用的 ngrok Endpoint 僅供開發與整合測試使用，不視為正式遠端部署環境。  
+> 正式部署時，應將 n8n 部署於可長期穩定運行的遠端環境，並使用正式的 HTTPS Domain、Webhook Secret 與 Credential。
 > 本目錄的 `docker-compose.yml` 僅供本機 HTTP 開發環境使用。  
 > 遠端部署不可直接沿用 `N8N_SECURE_COOKIE=false`，必須配合 HTTPS 及正式環境安全設定重新調整。
 
@@ -694,31 +816,37 @@ N8n__HeaderName=X-Hotel-Webhook-Key
 
 # 十五、交接內容
 
-Repository 會提供：
+目前開發階段以「共用 n8n + ngrok」作為主要整合測試方式。
 
-- n8n Workflow JSON。
-- Docker Compose。
-- `.env.example`。
-- PowerShell 測試程式。
-- 本機與遠端設定說明。
+## 1. 一般組員進行開發測試
 
-專案管理者會私下提供：
+一般組員不需要另外安裝或建立 n8n，只需：
 
-- 專案測試寄件 Gmail。
-- 測試用 Gmail App Password。
+1. 拉取最新專案程式碼。
+2. 在 `appsettings.Development.json` 設定目前共用的 ngrok Production Webhook URL。
+3. 確認 `N8n:HeaderName` 為 `X-Hotel-Webhook-Key`。
+4. 使用 ASP.NET Core User Secrets 設定共用開發環境的 `N8n:WebhookSecret`。
+5. 確認提供 n8n 的開發主機、Docker、n8n 與 ngrok 皆正常執行。
+6. 啟動 ASP.NET Core MVC 專案並完成訂房流程測試。
+7. 確認 n8n Workflow Execution 成功，且收到訂房成功通知信。
 
-本機驗收人員自行產生：
+Webhook Secret 應透過團隊認可的安全方式私下提供，不得寫入 README、程式碼或提交至 GitHub。
 
-- 本機 `N8N_ENCRYPTION_KEY`。
-- 本機 n8n Owner 密碼。
-- 本機 Webhook Secret。
+## 2. 需要自行建立或重建 n8n
 
-遠端部署人員自行產生並保存：
+Repository 的 `n8n/` 目錄已提供：
 
-- 遠端 `N8N_ENCRYPTION_KEY`。
-- 遠端 n8n Owner 密碼。
-- 遠端 Webhook Secret。
-- 正式 Gmail App Password。
+```text
+workflows/hotel-booking-confirmed.json
+scripts/test-webhook.ps1
+docker-compose.yml
+.env.example
+README.md
+```
+
+需要自行建立、重建或獨立驗收 n8n 環境時，可依本 README 前述的本機環境建立、Credential 設定、Webhook 設定及驗收流程操作。
+
+SMTP Credential、Webhook Secret、`N8N_ENCRYPTION_KEY` 等敏感資訊不包含於 Repository，需依文件說明自行設定或透過安全方式取得。
 
 ---
 
@@ -726,13 +854,27 @@ Repository 會提供：
 
 符合以下條件即視為交接完成：
 
-1. 組員拉取主分支。
-2. 組員依本文件建立自己的本機 n8n。
-3. 組員匯入 Workflow JSON。
-4. 組員重新建立 SMTP 與 Header Auth Credential。
-5. 組員設定 ASP.NET Core User Secrets。
-6. PowerShell 測試可以收到成功 JSON。
-7. 測試信箱可以收到確認信。
-8. ASP.NET Core 完整訂房流程測試成功。
-9. 組員可以使用相同 Workflow JSON 建立遠端 n8n。
-10. 所有真實密碼與密鑰都未提交至 GitHub。
+## 1. 共用 ngrok 開發環境
+
+一般組員應能：
+
+1. 拉取最新專案程式碼。
+2. 正確設定共用的 ngrok Production Webhook URL。
+3. 使用 ASP.NET Core User Secrets 設定 `N8n:WebhookSecret`。
+4. 啟動 ASP.NET Core MVC 專案並完成一次完整訂房流程。
+5. 成功觸發共用 n8n Workflow。
+6. 測試信箱可以收到內容正確的訂房成功通知信。
+
+## 2. n8n 環境重建與後續交接
+
+依本文件操作後，應能：
+
+1. 使用 `docker-compose.yml` 建立本機 n8n。
+2. 使用 `.env.example` 建立自己的 `.env`。
+3. 匯入 `hotel-booking-confirmed.json`。
+4. 重新建立 SMTP 與 Header Auth Credential。
+5. 使用 Production Webhook 成功觸發 Workflow。
+6. PowerShell 測試可以收到成功 Response。
+7. 測試信箱可以收到訂房成功通知信。
+8. 使用相同 Workflow JSON 建立後續遠端 n8n 環境。
+9. 所有真實密碼與密鑰皆未提交至 GitHub。
