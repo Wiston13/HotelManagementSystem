@@ -1,25 +1,109 @@
-# 開發資料庫重建順序
+# 中小型連鎖商旅訂房與住宿管理系統｜Database Scripts
 
-下列腳本只適用於本機開發／測試資料庫；`01` 會重建 Schema，`02` 與 `03` 會清除既有資料。
+本目錄保存目前完整資料庫 Schema、必要初始化資料，以及只供本機開發、測試與展示使用的 Demo／Scenario 資料。請依環境選擇正確的初始化方式。
 
-1. `01_create_hotel_management_schema.sql`：重建目前正式使用的八張資料表、約束與索引。
-2. `02_sample_data.sql`：建立穩定基準資料（分館、房型、房間、員工、操作類型）。
-3. `03_development_scenarios.sql`：依執行當天台灣日期建立訂單、住房、取消、No-show 與操作紀錄情境。
-4. `04_development_volume_data.sql`：可選；增加 2,000 筆訂單、1,148 筆住房與 3,648 筆操作紀錄，供查詢、分頁、匯出及統計測試。
-5. `05_validate_sample_data.sql`：唯讀摘要與資料一致性檢查。
+## 1. Database Scripts
 
-PowerShell 範例（Windows 驗證登入，SQL Server 預設執行個體）：
+### `01_create_hotel_management_schema.sql`
+
+建立目前完整 Schema，包含資料表、PK、FK、UNIQUE、CHECK、DEFAULT 與 Index。
+
+這是可重建 Schema：腳本會依相依順序刪除既有資料表後重新建立，只可用於：
+
+- 本機開發或測試環境。
+- 全新的空白資料庫。
+- 第一次部署建立全新資料庫。
+
+第一次正式部署完成後，不得再用本腳本重建已部署資料庫。本腳本不是 migration。
+
+### `02_required_seed.sql`
+
+只建立系統正常使用所需的必要初始化資料：
+
+- `OperationTypes` 1～25。
+- 初始 `SystemAdmin`。
+
+本腳本不是 Demo Data，不包含分館、一般員工、房型、房間、訂單或住房資料。
+
+Repository 內的固定密碼 `Hotel@123` 與 PasswordHash 只供本機開發／Demo。正式部署時：
+
+1. 保留完整 `OperationTypes`。
+2. 第一次正式部署前，直接配置正式 `SystemAdmin` 密碼的 PasswordHash。
+3. PasswordHash 必須與 ASP.NET Identity `PasswordHasher<Employee>` 相容。
+4. 部署用明碼與 hash 不得提交至版本控制。
+
+詳細規則見 [deploy/README.md](deploy/README.md)。
+
+### `03_demo_data.sql`
+
+建立本機開發與展示所需的 Demo 基礎資料：
+
+- 6 間分館。
+- 24 種房型。
+- 188 間房間。
+- 18 位一般分館員工。
+
+執行前必須先完成 `01`、`02`。本腳本會清除並重建 Demo 相關資料，不可對正式部署資料庫執行。所有測試帳號固定使用 `Hotel@123`，只供本機／Demo。
+
+### `04_development_scenarios.sql`
+
+建立可供人工操作、Smoke Test 與展示使用的動態情境：
+
+- 46 筆 Booking。
+- 9 筆 StayRecord。
+- 53 筆 OperationLog。
+- Paid、CheckedIn、Completed、Cancelled、NoShow 狀態。
+- Check-in、Check-out、No-show、取消、房況、清潔、房量重疊與容量臨界情境。
+- `OperationTypeId` 1～25 coverage。
+
+本腳本依執行當天的台灣日期產生可持續使用的情境，必須建立在 `01 → 02 → 03` 之後。它不取代 Unit Test 或 Integration Test，也不可對正式部署資料庫執行。
+
+## 2. 本機初始化流程
+
+### 最小可運作資料庫
+
+只建立 Schema 與必要初始化資料：
+
+```text
+01 → 02
+```
+
+### Demo／完整人工測試資料庫
+
+```text
+01 → 02 → 03 → 04
+```
+
+Windows 驗證登入與 SQL Server `sqlcmd` 範例：
 
 ```powershell
 sqlcmd -S . -E -C -b -f 65001 -i .\database\01_create_hotel_management_schema.sql
-sqlcmd -S . -E -C -b -f 65001 -i .\database\02_sample_data.sql
-sqlcmd -S . -E -C -b -f 65001 -i .\database\03_development_scenarios.sql
-sqlcmd -S . -E -C -b -f 65001 -i .\database\04_development_volume_data.sql
-sqlcmd -S . -E -C -b -f 65001 -i .\database\05_validate_sample_data.sql
+sqlcmd -S . -E -C -b -f 65001 -i .\database\02_required_seed.sql
+sqlcmd -S . -E -C -b -f 65001 -i .\database\03_demo_data.sql
+sqlcmd -S . -E -C -b -f 65001 -i .\database\04_development_scenarios.sql
 ```
 
-`02`、`03` 與 `04` 都可依上述順序重跑。若只需重建動態情境，基準資料未被修改時可重跑 `03`，需要量體時再跑 `04`，最後執行 `05` 驗證。
+`-S .` 只是本機 SQL Server 預設執行個體範例；請依實際環境調整伺服器與驗證參數。
 
-`03` 保留 42 筆容易辨識的核心驗收情境；`04` 使用獨立固定編號範圍建立大量營運資料，不會覆蓋核心訂單。若只需要開發單一流程，可略過 `04`，避免大量資料干擾人工查找。
+## 3. 第一次正式部署
 
-所有測試帳號的開發密碼皆為 `Hotel@123`。固定密碼雜湊只供本機開發與展示，不得用於正式環境。
+第一次部署本身就是 Database Baseline，不建立虛構的初始 migration。流程摘要：
+
+```text
+全新空白部署資料庫
+→ 執行目前最新版完整 Schema
+→ 執行正式部署版本的 Required Seed／Bootstrap
+→ 啟動應用程式
+→ Smoke Test
+```
+
+正式部署不得執行 `03_demo_data.sql` 或 `04_development_scenarios.sql`。第一次部署完成後，既有資料庫只能使用 `database/deploy/NNN_description.sql` 逐步更新，詳細規則見 [deploy/README.md](deploy/README.md)。
+
+## 4. 環境使用界線
+
+| 環境 | 允許的資料庫腳本 |
+| --- | --- |
+| Fresh Database | 使用最新版 `01` 建立完整 Schema；依用途選擇後續資料。 |
+| Local / Test / Demo | 可依序執行 `01 → 02 → 03 → 04`。 |
+| First Deployment | 對全新空白 DB 執行最新版 Schema 與正式部署專用 Required Seed／Bootstrap。 |
+| Existing Deployed Database | 只依序執行尚未套用的 `deploy/NNN_description.sql`；不得重跑 `01`、`03`、`04`。 |

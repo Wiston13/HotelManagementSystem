@@ -493,6 +493,9 @@ namespace HotelManagementSystem.Controllers
 
             if (!PhoneHelper.TryNormalize(Phone, out var normalizedPhone))
             {
+                model.BookingNum = BookingNum;
+                model.Phone = Phone;
+                ViewBag.PhoneError = "請輸入正確的聯絡電話格式。";
                 return View(model);
             }
 
@@ -516,7 +519,7 @@ namespace HotelManagementSystem.Controllers
             model.EndDate = new DateTime(booking.CheckOutDate.Year, booking.CheckOutDate.Month, booking.CheckOutDate.Day);
             model.BookingDate = booking.CreatedAt;
             model.Name = booking.BookerName;
-            model.Price = booking.TotalAmount.ToString("N0");
+            model.Price = booking.TotalAmount.ToString("#,##0.##", System.Globalization.CultureInfo.GetCultureInfo("zh-TW"));
             model.BookingStatus = StatusDisplayHelper.GetBookingStatusText(booking.BookingStatus);
             return View(model);
         }
