@@ -50,12 +50,12 @@ builder.Services.AddRateLimiter(options =>
         string clientIp =
             httpContext.Connection.RemoteIpAddress?.ToString()
             ?? "unknown";
-
+        // 設定1分鐘詢問次數上限
         return RateLimitPartition.GetFixedWindowLimiter(
             partitionKey: clientIp,
             factory: _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 5,
+                PermitLimit = 8,
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0,
                 AutoReplenishment = true
