@@ -105,7 +105,7 @@ namespace HotelManagementSystem.Controllers
                 _context.OperationLogs.Add(log);
                 await _context.SaveChangesAsync();
 
-                return Json(new { success = true, message = $"員工建立成功！系統自動配發工號：{newEmployeeNumber}" });
+                return Json(new { success = true, message = $"員工建立成功！系統自動配發員工編號：{newEmployeeNumber}" });
             }
             catch (Exception)
             {
