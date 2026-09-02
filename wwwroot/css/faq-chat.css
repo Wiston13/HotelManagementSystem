@@ -54,7 +54,7 @@
     height: var(--faq-toggle-size);
     padding: 0;
     place-items: center;
-    overflow: hidden;
+    overflow: visible;
     background: var(--faq-primary);
     border: 0;
     border-radius: 50%;
@@ -62,6 +62,47 @@
     cursor: pointer;
     transition: background-color 160ms ease, box-shadow 160ms ease;
 }
+
+.faq-quest-indicator {
+    position: absolute;
+    top: -40px;
+    left: 50%;
+    z-index: 2;
+    display: block;
+    width: 34px;
+    height: 46px;
+    color: #ffd500;
+    font-family: "Arial Black", Arial, sans-serif;
+    font-size: 28px;
+    font-weight: 900;
+    line-height: 46px;
+    text-align: center;
+    -webkit-text-stroke: 2px #b86f00;
+    text-shadow: 0 2px 0 #d88a00, 0 4px 0 #a85d00, 0 7px 8px rgba(72, 43, 0, 0.38), 0 0 7px rgba(255, 221, 0, 0.9), 0 0 15px rgba(255, 193, 7, 0.65);
+    filter: drop-shadow(0 0 4px rgba(255, 221, 0, 0.45)) drop-shadow(0 0 9px rgba(255, 193, 7, 0.5));
+    pointer-events: none;
+    transform-origin: center bottom;
+    animation: faq-quest-float 800ms ease-in-out infinite alternate;
+    transition: opacity 160ms ease, transform 160ms ease, visibility 160ms;
+}
+
+.faq-chat-widget.has-opened .faq-quest-indicator {
+    opacity: 0;
+    visibility: hidden;
+    transform: translate(-50%, 5px) scale(0.55);
+    animation: none;
+}
+
+@keyframes faq-quest-float {
+    from {
+        transform: translate(-50%, 0) rotate(-2deg) scale(1);
+    }
+
+    to {
+        transform: translate(-50%, 1px) rotate(2deg) scale(1.05);
+    }
+}
+
 
 .faq-chat-toggle:hover {
     background: var(--faq-primary-hover);
@@ -341,6 +382,7 @@
     .faq-chat-toggle,
     .faq-chat-toggle__robot,
     .faq-chat-toggle__chevron,
+    .faq-quest-indicator,
     .faq-suggestion {
         transition-duration: 1ms;
     }
@@ -348,4 +390,57 @@
     .faq-chat-messages {
         scroll-behavior: auto;
     }
+}
+
+.faq-chat-greeting-hint {
+    position: absolute;
+    right: calc(100% + 14px);
+    bottom: 50%;
+    z-index: 3;
+    width: max-content;
+    max-width: 180px;
+    padding: 9px 13px;
+    color: #35424d;
+    font-size: 0.85rem;
+    font-weight: 500;
+    line-height: 1.4;
+    text-align: left;
+    background: #ffffff;
+    border: 1px solid var(--faq-border);
+    border-radius: 12px;
+    box-shadow: 0 5px 16px rgba(38, 58, 77, 0.2);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translate(7px, 50%);
+    transition: opacity 150ms ease, transform 150ms ease, visibility 150ms;
+}
+
+    /* 對話氣泡右側的小三角形 */
+    .faq-chat-greeting-hint::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        right: -7px;
+        width: 12px;
+        height: 12px;
+        background: #ffffff;
+        border-top: 1px solid var(--faq-border);
+        border-right: 1px solid var(--faq-border);
+        transform: translateY(-50%) rotate(45deg);
+    }
+
+/* 滑鼠移入或鍵盤聚焦時顯示 */
+.faq-chat-toggle:hover .faq-chat-greeting-hint,
+.faq-chat-toggle:focus-visible .faq-chat-greeting-hint {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(0, 50%);
+}
+
+/* 聊天視窗展開時，即使按鈕仍有焦點也不要顯示 */
+.faq-chat-widget.is-open .faq-chat-greeting-hint {
+    opacity: 0;
+    visibility: hidden;
+    transform: translate(7px, 50%);
 }

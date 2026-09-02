@@ -24,6 +24,9 @@ document.addEventListener("DOMContentLoaded", () => {
     let isSending = false;
     let activeRequestController = null;
 
+    let conversationStarted = false;
+    let welcomeTimer = null;
+
     function scrollToBottom() {
         messages.scrollTop = messages.scrollHeight;
     }
@@ -73,11 +76,31 @@ document.addEventListener("DOMContentLoaded", () => {
         scrollToBottom();
     }
 
+    function startConversation() {
+        if (conversationStarted) {
+            return;
+        }
+
+        conversationStarted = true;
+
+        welcomeTimer = window.setTimeout(() => {
+            if (messages.childElementCount === 0) {
+                renderWelcomeMessage();
+                renderSuggestions();
+            }
+
+            welcomeTimer = null;
+        }, 250);
+    }
+
     function openChat() {
         widget.classList.add("is-open");
         chatPanel.setAttribute("aria-hidden", "false");
         toggleButton.setAttribute("aria-expanded", "true");
         toggleButton.setAttribute("aria-label", "收合旅宿小助手");
+
+        startConversation();
+
         input.focus();
         scrollToBottom();
     }
@@ -91,6 +114,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function toggleChat() {
+        widget.classList.add("has-opened");
         if (widget.classList.contains("is-open")) {
             closeChat();
         } else {
@@ -109,12 +133,18 @@ document.addEventListener("DOMContentLoaded", () => {
             activeRequestController.abort();
             activeRequestController = null;
         }
+        if (welcomeTimer) {
+            window.clearTimeout(welcomeTimer);
+            welcomeTimer = null;
+        }
+
+        conversationStarted = false;
+
 
         setSendingState(false);
         input.value = "";
         messages.replaceChildren();
-        renderWelcomeMessage();
-        renderSuggestions();
+        startConversation();
 
         if (widget.classList.contains("is-open")) {
             input.focus();
@@ -190,5 +220,5 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    resetConversation();
+    // resetConversation();
 });
