@@ -96,6 +96,7 @@ namespace HotelManagementSystem.Controllers
                                            && a.EndAt >= now)
                         .AsNoTracking()
                         .OrderByDescending(a => a.StartAt)
+                        .Take(1)
                         .Select(a => new AnnouncementItemViewModel
                         {
                                 Title = a.Title,
@@ -107,6 +108,29 @@ namespace HotelManagementSystem.Controllers
             };
 
             return View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Announcements()
+        {
+            var now = _clock.Now;
+
+            var announcements = await _context.Announcements
+                .Where(a => a.IsActive
+                         && a.StartAt <= now
+                         && a.EndAt >= now)
+                .AsNoTracking()
+                .OrderByDescending(a => a.StartAt)
+                .Select(a => new AnnouncementItemViewModel
+                {
+                    Title = a.Title,
+                    Content = a.Content,
+                    StartAt = a.StartAt,
+                    EndAt = a.EndAt
+                })
+                .ToListAsync();
+
+            return View(announcements);
         }
     }
 }

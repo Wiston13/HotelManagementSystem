@@ -62,7 +62,8 @@ namespace HotelManagementSystem.Controllers
                 Content = model.Content,
                 StartAt = model.StartAt!.Value,
                 EndAt = model.EndAt!.Value,
-                IsActive = model.IsActive
+                IsActive = model.IsActive,
+                ShowToGuest = model.ShowToGuest
             };
 
             _context.Announcements.Add(announcement);
@@ -116,6 +117,7 @@ namespace HotelManagementSystem.Controllers
             announcement.StartAt = model.StartAt!.Value;
             announcement.EndAt = model.EndAt!.Value;
             announcement.IsActive = model.IsActive;
+            announcement.ShowToGuest = model.ShowToGuest;
 
             _context.SaveChanges();
 

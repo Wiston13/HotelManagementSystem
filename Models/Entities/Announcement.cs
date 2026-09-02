@@ -14,6 +14,8 @@
 
         public bool IsActive { get; set; }
 
+        public bool ShowToGuest { get; set; }
+
         public DateTime CreatedAt { get; set; }
     }
 }

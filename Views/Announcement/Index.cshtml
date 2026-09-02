@@ -1,7 +1,4 @@
 ﻿@model HotelManagementSystem.Models.ViewModels.AnnouncementIndexViewModel
-@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
 @{
         ViewData["Title"] = "系統公告管理";
         Layout = "~/Views/Shared/_ManagerLayout.cshtml";
@@ -83,7 +80,8 @@
                                         data-content="@announcement.Content"
                                         data-start="@announcement.StartAt.ToString("yyyy-MM-ddTHH:mm")"
                                         data-end="@announcement.EndAt.ToString("yyyy-MM-ddTHH:mm")"
-                                        data-active="@announcement.IsActive.ToString().ToLower()">
+                                        data-active="@announcement.IsActive.ToString().ToLower()"
+                                        data-show-to-guest="@announcement.ShowToGuest.ToString().ToLower()">
                                     編輯
                                 </button>
                             </td>
@@ -176,6 +174,16 @@
                         <label asp-for="Create.IsActive"
                                class="form-check-label">
                             啟用公告
+                        </label>
+                    </div>
+
+                    <div class="form-check mt-2">
+                        <input asp-for="Create.ShowToGuest"
+                               class="form-check-input" />
+
+                        <label asp-for="Create.ShowToGuest"
+                               class="form-check-label">
+                            顯示於顧客首頁
                         </label>
                     </div>
 
@@ -300,6 +308,16 @@
                         </label>
                     </div>
 
+                    <div class="form-check mt-2">
+                        <input asp-for="Edit.ShowToGuest"
+                               id="editShowToGuest"
+                               class="form-check-input" />
+
+                        <label asp-for="Edit.ShowToGuest"
+                               class="form-check-label">
+                            顯示於顧客首頁
+                        </label>
+                    </div>
                 </div>
 
                 <div class="modal-footer">
@@ -345,6 +363,9 @@
 
                     document.getElementById('editIsActive').checked =
                         this.dataset.active === 'true';
+                    
+                    document.getElementById('editShowToGuest').checked =
+                        this.dataset.showToGuest === 'true';
                 });
             });
     </script>

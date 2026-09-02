@@ -19,5 +19,7 @@ namespace HotelManagementSystem.Models.ViewModels.Announcement
         public DateTime? EndAt { get; set; }
 
         public bool IsActive { get; set; } = true;
+
+        public bool ShowToGuest { get; set; }
     }
 }
