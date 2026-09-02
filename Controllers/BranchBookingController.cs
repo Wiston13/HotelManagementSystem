@@ -111,7 +111,11 @@ namespace HotelManagementSystem.Controllers
                 StartDate = new DateTime(x.CheckInDate.Year, x.CheckInDate.Month, x.CheckInDate.Day),
                 EndDate = new DateTime(x.CheckOutDate.Year, x.CheckOutDate.Month, x.CheckOutDate.Day),
                 Price = "NT$ " + x.TotalAmount.ToString("#,##0.##", culture),
-                Email = x.Email
+                Email = x.Email,
+
+                // 資料庫新增欄位後改為 x.LastConfirmationEmailSentAt
+                LastConfirmationEmailSentAt = null
+
             }).ToList();
 
             foreach (var b in bookingData)
@@ -260,7 +264,6 @@ namespace HotelManagementSystem.Controllers
             }
             // 後端重新查詢訂單，並限制只能操作目前員工所屬分館
             var booking = await _context.Bookings
-                .AsNoTracking()
                 .FirstOrDefaultAsync(booking =>
                     booking.BookingNumber == input.BookingNumber &&
                     booking.BranchId == CurrentBranchId);
@@ -333,6 +336,14 @@ namespace HotelManagementSystem.Controllers
                             message = "確認信暫時無法補寄，請稍後再試。"
                         });
                 }
+
+                // TODO：
+                // 資料庫新增 LastConfirmationEmailSentAt 後啟用。
+                // 寄信成功後，保存最近一次寄送時間
+                //var sentAt = _clock.Now;
+                //booking.LastConfirmationEmailSentAt = sentAt;
+                //await _context.SaveChangesAsync();
+
                 _logger.LogInformation(
                     "訂房確認信補寄成功。BookingNumber: {BookingNumber}",
                     booking.BookingNumber);

@@ -402,6 +402,16 @@ namespace HotelManagementSystem.Controllers
                         "訂單已建立，但寄送確認信時發生未預期錯誤。BookingNumber: {BookingNumber}",
                         booking.BookingNumber);
                 }
+
+                // TODO：
+                // Bookings 新增 LastConfirmationEmailSentAt 後
+                // 使用 _taipeiClock.Now 更新並儲存最近一次寄送時間。
+                // if (emailSendSucceeded)
+                // {
+                //     booking.LastConfirmationEmailSentAt = _taipeiClock.Now;
+                //     await _context.SaveChangesAsync();
+                // }
+
                 // 暫存本次寄信結果，供 GET Success 顯示寄送狀態
                 TempData["ConfirmationEmailSent"] = emailSendSucceeded;
 
