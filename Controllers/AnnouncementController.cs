@@ -30,33 +30,39 @@ namespace HotelManagementSystem.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(AnnouncementIndexViewModel model)
+        public IActionResult Create(
+                [Bind(Prefix = "Create")] AnnouncementCreateViewModel model)
         {
-            if (model.Create.StartAt.HasValue &&
-                model.Create.EndAt.HasValue &&
-                model.Create.EndAt <= model.Create.StartAt)
+            if (model.StartAt.HasValue &&
+                model.EndAt.HasValue &&
+                model.EndAt <= model.StartAt)
             {
                 ModelState.AddModelError(
-                    "Create.EndAt",
+                    nameof(model.EndAt),
                     "結束時間必須晚於開始時間");
             }
 
             if (!ModelState.IsValid)
             {
-                model.Announcements = _context.Announcements
-                    .OrderByDescending(a => a.CreatedAt)
-                    .ToList();
+                var indexModel = new AnnouncementIndexViewModel
+                {
+                    Create = model,
 
-                return View("Index", model);
+                    Announcements = _context.Announcements
+                        .OrderByDescending(a => a.CreatedAt)
+                        .ToList()
+                };
+
+                return View("Index", indexModel);
             }
 
             var announcement = new Announcement
             {
-                Title = model.Create.Title,
-                Content = model.Create.Content,
-                StartAt = model.Create.StartAt!.Value,
-                EndAt = model.Create.EndAt!.Value,
-                IsActive = model.Create.IsActive
+                Title = model.Title,
+                Content = model.Content,
+                StartAt = model.StartAt!.Value,
+                EndAt = model.EndAt!.Value,
+                IsActive = model.IsActive
             };
 
             _context.Announcements.Add(announcement);
@@ -69,23 +75,51 @@ namespace HotelManagementSystem.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(AnnouncementIndexViewModel model)
+        public IActionResult Edit(
+    [Bind(Prefix = "Edit")] AnnouncementEditViewModel model)
         {
-            if (model.Edit.StartAt.HasValue &&
-                model.Edit.EndAt.HasValue &&
-                model.Edit.EndAt <= model.Edit.StartAt)
+            if (model.StartAt.HasValue &&
+                model.EndAt.HasValue &&
+                model.EndAt <= model.StartAt)
             {
                 ModelState.AddModelError(
-                    "Edit.EndAt",
+                    nameof(model.EndAt),
                     "結束時間必須晚於開始時間");
             }
 
             if (!ModelState.IsValid)
             {
-                return View("Index", model);
+                var indexModel = new AnnouncementIndexViewModel
+                {
+                    Edit = model,
+
+                    Announcements = _context.Announcements
+                        .OrderByDescending(a => a.CreatedAt)
+                        .ToList()
+                };
+
+                return View("Index", indexModel);
             }
 
-            TempData["SuccessMessage"] = "公告修改資料驗證成功";
+            var announcement = _context.Announcements
+                .FirstOrDefault(a => a.AnnouncementId == model.AnnouncementId);
+
+            if (announcement == null)
+            {
+                TempData["ErrorMessage"] = "找不到要修改的公告";
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            announcement.Title = model.Title;
+            announcement.Content = model.Content;
+            announcement.StartAt = model.StartAt!.Value;
+            announcement.EndAt = model.EndAt!.Value;
+            announcement.IsActive = model.IsActive;
+
+            _context.SaveChanges();
+
+            TempData["SuccessMessage"] = "公告修改成功";
 
             return RedirectToAction(nameof(Index));
         }

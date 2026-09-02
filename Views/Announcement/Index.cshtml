@@ -123,7 +123,9 @@
                 <div class="modal-body">
 
                     <div class="mb-3">
-                        <label asp-for="Create.Title" class="form-label">公告標題</label>
+                        <label asp-for="Create.Title" class="form-label">
+                            公告標題 <span class="text-danger">*</span>
+                        </label>
                         <input asp-for="Create.Title"
                                class="form-control"
                                placeholder="請輸入公告標題" />
@@ -132,7 +134,9 @@
                     </div>
 
                     <div class="mb-3">
-                        <label asp-for="Create.Content" class="form-label">公告內容</label>
+                        <label asp-for="Create.Content" class="form-label">
+                            公告內容 <span class="text-danger">*</span>
+                        </label>
                         <textarea asp-for="Create.Content"
                                   class="form-control"
                                   rows="5"
@@ -143,7 +147,9 @@
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label asp-for="Create.StartAt" class="form-label">開始時間</label>
+                            <label asp-for="Create.StartAt" class="form-label">
+                                開始時間 <span class="text-danger">*</span>
+                            </label>
                             <input asp-for="Create.StartAt"
                                    type="datetime-local"
                                    class="form-control" />
@@ -152,7 +158,9 @@
                         </div>
 
                         <div class="col-md-6 mb-3">
-                            <label asp-for="Create.EndAt" class="form-label">結束時間</label>
+                            <label asp-for="Create.EndAt" class="form-label">
+                                結束時間 <span class="text-danger">*</span>
+                            </label>
                             <input asp-for="Create.EndAt"
                                    type="datetime-local"
                                    class="form-control" />
@@ -222,7 +230,9 @@
                            id="editAnnouncementId" />
 
                     <div class="mb-3">
-                        <label asp-for="Edit.Title" class="form-label">公告標題</label>
+                        <label asp-for="Edit.Title" class="form-label">
+                            公告標題 <span class="text-danger">*</span>
+                        </label>
 
                         <input asp-for="Edit.Title"
                                id="editTitle"
@@ -233,7 +243,9 @@
                     </div>
 
                     <div class="mb-3">
-                        <label asp-for="Edit.Content" class="form-label">公告內容</label>
+                        <label asp-for="Edit.Content" class="form-label">
+                            公告內容 <span class="text-danger">*</span>
+                        </label>
 
                         <textarea asp-for="Edit.Content"
                                   id="editContent"
@@ -246,7 +258,9 @@
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label asp-for="Edit.StartAt" class="form-label">開始時間</label>
+                            <label asp-for="Edit.StartAt" class="form-label">
+                                開始時間 <span class="text-danger">*</span>
+                            </label>
 
                             <input asp-for="Edit.StartAt"
                                    type="datetime-local"
@@ -258,7 +272,9 @@
                         </div>
 
                         <div class="col-md-6 mb-3">
-                            <label asp-for="Edit.EndAt" class="form-label">結束時間</label>
+                            <label asp-for="Edit.EndAt" class="form-label">
+                                結束時間 <span class="text-danger">*</span>
+                            </label>
 
                             <input asp-for="Edit.EndAt"
                                    type="datetime-local"
