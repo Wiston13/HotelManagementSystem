@@ -12,7 +12,7 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -208,
+        -352,
         0
       ],
       "id": "6472f928-b290-416a-b94c-e747c88b7c37",
@@ -28,15 +28,15 @@
     {
       "parameters": {
         "fromEmail": "htlmgmtsys@gmail.com",
-        "toEmail": "={{ $('Webhook').first().json.body.email }}",
-        "subject": "=【{{ $('Webhook').first().json.body.branchName }}】訂房成功通知",
-        "html": "=<h2>訂房成功通知</h2>\n\n<p>{{ $('Webhook').first().json.body.bookerName }} 您好，</p>\n\n<p>以下為您的訂房資訊：</p>\n\n<ul>\n  <li>訂單編號：{{ $('Webhook').first().json.body.bookingNumber }}</li>\n  <li>入住分館：{{ $('Webhook').first().json.body.branchName }}</li>\n  <li>房型：{{ $('Webhook').first().json.body.roomTypeName }}</li>\n  <li>入住日期：{{ $('Webhook').first().json.body.checkInDate }}</li>\n  <li>退房日期：{{ $('Webhook').first().json.body.checkOutDate }}</li>\n  <li>訂單總金額：NT$ {{ $('Webhook').first().json.body.totalAmount }}</li>\n  <li>付款狀態：已付款</li>\n</ul>\n\n<h4 style=\"margin-top: 32px; margin-bottom: 12px;\">分館資訊</h4>\n\n<ul>\n  <li>地址：{{ $('Webhook').first().json.body.branchAddress }}</li>\n  <li>電話：{{ $('Webhook').first().json.body.branchPhone }}</li>\n</ul>\n\n<p style=\"margin-top: 32px;\">\n  如需查看訂單詳細資訊，請至官網的「訂單查詢」頁面，\n  輸入訂單編號及訂房時填寫的聯絡電話進行查詢。\n</p>\n\n<p>\n  如有訂單相關問題，請聯繫\n  <strong>{{ $('Webhook').first().json.body.branchName }}</strong>\n  （電話：\n  <a href=\"tel:{{ $('Webhook').first().json.body.branchPhone }}\">\n    {{ $('Webhook').first().json.body.branchPhone }}\n  </a>）。\n</p>\n\n<p>感謝您的預訂。</p>",
+        "toEmail": "={{ $json.body.email }}",
+        "subject": "=【{{ $json.emailContent.subjectBranchName }}】訂房成功通知",
+        "html": "=<h2>訂房成功通知</h2>\n\n<p>{{ $json.emailContent.bookerName }} 您好，</p>\n\n<p>以下為您的訂房資訊：</p>\n\n<ul>\n  <li>訂單編號：{{ $json.emailContent.bookingNumber }}</li>\n  <li>入住分館：{{ $json.emailContent.branchName }}</li>\n  <li>房型：{{ $json.emailContent.roomTypeName }}</li>\n  <li>入住日期：{{ $json.emailContent.checkInDate }}</li>\n  <li>退房日期：{{ $json.emailContent.checkOutDate }}</li>\n  <li>訂單總金額：NT$ {{ $json.emailContent.totalAmount }}</li>\n  <li>付款狀態：已付款</li>\n</ul>\n\n<h4 style=\"margin-top: 32px; margin-bottom: 12px;\">分館資訊</h4>\n\n<ul>\n  <li>地址：{{ $json.emailContent.branchAddress }}</li>\n  <li>電話：{{ $json.emailContent.branchPhoneText }}</li>\n</ul>\n\n<p style=\"margin-top: 32px;\">\n  如需查看訂單詳細資訊，請至官網的「訂單查詢」頁面，\n  輸入訂單編號及訂房時填寫的聯絡電話進行查詢。\n</p>\n\n<p>\n  如有訂單相關問題，請聯繫\n  <strong>{{ $json.emailContent.branchName }}</strong>\n  （電話：\n  <a href=\"tel:{{ $json.emailContent.branchPhoneHref }}\">\n    {{ $json.emailContent.branchPhoneText }}\n  </a>）。\n</p>\n\n<p>感謝您的預訂。</p>",
         "options": {}
       },
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
       "position": [
-        -16,
+        48,
         0
       ],
       "id": "1d665816-a71b-44ed-86f2-eaffd2266d2a",
@@ -60,11 +60,24 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        208,
+        224,
         0
       ],
       "id": "54062800-2c19-426f-a23d-1bdea20b86ff",
       "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body ?? {};\n\nconst htmlEncodeOnly = (value) => String(value ?? '')\n  .replace(/&/g, '&amp;')\n  .replace(/</g, '&lt;')\n  .replace(/>/g, '&gt;')\n  .replace(/\"/g, '&quot;')\n  .replace(/'/g, '&#39;');\n\nconst defangLinks = (value) => String(value ?? '')\n  .replace(/https:\\/\\//gi, 'https[:]//')\n  .replace(/http:\\/\\//gi, 'http[:]//')\n  .replace(/www\\./gi, 'www[.]')\n  .replace(\n    /\\b([a-z0-9-]+(?:\\.[a-z0-9-]+)+)(\\/[^\\s<>\"']*)?/gi,\n    (match) => match.replace(/\\./g, '[.]')\n  );\n\nconst safeText = (value) => htmlEncodeOnly(defangLinks(value));\n\nconst cleanSubjectText = (value) => String(value ?? '')\n  .replace(/[\\r\\n]+/g, ' ')\n  .trim();\n\nconst sanitizePhone = (value) => {\n  const text = String(value ?? '').trim();\n\n  return text\n    .replace(/[^\\d+]/g, '')\n    .replace(/(?!^)\\+/g, '');\n};\n\nreturn [\n  {\n    json: {\n      ...$input.first().json,\n      emailContent: {\n        bookingNumber: safeText(body.bookingNumber),\n        bookerName: safeText(body.bookerName),\n        branchName: safeText(body.branchName),\n        roomTypeName: safeText(body.roomTypeName),\n        checkInDate: safeText(body.checkInDate),\n        checkOutDate: safeText(body.checkOutDate),\n        totalAmount: safeText(body.totalAmount),\n        branchAddress: safeText(body.branchAddress),\n        branchPhoneText: safeText(sanitizePhone(body.branchPhone)),\n        branchPhoneHref: sanitizePhone(body.branchPhone),\n        subjectBranchName: cleanSubjectText(body.branchName).replace(/[<>]/g, '')\n      }\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -160,
+        0
+      ],
+      "id": "48592a3a-8ef2-44af-b77d-eb09cf27a76f",
+      "name": "Prepare Email Content"
     }
   ],
   "pinData": {},
@@ -73,7 +86,7 @@
       "main": [
         [
           {
-            "node": "Send an Email",
+            "node": "Prepare Email Content",
             "type": "main",
             "index": 0
           }
@@ -90,6 +103,17 @@
           }
         ]
       ]
+    },
+    "Prepare Email Content": {
+      "main": [
+        [
+          {
+            "node": "Send an Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -97,7 +121,7 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "aeecfa73-dc5b-4a50-9f4c-3494eab2fa33",
+  "versionId": "61401f42-42e3-4841-8dbd-f1bff7fd1c67",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "d3edbe9b0bf7b021bd96cdfbf013349a7e456c9ba991f3bc9ce5c328d6935a25"
