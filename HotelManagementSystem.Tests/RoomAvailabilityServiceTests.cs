@@ -7,6 +7,9 @@ using Microsoft.EntityFrameworkCore;
 
 public class RoomAvailabilityServiceTests
 {
+    #region CalculateDailyRemainingRooms Method
+    // 規則：查詢區間的結束日必須晚於開始日。
+    // 原因：相同日期不構成有效的 [startDate, endDate) 區間，應拒絕計算。
     [Fact]
     public void CalculateDailyRemainingRooms_EndDateEqualsStartDate_ThrowsArgumentException()
     {
@@ -17,6 +20,8 @@ public class RoomAvailabilityServiceTests
             service.CalculateDailyRemainingRooms(1, startDate, startDate));
     }
 
+    // 規則：沒有訂單時，每個查詢日的可用房數等於 Open 房間數。
+    // 原因：查詢區間 [startDate, endDate) 內沒有任何占用來源扣減三間 Open 房。
     [Fact]
     public void CalculateDailyRemainingRooms_NoBookings_ReturnsOpenRoomCount()
     {
@@ -44,6 +49,8 @@ public class RoomAvailabilityServiceTests
         Assert.Equal(3, result[startDate.AddDays(1)]);
     }
 
+    // 規則：Paid 與 CheckedIn 訂單會在住宿日扣減同房型的可用房數。
+    // 原因：訂單的入住日計入占用、退房日不計入，因此只有第一個查詢日剩兩間房。
     [Theory]
     [InlineData("Paid")]
     [InlineData("CheckedIn")]
@@ -79,6 +86,8 @@ public class RoomAvailabilityServiceTests
         Assert.Equal(3, result[startDate.AddDays(1)]);
     }
 
+    // 規則：Cancelled、Completed 與 NoShow 訂單不應占用房間供應。
+    // 原因：這些狀態不是有效住宿，占用區間內兩日都維持三間 Open 房。
     [Theory]
     [InlineData("Cancelled")]
     [InlineData("Completed")]
@@ -115,6 +124,8 @@ public class RoomAvailabilityServiceTests
         Assert.Equal(3, result[startDate.AddDays(1)]);
     }
 
+    // 規則：只有 SupplyStatus 為 Open 的房間可納入供應量。
+    // 原因：Reserved 與 Disabled 房間不可售，兩個查詢日皆只剩一間 Open 房。
     [Fact]
     public void CalculateDailyRemainingRooms_NonOpenRooms_ReturnsOpenRoomCount()
     {
@@ -142,6 +153,8 @@ public class RoomAvailabilityServiceTests
         Assert.Equal(1, result[startDate.AddDays(1)]);
     }
 
+    // 規則：其他房型的 Booking 不得扣減目前查詢房型的可用房數。
+    // 原因：兩筆有效訂單皆屬其他房型，因此房型 1 的三間 Open 房不受影響。
     [Fact]
     public void CalculateDailyRemainingRooms_OtherRoomTypeBooking_DoesNotReduceRemainingRoomCount()
     {
@@ -178,6 +191,8 @@ public class RoomAvailabilityServiceTests
         Assert.Equal(3, result[startDate.AddDays(1)]);
     }
 
+    // 規則：查詢區間外、剛好貼齊邊界的 Booking 不應占用查詢日。
+    // 原因：[startDate, endDate) 採左閉右開，前筆退房日與後筆入住日都不落在區間內。
     [Fact]
     public void CalculateDailyRemainingRooms_BookingsAdjacentToDateRange_DoNotReduceRemainingRoomCount()
     {
@@ -212,6 +227,8 @@ public class RoomAvailabilityServiceTests
         Assert.Equal(3, result[startDate.AddDays(1)]);
     }
 
+    // 規則：Booking 只扣減與查詢區間重疊的住宿日。
+    // 原因：訂單與查詢區間只在第一日重疊；退房日不計入原訂單住宿占用。
     [Fact]
     public void CalculateDailyRemainingRooms_PartiallyOverlappingBooking_ReducesOnlyOverlappingDates()
     {
@@ -245,6 +262,8 @@ public class RoomAvailabilityServiceTests
         Assert.Equal(3, result[startDate.AddDays(1)]);
     }
 
+    // 規則：相鄰 Booking 應各扣減自己的住宿日，不能在交界日重複扣減。
+    // 原因：前筆的退房日正是後筆入住日，查詢區間內每一天都只被一筆訂單占用。
     [Fact]
     public void CalculateDailyRemainingRooms_AdjacentBookings_ReduceEachOccupiedDateWithoutDoubleCounting()
     {
@@ -281,6 +300,8 @@ public class RoomAvailabilityServiceTests
         Assert.Equal(2, result[startDate.AddDays(1)]);
     }
 
+    // 規則：同房型的重疊 Booking 應依同日實際占用筆數扣減供應量。
+    // 原因：三個查詢日分別被一、兩、一筆訂單占用，所以剩餘房數為 2、1、2。
     [Fact]
     public void CalculateDailyRemainingRooms_MultipleOverlappingBookings_ReducesByBookingCount()
     {
@@ -318,6 +339,8 @@ public class RoomAvailabilityServiceTests
         Assert.Equal(2, result[startDate.AddDays(2)]);
     }
 
+    // 規則：12:00:00 起，尚未退房的 CheckedIn 住房視為逾期未退房。
+    // 原因：原訂單占用入住日，逾期住房再額外影響退房當日，兩個查詢日皆只剩兩間房。
     [Fact]
     public void CalculateDailyRemainingRooms_OverdueStayAfterCheckoutTime_ReducesTodayAvailability()
     {
@@ -359,27 +382,216 @@ public class RoomAvailabilityServiceTests
         Assert.Equal(2, result[startDate.AddDays(1)]);
     }
 
+    // 規則：11:59:59 尚未達 12:00，不應視為逾期未退房。
+    // 原因：退房日不計入原訂單住宿占用，且尚未逾期，所以查詢當日維持三間房。
     [Fact]
     public void CalculateDailyRemainingRooms_StayBeforeCheckoutTime_DoesNotReduceTodayAvailability()
     {
-        // TODO:
-        // 1. 建立測試 Context
-        // 2. 建立 3 間 RoomType 1 的 Open 房
-        // 3. 建立一筆 CheckedIn Booking：
-        //    - 2099/01/01 入住
-        //    - 2099/01/03 退房
-        // 4. 建立對應 StayRecord：
-        //    - ActualCheckOutAt = null
-        // 5. 使用 FakeTaipeiClock 固定現在時間：
-        //    - 2099/01/03 11:00
-        // 6. 查詢 2099/01/03 ～ 2099/01/04
-        // 7. 驗證今天剩餘房量仍為 3
-        //
-        // 原因：
-        // Booking 在退房日已不算正常占房，
-        // 而現在 11:00 尚未超過 12:00 退房時間，
-        // 所以也不應被算進 overdueCount。
+        using var context = CreateContext();
+
+        var bookingCheckInDate = new DateOnly(2099, 1, 1);
+        var bookingCheckOutDate = bookingCheckInDate.AddDays(2);
+        var startDate = bookingCheckOutDate;
+        var endDate = startDate.AddDays(1);
+
+        var room = CreateRoom(1, "Open");
+        context.Rooms.AddRange(
+            room,
+            CreateRoom(2, "Open"),
+            CreateRoom(3, "Open")
+        );
+
+        var booking = CreateBooking(
+            "CheckedIn",
+            bookingCheckInDate,
+            bookingCheckOutDate);
+
+        context.Bookings.Add(booking);
+
+        context.StayRecords.Add(
+            CreateStayRecord(booking, room)
+        );
+
+        context.SaveChanges();
+
+        var fakeTaipeiClock = new FakeTaipeiClock(new DateTime(2099, 1, 3, 11, 59, 59));
+        var service = new RoomAvailabilityService(fakeTaipeiClock, context);
+
+        var result = service.CalculateDailyRemainingRooms(1, startDate, endDate);
+
+        Assert.Single(result);
+        Assert.Equal(3, result[startDate]);
     }
+
+    // 規則：12:00:00 是逾期未退房的起算邊界。
+    // 原因：退房當日自此刻起仍未退房的 StayRecord 會額外占用一間房，剩餘兩間房。
+    [Fact]
+    public void CalculateDailyRemainingRooms_StayAtCheckoutTime_ReducesTodayAvailability()
+    {
+        using var context = CreateContext();
+
+        var bookingCheckInDate = new DateOnly(2099, 1, 1);
+        var bookingCheckOutDate = bookingCheckInDate.AddDays(2);
+        var startDate = bookingCheckOutDate;
+        var endDate = startDate.AddDays(1);
+
+        var room = CreateRoom(1, "Open");
+        context.Rooms.AddRange(
+            room,
+            CreateRoom(2, "Open"),
+            CreateRoom(3, "Open")
+        );
+
+        var booking = CreateBooking(
+            "CheckedIn",
+            bookingCheckInDate,
+            bookingCheckOutDate);
+
+        context.Bookings.Add(booking);
+
+        context.StayRecords.Add(
+            CreateStayRecord(booking, room)
+        );
+
+        context.SaveChanges();
+
+        var fakeTaipeiClock = new FakeTaipeiClock(new DateTime(2099, 1, 3, 12, 0, 0));
+        var service = new RoomAvailabilityService(fakeTaipeiClock, context);
+
+        var result = service.CalculateDailyRemainingRooms(1, startDate, endDate);
+
+        Assert.Single(result);
+        Assert.Equal(2, result[startDate]);
+    }
+
+    // 規則：已完成退房的 StayRecord 不得再視為逾期住房。
+    // 原因：退房日不計入原訂單住宿占用，且 ActualCheckOutAt 已存在，查詢當日維持三間房。
+    [Fact]
+    public void CalculateDailyRemainingRooms_CompletedStay_DoesNotReduceTodayAvailability()
+    {
+        using var context = CreateContext();
+
+        var bookingCheckInDate = new DateOnly(2099, 1, 1);
+        var bookingCheckOutDate = bookingCheckInDate.AddDays(2);
+        var startDate = bookingCheckOutDate;
+        var endDate = startDate.AddDays(1);
+
+        var room = CreateRoom(1, "Open");
+        context.Rooms.AddRange(
+            room,
+            CreateRoom(2, "Open"),
+            CreateRoom(3, "Open")
+        );
+
+        var booking = CreateBooking(
+            "Completed",
+            bookingCheckInDate,
+            bookingCheckOutDate);
+
+        context.Bookings.Add(booking);
+
+        context.StayRecords.Add(
+            CreateStayRecord(booking, room, actualCheckOutAt: new DateTime(2099, 1, 3, 12, 30, 0))
+        );
+
+        context.SaveChanges();
+
+        var fakeTaipeiClock = new FakeTaipeiClock(new DateTime(2099, 1, 3, 13, 0, 0));
+        var service = new RoomAvailabilityService(fakeTaipeiClock, context);
+
+        var result = service.CalculateDailyRemainingRooms(1, startDate, endDate);
+
+        Assert.Single(result);
+        Assert.Equal(3, result[startDate]);
+    }
+
+    // 規則：逾期住房只額外影響時鐘所指的查詢當日。
+    // 原因：前一天退房但仍未退房的住房在今日扣減一間房，次日不應持續扣減。
+    [Fact]
+    public void CalculateDailyRemainingRooms_OverdueStayFromPreviousDay_ReducesTodayAvailability()
+    {
+        using var context = CreateContext();
+
+        var bookingCheckInDate = new DateOnly(2099, 1, 1);
+        var bookingCheckOutDate = bookingCheckInDate.AddDays(2);
+        var startDate = bookingCheckOutDate.AddDays(1);
+        var endDate = startDate.AddDays(2);
+
+        var room = CreateRoom(1, "Open");
+        context.Rooms.AddRange(
+            room,
+            CreateRoom(2, "Open"),
+            CreateRoom(3, "Open")
+        );
+
+        var booking = CreateBooking(
+            "CheckedIn",
+            bookingCheckInDate,
+            bookingCheckOutDate);
+
+        context.Bookings.Add(booking);
+
+        context.StayRecords.Add(
+            CreateStayRecord(booking, room)
+        );
+
+        context.SaveChanges();
+
+        var fakeTaipeiClock = new FakeTaipeiClock(new DateTime(2099, 1, 4, 10, 0, 0));
+        var service = new RoomAvailabilityService(fakeTaipeiClock, context);
+
+        var result = service.CalculateDailyRemainingRooms(1, startDate, endDate);
+
+        Assert.Equal(2, result.Count);
+
+        Assert.Equal(2, result[startDate]);
+        Assert.Equal(3, result[startDate.AddDays(1)]);
+    }
+
+    // 規則：其他房型的逾期 StayRecord 不得影響目前查詢房型。
+    // 原因：逾期住房屬房型 2，房型 1 的三間 Open 房在查詢當日皆可用。
+    [Fact]
+    public void CalculateDailyRemainingRooms_OverdueStayInOtherRoomType_DoesNotReduceTodayAvailability()
+    {
+        using var context = CreateContext();
+
+        var bookingCheckInDate = new DateOnly(2099, 1, 1);
+        var bookingCheckOutDate = bookingCheckInDate.AddDays(2);
+        var startDate = bookingCheckOutDate.AddDays(1); // 1/4
+        var endDate = startDate.AddDays(1);             // 1/5
+
+        var overdueRoom = CreateRoom(4, "Open", roomTypeId: 2);
+        context.Rooms.AddRange(
+            CreateRoom(1, "Open"),
+            CreateRoom(2, "Open"),
+            CreateRoom(3, "Open"),
+            overdueRoom
+        );
+
+        var booking = CreateBooking(
+            "CheckedIn",
+            bookingCheckInDate,
+            bookingCheckOutDate,
+            roomTypeId: 2);
+
+        context.Bookings.Add(booking);
+
+        context.StayRecords.Add(
+            CreateStayRecord(booking, overdueRoom)
+        );
+
+        context.SaveChanges();
+
+        var fakeTaipeiClock = new FakeTaipeiClock(new DateTime(2099, 1, 4, 10, 0, 0));
+        var service = new RoomAvailabilityService(fakeTaipeiClock, context);
+
+        var result = service.CalculateDailyRemainingRooms(1, startDate, endDate);
+
+        Assert.Single(result);
+        Assert.Equal(3, result[startDate]);
+    }
+
+    #endregion
 
     #region helper
     private static HotelManagementContext CreateContext()
