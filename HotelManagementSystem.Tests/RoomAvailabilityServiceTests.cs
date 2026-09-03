@@ -593,6 +593,142 @@ public class RoomAvailabilityServiceTests
 
     #endregion
 
+    #region CalculateMinimumRemainingRooms
+    // 規則：最小剩餘房量應從多日的每日剩餘房量中取最低值。
+    // 原因：三個查詢日的剩餘房量為 2、1、2，因此結果應為 1。
+    [Fact]
+    public void CalculateMinimumRemainingRooms_MultipleDays_ReturnsLowestRemainingCount()
+    {
+        using var context = CreateContext();
+
+        var firstBookingCheckInDate = new DateOnly(2099, 1, 1);
+        var firstBookingCheckOutDate = firstBookingCheckInDate.AddDays(2);
+        var secondBookingCheckInDate = firstBookingCheckInDate.AddDays(1);
+        var secondBookingCheckOutDate = secondBookingCheckInDate.AddDays(2);
+        var startDate = firstBookingCheckInDate;
+        var endDate = startDate.AddDays(3);
+
+        context.Rooms.AddRange(
+            CreateRoom(1, "Open"),
+            CreateRoom(2, "Open"),
+            CreateRoom(3, "Open")
+        );
+
+        context.Bookings.AddRange(
+            CreateBooking("Paid", firstBookingCheckInDate, firstBookingCheckOutDate, bookingNumber: 1),
+            CreateBooking("Paid", secondBookingCheckInDate, secondBookingCheckOutDate, bookingNumber: 2)
+        );
+
+        context.SaveChanges();
+
+        var taipeiClock = new TaipeiClock();
+        var service = new RoomAvailabilityService(taipeiClock, context);
+
+        var result = service.CalculateMinimumRemainingRooms(1, startDate, endDate);
+
+        Assert.Equal(1, result);
+    }
+    #endregion
+
+    #region FindCapacityShortages
+    // 規則：supplyReduction 小於 0 時，應丟出 ArgumentOutOfRangeException。
+    // 原因：供應量減少不能為負值，-1 不代表有效的減少數量。
+    [Fact]
+    public void FindCapacityShortages_NegativeSupplyReduction_ThrowsArgumentOutOfRangeException()
+    {
+        var service = new RoomAvailabilityService(null!, null!);
+
+        var startDate = new DateOnly(2099, 1, 1);
+        var endDate = new DateOnly(2099, 1, 5);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => service.FindCapacityShortages(1, startDate, endDate, -1));
+    }
+
+    // 規則：減少後仍大於 0 的日期不算 shortage。
+    // 原因：三間 Open 房減少一間後仍有兩間可用，查詢區間不應回傳不足日期。
+    [Fact]
+    public void FindCapacityShortages_NoCapacityShortage_ReturnsEmpty()
+    {
+        using var context = CreateContext();
+
+        context.Rooms.AddRange(
+            CreateRoom(1, "Open"),
+            CreateRoom(2, "Open"),
+            CreateRoom(3, "Open")
+        );
+
+        context.SaveChanges();
+
+        var startDate = new DateOnly(2099, 1, 1);
+        var endDate = new DateOnly(2099, 1, 5);
+
+        var taipeiClock = new TaipeiClock();
+        var service = new RoomAvailabilityService(taipeiClock, context);
+
+        Assert.Empty(service.FindCapacityShortages(1, startDate, endDate, 1));
+    }
+
+    // 規則：減少後剛好等於 0 的日期也不算 shortage。
+    // 原因：唯一的 Open 房減少一間後雖無剩餘，但未低於 0，因此不應回傳不足日期。
+    [Fact]
+    public void FindCapacityShortages_ReductionEqualsRemainingCapacity_DoesNotReportShortage()
+    {
+        using var context = CreateContext();
+
+        context.Rooms.AddRange(
+            CreateRoom(1, "Open"),
+            CreateRoom(2, "Disabled"),
+            CreateRoom(3, "Disabled")
+        );
+
+        context.SaveChanges();
+
+        var startDate = new DateOnly(2099, 1, 1);
+        var endDate = new DateOnly(2099, 1, 5);
+
+        var taipeiClock = new TaipeiClock();
+        var service = new RoomAvailabilityService(taipeiClock, context);
+
+        Assert.Empty(service.FindCapacityShortages(1, startDate, endDate, 1));
+    }
+
+    // 規則：只有減少後小於 0 的日期才回傳，且不足量必須正確。
+    // 原因：第二日兩筆訂單已用盡兩間 Open 房，再減少一間後不足 1，其餘日期不短缺。
+    [Fact]
+    public void FindCapacityShortages_CapacityShortage_ReturnsAffectedDatesAndShortageAmounts()
+    {
+        using var context = CreateContext();
+
+        var startDate = new DateOnly(2099, 1, 1);
+        var endDate = startDate.AddDays(3);
+        var firstBookingCheckInDate = startDate;
+        var firstBookingCheckOutDate = firstBookingCheckInDate.AddDays(2);
+        var secondBookingCheckInDate = startDate.AddDays(1);
+        var secondBookingCheckOutDate = secondBookingCheckInDate.AddDays(2);
+
+        context.Rooms.AddRange(
+            CreateRoom(1, "Open"),
+            CreateRoom(2, "Open"),
+            CreateRoom(3, "Disabled")
+        );
+
+        context.Bookings.AddRange(
+            CreateBooking("Paid", firstBookingCheckInDate, firstBookingCheckOutDate, bookingNumber: 1),
+            CreateBooking("Paid", secondBookingCheckInDate, secondBookingCheckOutDate, bookingNumber: 2)
+        );
+
+        context.SaveChanges();
+
+        var taipeiClock = new TaipeiClock();
+        var service = new RoomAvailabilityService(taipeiClock, context);
+
+        var result = service.FindCapacityShortages(1, startDate, endDate, 1);
+
+        Assert.Single(result);
+        Assert.Equal(1, result[startDate.AddDays(1)]);
+    }
+    #endregion
+
     #region helper
     private static HotelManagementContext CreateContext()
     {
@@ -686,6 +822,5 @@ public class RoomAvailabilityServiceTests
         public override DateTime Now => _now;
     }
     #endregion
-
 }
 
