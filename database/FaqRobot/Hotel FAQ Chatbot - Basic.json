@@ -27,7 +27,7 @@
       "typeVersion": 1.1,
       "position": [
         816,
-        -16
+        0
       ],
       "id": "9cf41e5f-1c3e-404a-8019-b1e93fa69fcb",
       "name": "Google Gemini Chat Model",
@@ -76,7 +76,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        672,
+        624,
         -176
       ],
       "id": "f327162e-4b67-4738-b660-c7132aaf1974",
@@ -109,7 +109,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={\n  \"success\": true,\n  \"reply\": \"{{ $json.output }}\"\n}",
+        "responseBody": "={{ {\n  success: true,\n  reply: $json.output\n} }}",
         "options": {}
       },
       "type": "n8n-nodes-base.respondToWebhook",
@@ -186,7 +186,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "4913823d-65cb-45e1-9aa0-9ebb75007523",
+  "versionId": "269d0b18-8d50-4ad9-9167-935441d60730",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "b27803072219c3a221845c7d22684c2163753990ac71bfad1f8949cc33ca51e8"
