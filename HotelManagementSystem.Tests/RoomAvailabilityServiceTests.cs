@@ -593,7 +593,7 @@ public class RoomAvailabilityServiceTests
 
     #endregion
 
-    #region CalculateMinimumRemainingRooms
+    #region CalculateMinimumRemainingRooms Method
     // 規則：最小剩餘房量應從多日的每日剩餘房量中取最低值。
     // 原因：三個查詢日的剩餘房量為 2、1、2，因此結果應為 1。
     [Fact]
@@ -630,7 +630,7 @@ public class RoomAvailabilityServiceTests
     }
     #endregion
 
-    #region FindCapacityShortages
+    #region FindCapacityShortages Method
     // 規則：supplyReduction 小於 0 時，應丟出 ArgumentOutOfRangeException。
     // 原因：供應量減少不能為負值，-1 不代表有效的減少數量。
     [Fact]
