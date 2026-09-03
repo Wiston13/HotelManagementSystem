@@ -591,6 +591,45 @@ public class RoomAvailabilityServiceTests
         Assert.Equal(3, result[startDate]);
     }
 
+    // 規則：NeedsCleaning 房間仍應納入 Open 房間供應量計算。
+    // 原因：清潔狀態不影響可售房量，只影響 Check-in 時能否被實際指派。
+    [Fact]
+    public void CalculateDailyRemainingRooms_NeedsCleaningRoom_StillCountsAsOpenCapacity()
+    {
+        using var context = CreateContext();
+
+        var startDate = new DateOnly(2099, 1, 1);
+        var endDate = startDate.AddDays(2);
+
+        var cleaningRoom = new Room
+        {
+            RoomId = 3,
+            BranchId = 1,
+            RoomTypeId = 1,
+            RoomNumber = "103",
+            Floor = 1,
+            SupplyStatus = "Open",
+            CleaningStatus = "NeedsCleaning"
+        };
+
+        context.Rooms.AddRange(
+            CreateRoom(1, "Open"),
+            CreateRoom(2, "Open"),
+            cleaningRoom
+        );
+
+        context.SaveChanges();
+
+        var taipeiClock = new TaipeiClock();
+        var service = new RoomAvailabilityService(taipeiClock, context);
+
+        var result = service.CalculateDailyRemainingRooms(1, startDate, endDate);
+
+        Assert.Equal(2, result.Count);
+
+        Assert.Equal(3, result[startDate]);
+        Assert.Equal(3, result[startDate.AddDays(1)]);
+    }
     #endregion
 
     #region CalculateMinimumRemainingRooms Method
