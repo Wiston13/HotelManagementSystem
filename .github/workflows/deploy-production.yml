@@ -33,7 +33,7 @@ jobs:
         run: dotnet test --configuration Release --no-build
 
       - name: Publish
-        run: dotnet publish --configuration Release --no-build --output ./publish
+        run: dotnet publish HotelManagementSystem.csproj --configuration Release --no-build --output ./publish
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
