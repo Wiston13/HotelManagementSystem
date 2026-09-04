@@ -18,6 +18,8 @@ public partial class HotelManagementContext : DbContext
 
     public virtual DbSet<Employee> Employees { get; set; }
 
+    public virtual DbSet<Feedback> Feedbacks { get; set; }
+
     public virtual DbSet<OperationLog> OperationLogs { get; set; }
 
     public virtual DbSet<OperationType> OperationTypes { get; set; }
@@ -115,6 +117,41 @@ public partial class HotelManagementContext : DbContext
             entity.HasOne(d => d.Branch).WithMany(p => p.Employees)
                 .HasForeignKey(d => d.BranchId)
                 .HasConstraintName("FK_Employees_Branches");
+        });
+
+        modelBuilder.Entity<Feedback>(entity =>
+        {
+            entity.ToTable("CustomerFeedbacks", "dbo", table =>
+            {
+                table.HasCheckConstraint("CK_CustomerFeedbacks_CustomerName", "LEN(LTRIM(RTRIM([CustomerName]))) > 0");
+                table.HasCheckConstraint("CK_CustomerFeedbacks_Email", "LEN(LTRIM(RTRIM([Email]))) > 0");
+                table.HasCheckConstraint("CK_CustomerFeedbacks_Content", "LEN(LTRIM(RTRIM([Content]))) > 0");
+                table.HasCheckConstraint("CK_CustomerFeedbacks_Phone", "[Phone] IS NULL OR (DATALENGTH([Phone]) > 0 AND [Phone] COLLATE Latin1_General_100_BIN2 NOT LIKE N'%[^0-9]%')");
+            });
+
+            entity.HasKey(e => e.Id).HasName("PK_CustomerFeedbacks");
+
+            entity.HasIndex(e => new { e.BranchId, e.CreatedAt }, "IX_CustomerFeedbacks_Branch_CreatedAt")
+                .IsDescending(false, true);
+            entity.HasIndex(e => e.CreatedAt, "IX_CustomerFeedbacks_CreatedAt")
+                .IsDescending(true);
+
+            entity.Property(e => e.Id).UseIdentityColumn(1, 1);
+            entity.Property(e => e.BranchId).IsRequired();
+            entity.Property(e => e.CustomerName).IsRequired().HasMaxLength(254).IsUnicode(true);
+            entity.Property(e => e.Email).IsRequired().HasMaxLength(254).IsUnicode(true);
+            entity.Property(e => e.Phone).IsRequired(false).HasMaxLength(20).IsUnicode(true);
+            entity.Property(e => e.Content).IsRequired().HasMaxLength(500).IsUnicode(true);
+            entity.Property(e => e.CreatedAt)
+                .HasColumnType("datetime2(0)")
+                .HasPrecision(0)
+                .HasDefaultValueSql("(CONVERT([datetime2](0),(sysdatetimeoffset() AT TIME ZONE 'Taipei Standard Time')))", "DF_CustomerFeedbacks_CreatedAt")
+                .ValueGeneratedOnAdd();
+
+            entity.HasOne(d => d.Branch).WithMany()
+                .HasForeignKey(d => d.BranchId)
+                .OnDelete(DeleteBehavior.NoAction)
+                .HasConstraintName("FK_CustomerFeedbacks_Branches");
         });
 
         modelBuilder.Entity<OperationLog>(entity =>

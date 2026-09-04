@@ -11,6 +11,7 @@
     本檔責任：
     - 重設情境用房間供應／清潔狀態
     - 訂單、住房紀錄、取消、No-show、操作紀錄
+    - 5 筆單向顧客意見，供本館／跨館唯讀查詢與日期篩選、匯出
     - 所有相對日期以執行當下的台灣日期為基準
 
     可重跑方式：
@@ -53,6 +54,7 @@ BEGIN TRY
     DELETE FROM [dbo].[OperationLogs];
     DELETE FROM [dbo].[StayRecords];
     DELETE FROM [dbo].[Bookings];
+    DELETE FROM [dbo].[CustomerFeedbacks];
 
     DECLARE @NowTaipei datetime2(0) =
         CONVERT(datetime2(0), SYSDATETIMEOFFSET() AT TIME ZONE 'Taipei Standard Time');
@@ -506,6 +508,39 @@ BEGIN TRY
     SET IDENTITY_INSERT [dbo].[OperationLogs] OFF;
     SET @IdentityInsertTable = NULL;
 
+    /* =========================================================
+       5. CustomerFeedbacks：虛構意見，沿用分館 1、2、3
+       不關聯訂單／住房，不建立 OperationLog 或觸發任何通知。
+       同一 Email 可重複提交；日期涵蓋今天與前 1、3、7 天。
+       ========================================================= */
+    SET @IdentityInsertTable = N'dbo.CustomerFeedbacks';
+    SET IDENTITY_INSERT [dbo].[CustomerFeedbacks] ON;
+
+    INSERT INTO [dbo].[CustomerFeedbacks]
+    (
+        [Id], [BranchId], [CustomerName], [Email], [Phone], [Content], [CreatedAt]
+    )
+    VALUES
+    (1, 1, N'測試旅客甲', N'feedback01@example.com', N'0900000001',
+        N'希望住宿指南能補充附近早餐店的步行路線。',
+        DATEADD(MINUTE,600,CAST(DATEADD(DAY,-7,@Today) AS datetime2(0)))),
+    (2, 2, N'測試旅客乙', N'feedback02@example.com', NULL,
+        N'建議房型介紹增加行李攤開後的空間照片，方便選擇。',
+        DATEADD(MINUTE,840,CAST(DATEADD(DAY,-3,@Today) AS datetime2(0)))),
+    (3, 1, N'測試旅客甲', N'feedback01@example.com', N'0900000001',
+        N'網站在手機上很容易瀏覽，希望交通資訊也能提供公車站名。',
+        DATEADD(MINUTE,570,CAST(DATEADD(DAY,-1,@Today) AS datetime2(0)))),
+    (4, 3, N'測試旅客丙', N'feedback03@example.com', N'0900000003',
+        N'建議公共區域增加閱讀燈，方便晚間閱讀旅遊資料。',
+        DATEADD(MINUTE,1080,CAST(DATEADD(DAY,-1,@Today) AS datetime2(0)))),
+    (5, 2, N'測試旅客丁', N'feedback04@example.com', NULL,
+        N'希望網站的住宿說明能補充飲水機與公共設施的位置。',
+        @NowTaipei);
+
+    SET IDENTITY_INSERT [dbo].[CustomerFeedbacks] OFF;
+    SET @IdentityInsertTable = NULL;
+
+    DBCC CHECKIDENT ('dbo.CustomerFeedbacks', RESEED, 5) WITH NO_INFOMSGS;
     DBCC CHECKIDENT ('dbo.StayRecords',   RESEED, 9)  WITH NO_INFOMSGS;
     DBCC CHECKIDENT ('dbo.OperationLogs', RESEED, 53) WITH NO_INFOMSGS;
 
@@ -515,7 +550,8 @@ BEGIN TRY
            @NowTaipei AS [TaipeiNow],
            (SELECT COUNT(*) FROM [dbo].[Bookings]) AS [Bookings],
            (SELECT COUNT(*) FROM [dbo].[StayRecords]) AS [StayRecords],
-           (SELECT COUNT(*) FROM [dbo].[OperationLogs]) AS [OperationLogs];
+           (SELECT COUNT(*) FROM [dbo].[OperationLogs]) AS [OperationLogs],
+           (SELECT COUNT(*) FROM [dbo].[CustomerFeedbacks]) AS [CustomerFeedbacks];
 
     SELECT
         RIGHT('000' + CONVERT(varchar(3), [ScenarioId]), 3) AS [ScenarioId],
@@ -533,6 +569,8 @@ BEGIN CATCH
         SET IDENTITY_INSERT [dbo].[StayRecords] OFF;
     ELSE IF @IdentityInsertTable = N'dbo.OperationLogs'
         SET IDENTITY_INSERT [dbo].[OperationLogs] OFF;
+    ELSE IF @IdentityInsertTable = N'dbo.CustomerFeedbacks'
+        SET IDENTITY_INSERT [dbo].[CustomerFeedbacks] OFF;
 
     IF @@TRANCOUNT > 0
         ROLLBACK TRANSACTION;

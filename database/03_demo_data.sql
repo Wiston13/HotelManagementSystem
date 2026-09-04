@@ -48,6 +48,7 @@ BEGIN TRY
     DELETE FROM [dbo].[Rooms];
     DELETE FROM [dbo].[Employees] WHERE [Role] = 'BranchEmployee';
     DELETE FROM [dbo].[RoomTypes];
+    DELETE FROM [dbo].[CustomerFeedbacks];
     DELETE FROM [dbo].[Branches];
 
     DECLARE @SamplePasswordHash varchar(255) =
