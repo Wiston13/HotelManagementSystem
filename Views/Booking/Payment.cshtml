@@ -1,19 +1,28 @@
 ﻿@*
 	For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 *@
-@{
-}
 
 @*
 	飯店管理系統 - 模擬付款頁面原型
 	已完全修正所有標籤閉合與跑版問題，內嵌姓名防呆與卡號自動空格功能
 *@
 
+@{
+    ViewData["Title"] = "付款";
+}
+
+@model HotelManagementSystem.Models.ViewModels.Booking.PaymentViewModel
+
+
 <div class="container py-4">
 
 	<!-- 返回房型選擇頁 (後續記得處理返回後資料傳遞等部分) -->
 	<a asp-controller="Booking"
 	   asp-action="RoomSelection"
+	   asp-route-branchId="@Model.BranchId"
+	   asp-route-checkIn="@Model.CheckInDate.ToString("yyyy-MM-dd")"
+	   asp-route-checkOut="@Model.CheckOutDate.ToString("yyyy-MM-dd")"
+	   asp-route-guestCount="@Model.GuestCount"
 	   class="btn btn-link px-0 text-decoration-none mb-2">
 		← 重新選擇房型
 	</a>
@@ -25,12 +34,31 @@
 
 	<!-- 新增流程提醒 -->
 	<p class="text-secondary ms-3 mb-4">
-		*付款成功後，訂房才算完成。
+		*付款成功後，訂房才算完成。<br />
+		本系統使用模擬付款流程，不會實際扣款。
 	</p>
 
 
+	@if (TempData["PaymentError"] != null)
+	{
+		<div class="alert alert-danger mb-4" role="alert">
+			@TempData["PaymentError"]
+		</div>
+	}
+
+
 	<!-- 表單開始：使用 ASP.NET Core 標準 Tag Helper 確保標籤完美解析 -->
-	<form id="paymentForm" asp-controller="Booking" asp-action="Success" class="needs-validation" novalidate>		
+	<form id="paymentForm" asp-controller="Booking" asp-action="Success" method="post" class="needs-validation" novalidate>
+		
+		<!-- 透過表單將資料送到下一頁 (Success) -->
+		<input type="hidden" name="BranchId" value="@Model.BranchId" />
+		<input type="hidden" name="CheckInDate" value="@Model.CheckInDate.ToString("yyyy-MM-dd")" />
+		<input type="hidden" name="CheckOutDate" value="@Model.CheckOutDate.ToString("yyyy-MM-dd")" />
+		<input type="hidden" name="RoomTypeId" value="@Model.RoomTypeId" />
+		<input type="hidden" name="GuestCount" value="@Model.GuestCount" />
+		<!-- 使用者進入付款頁時看到的每晚房價 -->
+		<input type="hidden" name="ConfirmedNightlyPrice" value="@Model.NightlyPrice" />
+
 		<!-- 二、版面欄位使用 Bootstrap Grid (桌面版並排，窄畫面自動上下排列) -->
 		<div class="row g-4 align-items-start">
 
@@ -48,7 +76,7 @@
 							<label class="form-label">
 								姓名 <span class="text-danger">*</span>
 							</label>
-							<input class="form-control" type="text" id="txtName" required placeholder="例如：王小明"
+							<input class="form-control" type="text" id="txtName" name="BookerName" value="@TempData["BookerName"]" required placeholder="例如：王小明"
 								   pattern="[^\d]*" maxlength="50"
 								   oninput="this.value = this.value.replace(/\d/g, '')"
 								   data-error-target="#nameError">
@@ -59,15 +87,15 @@
 							<label class="form-label">
 								聯絡電話 <span class="text-danger">*</span>
 							</label>
-							<input class="form-control" type="tel" id="txtPhone" required placeholder="例如：0912345678" data-error-target="#phoneError">
-							<div id="phoneError" class="text-danger small mt-1 d-none">請輸入聯絡電話。</div>
+							<input class="form-control" type="tel" id="txtPhone" name="ContactPhone" value="@TempData["ContactPhone"]" required placeholder="例如：0912345678" data-error-target="#phoneError">
+							<div id="phoneError" class="text-danger small mt-1 d-none">請輸入正確的聯絡電話格式。</div>
 						</div>
 						<!-- 電子信箱欄位 -->
 						<div class="mb-3">
 							<label class="form-label">
 								電子信箱 <span class="text-danger">*</span>
 							</label>
-							<input class="form-control" type="email" id="txtEmail" required placeholder="例如：name@example.com" data-error-target="#emailError">
+							<input class="form-control" type="email" id="txtEmail" name="Email" value="@TempData["Email"]" required placeholder="例如：name@example.com" data-error-target="#emailError">
 							<div id="emailError" class="text-danger small mt-1 d-none">請輸入正確的電子信箱格式。</div>
 						</div>
 					</div>
@@ -94,7 +122,7 @@
 											<path d="M2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm13 2v1.5H1V4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1M1 7.5h14V12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1z" />
 										</svg>
 									</span>
-									<input class="form-control" type="text" id="txtCardNumber" required placeholder="4242 4242 4242 4242" maxlength="19" data-error-target="#cardError">
+									<input class="form-control" type="text" id="txtCardNumber" name="CardNumber" required placeholder="4242 4242 4242 4242" maxlength="19" data-error-target="#cardError">
 								</div>
 								<div id="cardError" class="text-danger small mt-1 d-none">此卡號無效。</div>
 							</div>
@@ -109,6 +137,7 @@
 									<input class="form-control text-center"
 										   type="text"
 										   id="txtExpiry"
+										   name="Expiry"
 										   required
 										   placeholder="MM/YY"
 										   maxlength="5"
@@ -120,7 +149,7 @@
 									<label class="form-label">
 										CVC 安全碼 <span class="text-danger">*</span>
 									</label>
-									<input class="form-control text-center" type="password" id="txtCvc" required placeholder="336" maxlength="3" data-error-target="#cvcError">
+									<input class="form-control text-center" type="password" id="txtCvc" name="Cvc" required placeholder="336" maxlength="3" data-error-target="#cvcError">
 									<div id="cvcError" class="text-danger small mt-1 d-none">請輸入安全碼。</div>
 								</div>
 							</div>
@@ -132,12 +161,12 @@
 								</span>
 
 								<span class="h4 fw-bold mb-0">
-									NT$ 4,800
+									NT$ @Model.TotalPrice.ToString("#,##0.##", System.Globalization.CultureInfo.GetCultureInfo("zh-TW"))
 								</span>
 							</div>
 
 							<!-- 主要操作按鈕 -->
-							<button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+							<button type="submit" id="btnSubmitPayment" class="btn btn-primary w-100 py-2 fw-semibold">
 								確認付款並送出訂房
 							</button>
 
@@ -166,7 +195,7 @@
 								分館
 							</div>
 							<div id="branchName" class="col-8 col-md-9 fw-semibold text-end">
-								台北館
+								@Model.BranchName
 							</div>
 						</div>
 
@@ -176,7 +205,7 @@
 								房型
 							</div>
 							<div id="roomTypeName" class="col-8 col-md-9 fw-semibold text-end">
-								標準雙人房
+								@Model.RoomTypeName
 							</div>
 						</div>
 
@@ -186,7 +215,7 @@
 								每晚房價
 							</div>
 							<div id="pricePerNight" class="col-8 col-md-9 fw-semibold text-end">
-								NT$ 2,400
+								NT$ @Model.NightlyPrice.ToString("#,##0.##", System.Globalization.CultureInfo.GetCultureInfo("zh-TW"))
 							</div>
 						</div>
 						
@@ -196,7 +225,7 @@
 								入住日期
 							</div>
 							<div id="checkInDate" class="col-8 col-md-9 fw-semibold text-end">
-								2026/08/14
+								@Model.CheckInDate.ToString("yyyy/MM/dd")
 							</div>
 						</div>
 						
@@ -206,7 +235,7 @@
 								退房日期
 							</div>
 							<div id="checkOutDate" class="col-8 col-md-9 fw-semibold text-end">
-								2026/08/16
+								@Model.CheckOutDate.ToString("yyyy/MM/dd")
 							</div>
 						</div>
 						
@@ -216,7 +245,7 @@
 								入住晚數
 							</div>
 							<div id="nights" class="col-8 col-md-9 fw-semibold text-end">
-								2 晚
+								@Model.Nights 晚
 							</div>
 						</div>
 						<hr class="my-1">
@@ -227,7 +256,7 @@
 								總金額
 							</div>
 							<div id="totalAmount" class="col-8 col-md-9 h4 fw-bold mb-0 text-end">
-								NT$ 4,800
+								NT$ @Model.TotalPrice.ToString("#,##0.##", System.Globalization.CultureInfo.GetCultureInfo("zh-TW"))
 							</div>
 						</div>
 
@@ -243,60 +272,25 @@
 
 
 
-<!-- 測試房量不足按鈕 -->
-@* <button type="button"
-		class="btn btn-outline-secondary"
-		data-bs-toggle="modal"
-		data-bs-target="#noRoomModal">
-	測試房量不足
-</button> *@
-
-<!-- 房量不足提示 -->
-<div class="modal fade"
-	 id="noRoomModal"
-	 tabindex="-1"
-	 aria-labelledby="noRoomModalLabel"
-	 aria-hidden="true"
-	 data-bs-backdrop="static"
-	 data-bs-keyboard="false">
-
-	<div class="modal-dialog modal-dialog-centered">
-
-		<div class="modal-content">
-
-			<div class="modal-header">
-				<h5 class="modal-title" id="noRoomModalLabel">
-					房型已無空房
-				</h5>
-			</div>
-
-			<div class="modal-body">
-				很抱歉，您晚了一步。<br>
-				此房型目前已無空房，請重新選擇其他房型。
-			</div>
-
-			<div class="modal-footer">
-				<button type="button"
-						class="btn btn-primary"
-						id="btnBackToRoomTypes">
-					重新選擇房型
-				</button>
-			</div>
-
-		</div>
-
-	</div>
-</div>
-
-
-
-<!-- 十、JavaScript 原型互動：卡號格式化、到期日補斜線與獨立紅字控制 -->
 <script>
+	
+
 	(function() {
 		'use strict'
 		var form = document.getElementById('paymentForm')
 		var cardNumberInput = document.getElementById('txtCardNumber')
 		var expiryInput = document.getElementById('txtExpiry')
+
+		// 聯絡電話驗證：只允許數字、空白與 -
+		function isValidPhone(phone) {
+			if (!/^[0-9\s-]+$/.test(phone)) {
+				return false;
+			}
+			var normalizedPhone = phone
+				.replace(/\s/g, '')
+				.replace(/-/g, '');
+			return /^\d+$/.test(normalizedPhone);
+		}
 
 		// 1. 信用卡卡號：連續輸入數字時自動 4 碼加空格格式化
 		if (cardNumberInput) {
@@ -392,8 +386,16 @@
 				var targetSelector = input.getAttribute('data-error-target');
 				var errorDiv = targetSelector ? document.querySelector(targetSelector) : null;
 
-				// 自訂檢驗標準
-				var isInputValid = input.checkValidity();				
+				// HTML 原生驗證
+				var isInputValid = input.checkValidity();
+				
+				// 聯絡電話格式驗證
+				if (input.id === 'txtPhone') {
+					if (!isValidPhone(input.value)) {
+						isInputValid = false;
+					}
+				}
+				// 信用卡卡號驗證
 				if (input.id === 'txtCardNumber') {
 					var cardNumber = input.value.replace(/\D/g, '');
 					// 卡號必須為 13～19 碼，並通過 Luhn 檢查
@@ -401,6 +403,7 @@
 						isInputValid = false;
 					}
 				}
+				// 信用卡到期日驗證
 				if (input.id === 'txtExpiry') {
 					// 到期日必須符合 MM/YY、月份有效且尚未過期
 					if (!isValidExpiry(input.value)) {
@@ -420,10 +423,16 @@
 				}
 			});
 
-			// 驗證全過才導向成功頁面
+			// 驗證全過才送出表單
+			var submitButton = document.getElementById('btnSubmitPayment');
+
 			if (isValid) {
+				submitButton.disabled = true;
+				submitButton.textContent = '處理中...';
+
 				form.submit();
 			}
+
 		}, false)
 	})()
 </script>

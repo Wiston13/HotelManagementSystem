@@ -1,5 +1,23 @@
-﻿@{
+﻿@model IEnumerable<HotelManagementSystem.Models.Entities.RoomType>
+
+@{
     ViewData["Title"] = "房型與固定價格管理";
+}
+
+<!-- 後端訊息提示區塊 -->
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="關閉"></button>
+    </div>
+}
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="關閉"></button>
+    </div>
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -17,8 +35,13 @@
     <div class="col-md-3">
         <label class="form-label fw-bold small">選擇分館</label>
         <select class="form-select" id="branchFilter" onchange="filterByBranch()">
-            <option value="1" selected>台北館</option>
-            <option value="2">高雄館</option>
+            @if (ViewBag.Branches != null)
+            {
+                foreach (var branch in ViewBag.Branches)
+                {
+                    <option value="@branch.BranchId">@branch.BranchName</option>
+                }
+            }
         </select>
     </div>
 </div>
@@ -37,81 +60,51 @@
                 </tr>
             </thead>
             <tbody id="roomTypeTableBody">
-                <!-- 示範資料列 1 (台北館 BranchId=1) -->
-                <tr data-branch-id="1">
-                    <td class="ps-4 fw-bold">標準雙人房</td>
-                    <td>2 人</td>
-                    <td>一大床</td>
-                    <td>NT$ 2,800</td>
-                    <td><span class="badge bg-success">啟用</span></td>
-                    <td class="text-end pe-4">
-                        <button class="btn btn-link text-primary p-0 text-decoration-none"
-                                data-bs-toggle="modal"
-                                data-bs-target="#roomTypeModal"
-                                data-id="1"
-                                data-branch-id="1"
-                                data-name="標準雙人房"
-                                data-capacity="2"
-                                data-bed="一大床"
-                                data-price="2800"
-                                data-status="true"
-                                data-imageurl="https://example.com/room1.jpg"
-                                data-description="舒適溫馨的雙人空間，適合情侶或商務出差。"
-                                onclick="openRoomTypeModal('edit', this)">
-                            編輯
-                        </button>
-                    </td>
-                </tr>
-                <!-- 示範資料列 2 (台北館 BranchId=1) -->
-                <tr data-branch-id="1">
-                    <td class="ps-4 fw-bold">三床豪華房</td>
-                    <td>3 人</td>
-                    <td>一大床 + 一小床</td>
-                    <td>NT$ 3,800</td>
-                    <td><span class="badge bg-secondary">停用</span></td>
-                    <td class="text-end pe-4">
-                        <button class="btn btn-link text-primary p-0 text-decoration-none"
-                                data-bs-toggle="modal"
-                                data-bs-target="#roomTypeModal"
-                                data-id="2"
-                                data-branch-id="1"
-                                data-name="三床豪華房"
-                                data-capacity="3"
-                                data-bed="一大床 + 一小床"
-                                data-price="3800"
-                                data-status="false"
-                                data-imageurl="https://example.com/room2.jpg"
-                                data-description="空間寬敞，適合家庭與小團體入住。"
-                                onclick="openRoomTypeModal('edit', this)">
-                            編輯
-                        </button>
-                    </td>
-                </tr>
-                <!-- 示範資料列 3 (高雄館 BranchId=2) -->
-                <tr data-branch-id="2" style="display: none;">
-                    <td class="ps-4 fw-bold">海景雙人房</td>
-                    <td>2 人</td>
-                    <td>一大床</td>
-                    <td>NT$ 3,200</td>
-                    <td><span class="badge bg-success">啟用</span></td>
-                    <td class="text-end pe-4">
-                        <button class="btn btn-link text-primary p-0 text-decoration-none"
-                                data-bs-toggle="modal"
-                                data-bs-target="#roomTypeModal"
-                                data-id="3"
-                                data-branch-id="2"
-                                data-name="海景雙人房"
-                                data-capacity="2"
-                                data-bed="一大床"
-                                data-price="3200"
-                                data-status="true"
-                                data-imageurl="https://example.com/room3.jpg"
-                                data-description="採光極佳，可直接遠眺高雄港夜景。"
-                                onclick="openRoomTypeModal('edit', this)">
-                            編輯
-                        </button>
-                    </td>
-                </tr>
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr data-branch-id="@item.BranchId">
+                            <td class="ps-4 fw-bold">@item.RoomTypeName</td>
+                            <td>@item.MaxOccupancy 人</td>
+                            <td>@item.BedType</td>
+                            <td>NT$ @item.NightlyPrice.ToString("#,##0.##", System.Globalization.CultureInfo.GetCultureInfo("zh-TW"))</td>
+                            <td>
+                                @if (item.IsActive)
+                                {
+                                    <span class="badge bg-success">啟用</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">停用</span>
+                                }
+                            </td>
+                            <td class="text-end pe-4">
+                                <button class="btn btn-link text-primary p-0 text-decoration-none"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#roomTypeModal"
+                                        data-id="@item.RoomTypeId"
+                                        data-branch-id="@item.BranchId"
+                                        data-name="@item.RoomTypeName"
+                                        data-capacity="@item.MaxOccupancy"
+                                        data-bed="@item.BedType"
+                                        data-price="@item.NightlyPrice.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)"
+                                        data-status="@(item.IsActive.ToString().ToLower())"
+                                        data-imageurl="@item.ImageUrl"
+                                        data-description="@item.Description"
+                                        onclick="openRoomTypeModal('edit', this)">
+                                    編輯
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">目前尚無任何房型資料</td>
+                    </tr>
+                }
             </tbody>
         </table>
     </div>
@@ -123,10 +116,12 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title fw-bold" id="roomTypeModalTitle">房型與固定價格維護</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
             </div>
             <div class="modal-body">
                 <form id="roomTypeForm" asp-controller="RoomType" asp-action="Save" method="post">
+                    @Html.AntiForgeryToken()
+
                     <!-- 隱藏欄位：PK (RoomTypeId) 與 FK (BranchId) -->
                     <input type="hidden" id="roomTypeId" name="RoomTypeId" value="0">
                     <input type="hidden" id="branchId" name="BranchId" value="1">
@@ -142,7 +137,7 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">床型說明 <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="bedType" name="BedType" placeholder="例如：一大床 / 兩單人床" required>
+                            <input type="text" class="form-control" id="bedType" name="BedType" placeholder="例如：一大床" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">每晚固定價格 <span class="text-danger">*</span></label>
@@ -156,9 +151,9 @@
                             </select>
                         </div>
                         <div class="col-12">
-                            <label class="form-label fw-bold">圖片網址 <span class="text-danger">*</span></label>
-                            <input type="url" class="form-control" id="imageUrl" name="ImageUrl" placeholder="https://example.com/image.jpg" required>
-                            <div class="form-text">供顧客房型搜尋與選擇頁顯示預覽圖片。</div>
+                            <label class="form-label fw-bold">圖片網址 / 相對路徑 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="imageUrl" name="ImageUrl" placeholder="例如：/images/room1.jpg 或 https://example.com/image.jpg" required>
+                            <div class="form-text">可填寫本地相對路徑（如：/images/room1.jpg）或公開網路圖片網址。</div>
                         </div>
                         <div class="col-12">
                             <label class="form-label fw-bold">房型描述</label>
@@ -185,10 +180,17 @@
 
         // 依畫面上方選擇的分館進行表格篩選
         function filterByBranch() {
-            const selectedBranchId = document.getElementById('branchFilter').value;
+            const branchSelect = document.getElementById('branchFilter');
+            if (!branchSelect) return;
+
+            const selectedBranchId = branchSelect.value;
             const rows = document.querySelectorAll('#roomTypeTableBody tr');
 
             rows.forEach(row => {
+                if (!row.hasAttribute('data-branch-id')) {
+                    return;
+                }
+
                 if (row.getAttribute('data-branch-id') === selectedBranchId) {
                     row.style.display = '';
                 } else {
@@ -238,39 +240,23 @@
             }
 
             const name = document.getElementById('roomTypeName').value;
-            // 抓取上方「選擇分館」下拉選單顯示的名稱（例如：台北館）
             const branchFilter = document.getElementById('branchFilter');
             const branchText = branchFilter.options[branchFilter.selectedIndex].text;
-
             const capacity = document.getElementById('maxOccupancy').value;
             const bed = document.getElementById('bedType').value;
-            const price = document.getElementById('nightlyPrice').value;
+            const price = Number(document.getElementById('nightlyPrice').value).toLocaleString('zh-TW', { maximumFractionDigits: 2 });
             const status = document.getElementById('isActive').value === 'true' ? '啟用' : '停用';
-            const img = document.getElementById('imageUrl').value;
+            const imgUrl = document.getElementById('imageUrl').value.trim();
 
-            let message = '';
-
-            if (currentMode === 'add') {
-                message = `【確認新增房型】\n\n` +
-                    `確定要新增以下房型資料嗎？\n` +
-                    `• 所屬分館：${branchText}\n` +
-                    `• 房型名稱：${name}\n` +
-                    `• 可住人數：${capacity} 人\n` +
-                    `• 床型說明：${bed}\n` +
-                    `• 每晚價格：NT$ ${price}\n` +
-                    `• 狀態：${status}\n` +
-                    `• 圖片網址：${img}`;
-            } else {
-                message = `【確認修改房型】\n\n` +
-                    `確定要儲存【${name}】的變更嗎？\n` +
-                    `• 所屬分館：${branchText}\n` +
-                    `• 房型名稱：${name}\n` +
-                    `• 可住人數：${capacity} 人\n` +
-                    `• 床型說明：${bed}\n` +
-                    `• 每晚價格：NT$ ${price}\n` +
-                    `• 狀態：${status}\n` +
-                    `• 圖片網址：${img}`;
-            }
+            let message = currentMode === 'add' ? `【確認新增房型】\n\n` : `【確認修改房型】\n\n`;
+            message += `確定要儲存以下房型資料嗎？\n` +
+                `• 所屬分館：${branchText}\n` +
+                `• 房型名稱：${name}\n` +
+                `• 可住人數：${capacity} 人\n` +
+                `• 床型說明：${bed}\n` +
+                `• 每晚價格：NT$ ${price}\n` +
+                `• 狀態：${status}\n` +
+                `• 圖片路徑：${imgUrl}`;
 
             if (confirm(message)) {
                 form.submit();

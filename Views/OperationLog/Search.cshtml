@@ -1,100 +1,71 @@
-﻿@* 飯店後台：基本操作紀錄查詢頁 *@
-@{
+﻿@{
     ViewData["Title"] = "操作紀錄";
 }
 
 <div>
     <p class="text-secondary mb-4">查詢系統內各帳號的操作歷程紀錄</p>
 
-    <!-- 查詢條件區塊 (Card) -->
     <div class="card mb-4 shadow-sm">
         <div class="card-body">
             <form id="searchForm" onsubmit="return false;">
-                <!-- 第一排：日期區間、分館、操作類型 -->
                 <div class="row g-3 mb-3">
                     <div class="col-12 col-md-4">
                         <label class="form-label">
-                            日期區間 <span class="text-danger">*</span>
+                            日期區間
                         </label>
                         <div class="input-group">
-                            <input type="date" class="form-control" id="dateStart" value="2026-08-10">
+                            <input type="date" class="form-control" id="dateStart">
                             <span class="input-group-text bg-light text-secondary">至</span>
-                            <input type="date" class="form-control" id="dateEnd" value="2026-08-11">
+                            <input type="date" class="form-control" id="dateEnd">
                         </div>
                     </div>
 
                     <div class="col-12 col-md-4">
                         <label class="form-label">
-                            分館 <span class="text-danger">*</span>
+                            分館
                         </label>
-                        <select class="form-select" id="branchSelect">
-                            <option value="全部分館">全部分館</option>
-                            <option value="台北商旅">台北商旅</option>
-                            <option value="台中商旅">台中商旅</option>
-                            <option value="高雄商旅">高雄商旅</option>
+                        <select id="branchSelect" class="form-control">
+                            <option value="">全部分館</option>
+                            @if (ViewBag.Branches != null)
+                            {
+                                foreach (var branch in ViewBag.Branches)
+                                {
+                                    <option value="@branch.BranchId">@branch.BranchName</option>
+                                }
+                            }
                         </select>
                     </div>
 
                     <div class="col-12 col-md-4">
                         <label class="form-label">
-                            操作類型 <span class="text-danger">*</span>
+                            操作類型
                         </label>
-                        
                         <select class="form-select" id="typeSelect">
-                            <option value="全部類型" selected>全部類型</option>
-
-                            <optgroup label="🏢 分館與房型管理">
-                                <option value="建立分館">建立分館</option>
-                                <option value="修改分館">修改分館</option>
-                                <option value="開放新訂房">開放新訂房</option>
-                                <option value="停止新訂房">停止新訂房</option>
-                                <option value="建立房型">建立房型</option>
-                                <option value="修改房型">修改房型</option>
-                                <option value="停用房型">停用房型</option>
-                                <option value="啟用房型">啟用房型</option>
-                            </optgroup>
-
-                            <optgroup label="🔑 房間與保留控制">
-                                <option value="建立房間">建立房間</option>
-                                <option value="修改房間">修改房間</option>
-                                <option value="停用房間">停用房間</option>
-                                <option value="啟用房間">啟用房間</option>
-                                <option value="設為保留">設為保留</option>
-                                <option value="解除保留">解除保留</option>
-                                <option value="更新清潔狀態">更新清潔狀態</option>
-                            </optgroup>
-
-                            <optgroup label="👤 員工帳號管理">
-                                <option value="建立帳號">建立帳號</option>
-                                <option value="修改帳號">修改帳號</option>
-                                <option value="停用帳號">停用帳號</option>
-                                <option value="啟用帳號">啟用帳號</option>
-                                <option value="重設密碼">重設密碼</option>
-                            </optgroup>
-
-                            <optgroup label="🛎️ 訂單與日常櫃檯">
-                                <option value="取消訂單">取消訂單</option>
-                                <option value="Check-in">Check-in</option>
-                                <option value="Check-out">Check-out</option>
-                            </optgroup>
+                            <option value="" selected>全部類型</option>
+                            @if (ViewBag.ActionTypes != null)
+                            {
+                                foreach (var name in ViewBag.ActionTypes)
+                                {
+                                    <option value="@name">@name</option>
+                                }
+                            }
                         </select>
                     </div>
                 </div>
 
-                <!-- 第二排：操作者、操作對象、查詢按鈕 -->
                 <div class="row g-3 align-items-end">
                     <div class="col-12 col-md-4">
                         <label class="form-label">操作者 <span class="text-secondary">＊選填</span></label>
-                        <input type="text" class="form-control" id="operatorInput" placeholder="姓名 / 帳號">
+                        <input type="text" class="form-control" id="operatorInput" placeholder="姓名 / 員工編號">
                     </div>
 
                     <div class="col-12 col-md-4">
-                        <label class="form-label">操作對象 <span class="text-secondary">＊選填</span></label>
-                        <input type="text" class="form-control" id="targetInput" placeholder="編號 / 房號">
+                        <label class="form-label">識別資訊 <span class="text-secondary">＊選填</span></label>
+                        <input type="text" class="form-control" id="targetInput" placeholder="名稱 / 編號 / 房號">
                     </div>
 
                     <div class="col-12 col-md-4 d-grid">
-                        <button type="button" class="btn btn-primary" id="btnSearch">
+                        <button type="button" class="btn btn-primary" id="btnSearch" onclick="executeSearch()">
                             查詢
                         </button>
                     </div>
@@ -103,19 +74,18 @@
         </div>
     </div>
 
-    <!-- 查詢結果列表區塊 -->
     <div class="card mb-4 shadow-sm d-none" id="resultCard">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th style="width: 12%;">時間</th>
+                        <th style="width: 15%;">時間</th>
                         <th style="width: 12%;">分館</th>
                         <th style="width: 12%;">操作者</th>
                         <th style="width: 15%;">操作類型</th>
                         <th style="width: 12%;">操作對象</th>
-                        <th style="width: 12%;">識別編號</th>
-                        <th style="width: 25%;">說明</th>
+                        <th style="width: 12%;">識別資訊</th>
+                        <th style="width: 22%;">說明</th>
                     </tr>
                 </thead>
                 <tbody id="resultTableBody"></tbody>
@@ -123,7 +93,6 @@
         </div>
     </div>
 
-    <!-- 查無資料的友善提示區塊 -->
     <div class="card mb-4 shadow-sm text-center py-5 d-none" id="noDataCard">
         <div class="card-body">
             <div class="text-secondary mb-3" style="font-size: 2.5rem;">🔍</div>
@@ -132,7 +101,6 @@
         </div>
     </div>
 </div>
-
 
 @section Scripts {
     <script>
@@ -148,124 +116,153 @@
             const typeSelect = document.getElementById("typeSelect");
             const operatorInput = document.getElementById("operatorInput");
             const targetInput = document.getElementById("targetInput");
+            const targetTypeLabels = {
+                Branch: "分館",
+                RoomType: "房型",
+                Room: "房間",
+                Booking: "訂單",
+                Employee: "員工"
+            };
 
-            // 1. 原始模擬資料集
-            const mockData = [
-                {
-                    date: "2026-08-10",
-                    displayTime: "08/10 16:05",
-                    branch: "台北商旅",
-                    operator: "林怡君",
-                    type: "解除保留",
-                    target: "房間",
-                    targetIdentifier: "304",
-                    description: "房間 304 已解除保留並恢復開放販售"
-                },
-                { date: "2026-08-10", displayTime: "08/10 16:05", branch: "台北商旅", operator: "林怡君", type: "Check-in", target: "訂單", targetIdentifier: "BK...0184", description: "訂單BK...0184 已辦理入住" },
-                { date: "2026-08-11", displayTime: "08/11 11:38", branch: "台北商旅", operator: "張雅婷", type: "Check-out", target: "訂單", targetIdentifier: "BK...024", description: "訂單BK...024 已辦理退房" },
-                { date: "2026-08-11", displayTime: "08/11 12:10", branch: "高雄商旅", operator: "系統管理員", type: "停用帳號", target: "員工帳號", targetIdentifier: "kaohsiung03", description: "員工帳號kaohsiung03 已停用" }
-            ];
-
-            // 2. 鎖定日期上限為今天
             const today = new Date();
             const year = today.getFullYear();
             const month = String(today.getMonth() + 1).padStart(2, '0');
             const day = String(today.getDate()).padStart(2, '0');
             const todayStr = `${year}-${month}-${day}`;
 
-            // 3. 交叉防呆限制邏輯
-            function updateDateConstraints() {
-                dateStart.setAttribute("max", todayStr);
-                if (dateStart.value) {
-                    dateEnd.setAttribute("min", dateStart.value);
-                }
-                if (dateEnd.value) {
-                    if (dateEnd.value < todayStr) {
-                        dateStart.setAttribute("max", dateEnd.value);
-                    } else {
-                        dateStart.setAttribute("max", todayStr);
+            const oneMonthAgo = new Date();
+            oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+            const startYear = oneMonthAgo.getFullYear();
+            const startMonth = String(oneMonthAgo.getMonth() + 1).padStart(2, '0');
+            const startDay = String(oneMonthAgo.getDate()).padStart(2, '0');
+            const startStr = `${startYear}-${startMonth}-${startDay}`;
+
+            dateStart.value = startStr;
+            dateEnd.value = todayStr;
+
+            dateStart.setAttribute("max", todayStr);
+            dateEnd.setAttribute("max", todayStr);
+
+            function validateDates() {
+                if (dateStart.value && dateEnd.value) {
+                    if (dateStart.value > dateEnd.value) {
+                        dateEnd.value = dateStart.value;
                     }
-                } else {
-                    dateEnd.setAttribute("max", todayStr);
+                    dateEnd.setAttribute("min", dateStart.value);
                 }
             }
 
-            updateDateConstraints();
+            validateDates();
+            dateStart.addEventListener("change", validateDates);
+            dateEnd.addEventListener("change", validateDates);
 
-            dateStart.addEventListener("change", function() {
-                if (dateEnd.value && dateStart.value > dateEnd.value) {
-                    dateStart.value = dateEnd.value;
-                }
-                if (dateStart.value > todayStr) {
-                    dateStart.value = todayStr;
-                }
-                updateDateConstraints();
-            });
-
-            dateEnd.addEventListener("change", function() {
-                if (dateStart.value && dateEnd.value < dateStart.value) {
-                    dateEnd.value = dateStart.value;
-                }
-                if (dateEnd.value > todayStr) {
-                    dateEnd.value = todayStr;
-                }
-                updateDateConstraints();
-            });
-
-            // 4. 搜尋與過濾繪製邏輯
-            btnSearch.addEventListener("click", function() {
-                const sDate = dateStart.value;
-                const eDate = dateEnd.value;
-                const branch = branchSelect.value;
-                const type = typeSelect.value;
-                const operator = operatorInput.value.trim().toLowerCase();
-                const target = targetInput.value.trim().toLowerCase();
-
-                if (sDate > eDate) {
-                    alert("開始日期不能大於結束日期！");
-                    return;
-                }
-
-                const filtered = mockData.filter(item => {
-                    // 日期篩選
-                    if (item.date < sDate || item.date > eDate) return false;
-
-                  
-                    if (branch !== "全部分館" && branch !== "" && item.branch !== branch) return false;
-
-                    // 操作類型篩選
-                    if (type !== "全部類型" && item.type !== type) return false;
-
-                    if (operator && !item.operator.toLowerCase().includes(operator)) return false;
-                    if (target && !item.target.toLowerCase().includes(target) && !item.targetIdentifier.toLowerCase().includes(target)) return false;
-
-                    return true;
-                });
-
+            // 使用 textContent 顯示資料，避免將資料庫字串解析為 HTML。
+            window.renderTable = function(dataList) {
                 resultTableBody.innerHTML = "";
-
-                if (filtered.length > 0) {
-                    filtered.forEach(item => {
+                if (dataList && dataList.length > 0) {
+                    dataList.forEach(item => {
                         const tr = document.createElement("tr");
-                      
-                        tr.innerHTML = `
-                                    <td class="text-secondary">${item.displayTime}</td>
-                                    <td>${item.branch}</td>
-                                    <td>${item.operator}</td>
-                                    <td><span class="badge bg-light text-dark border">${item.type}</span></td>
-                                    <td>${item.target}</td>
-                                    <td class="font-monospace fw-semibold">${item.targetIdentifier}</td>
-                                    <td class="small text-muted">${item.description}</td>
-                                `;
+
+                        const tdTime = document.createElement("td");
+                        tdTime.textContent = item.operatedAt ? item.operatedAt.replace("T", " ").substring(0, 19) : "";
+                        tr.appendChild(tdTime);
+
+                        const tdBranch = document.createElement("td");
+                        const spanBranch = document.createElement("span");
+                        spanBranch.className = "badge bg-light text-dark border";
+                        spanBranch.textContent = item.branchName || "系統核心";
+                        tdBranch.appendChild(spanBranch);
+                        tr.appendChild(tdBranch);
+
+                        const tdOperator = document.createElement("td");
+                        const strongOperator = document.createElement("strong");
+                        strongOperator.className = "text-primary";
+                        strongOperator.textContent = item.operatorName || "-";
+                        tdOperator.appendChild(strongOperator);
+                        tr.appendChild(tdOperator);
+
+                        const tdType = document.createElement("td");
+                        const spanType = document.createElement("span");
+                        spanType.className = "text-secondary";
+                        spanType.textContent = item.operationTypeName || "-";
+                        tdType.appendChild(spanType);
+                        tr.appendChild(tdType);
+
+                        const tdTargetType = document.createElement("td");
+                        const spanTgtType = document.createElement("span");
+                        spanTgtType.className = "badge bg-secondary-subtle text-secondary-emphasis";
+                        spanTgtType.textContent = targetTypeLabels[item.targetType] || item.targetType || "-";
+                        tdTargetType.appendChild(spanTgtType);
+                        tr.appendChild(tdTargetType);
+
+                        const tdIdentifier = document.createElement("td");
+                        const codeId = document.createElement("code");
+                        codeId.textContent = item.targetIdentifier || "-";
+                        tdIdentifier.appendChild(codeId);
+                        tr.appendChild(tdIdentifier);
+
+                        const tdDesc = document.createElement("td");
+                        tdDesc.className = "text-muted small";
+                        tdDesc.textContent = item.description || "-";
+                        tr.appendChild(tdDesc);
+
                         resultTableBody.appendChild(tr);
                     });
+
                     resultCard.classList.remove("d-none");
                     noDataCard.classList.add("d-none");
                 } else {
                     resultCard.classList.add("d-none");
                     noDataCard.classList.remove("d-none");
                 }
-            });
+            }
+
+            window.executeSearch = async function() {
+                btnSearch.disabled = true;
+                btnSearch.innerText = "查詢中...";
+
+                const sDate = dateStart.value;
+                const eDate = dateEnd.value;
+                const bId = branchSelect.value;
+                const type = typeSelect.value;
+                const op = operatorInput.value.trim();
+                const tgt = targetInput.value.trim();
+
+                try {
+
+                    let url = `/OperationLog/GetFilteredLogs?startDate=${sDate}&endDate=${eDate}`;
+
+                    if (bId) {
+                        url += `&branchId=${parseInt(bId)}`;
+                    }
+                    if (type) {
+                        url += `&type=${encodeURIComponent(type)}`;
+                    }
+                    if (op) {
+                        url += `&operatorInput=${encodeURIComponent(op)}`;
+                    }
+                    if (tgt) {
+                        url += `&target=${encodeURIComponent(tgt)}`;
+                    }
+
+                    const response = await fetch(url);
+                    const data = await response.json();
+
+                    if (data && data.success === false) {
+                        alert("操作失敗：" + (data.message || "讀取紀錄失敗。"));
+                        return;
+                    }
+
+                    renderTable(data);
+                } catch (error) {
+                    console.error(error);
+                    alert("網路連線失敗，請檢查網路或伺服器狀態。");
+                } finally {
+                    btnSearch.disabled = false;
+                    btnSearch.innerText = "查詢";
+                }
+            }
+
         });
     </script>
 }

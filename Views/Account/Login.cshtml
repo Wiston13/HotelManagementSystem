@@ -27,7 +27,7 @@
                         <form id="loginForm" class="needs-validation" novalidate>
                             <div class="mb-3">
                                 <label class="form-label" for="username">
-                                    員工帳號 <span class="text-danger">*</span>
+                                    員工編號 <span class="text-danger">*</span>
                                 </label>
 
                                 <input type="text"
@@ -63,7 +63,7 @@
                             }
 
                             <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
-                                安全登入
+                                登入
                             </button>
                         </form>
                     </div>
@@ -77,16 +77,42 @@
     </div>
 
     <script>
-        document.getElementById("loginForm").addEventListener("submit", function(event) {
-            event.preventDefault();
-            this.classList.add("was-validated");
+            document.getElementById("loginForm").addEventListener("submit", async function(event) {
+                event.preventDefault();
+                this.classList.add("was-validated");
 
-            if (!this.checkValidity()) {
-                return;
-            }
+                if (!this.checkValidity()) {
+                    return;
+                }
 
-            window.location.href = "/EmployeeHome/Index";
-        });
+                const usernameInput = document.getElementById("username").value;
+                const passwordInput = document.getElementById("password").value;
+
+                try {
+                    const response = await fetch('/Account/Login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            Username: usernameInput,
+                            Password: passwordInput
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        window.location.href = result.redirectUrl;
+                    } else {
+                        alert(result.message || "登入失敗，請檢查帳號密碼");
+                    }
+                } catch (error) {
+                    console.error("網路錯誤:", error);
+                    alert("系統連線錯誤，請稍後再試");
+                }
+            });
     </script>
+
 </body>
 </html>

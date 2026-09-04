@@ -1,101 +1,723 @@
+@using HotelManagementSystem.Models.ViewModels.RoomStatus
+@model RoomStatusViewModel
+
 @{
-    ViewData["Title"] = "房間供應與清潔狀態";
+	ViewData["Title"] = "房間供應與清潔狀態";
+}
+@{
+	var availableRooms = Model.Rooms.Where(r => r.IsAvailable);
+
+	var reservedRooms = Model.Rooms.Where(r => r.SupplyStatus == "Reserved");
+
+	var occupiedRooms = Model.Rooms.Where(r => r.IsOccupied);
+
+	var cleaningRooms = Model.Rooms.Where(r => r.CleaningStatus == "NeedsCleaning");
+
+	var disabledRooms = Model.Rooms.Where(r => r.SupplyStatus == "Disabled");
+
+	var roomTabs = new (
+		string Id,
+		string Label,
+		IEnumerable<RoomStatusItemViewModel> Rooms,
+		bool IsActive)[]
+	{
+		("all", "全部", Model.Rooms, true),
+		("available", "可入住", availableRooms, false),
+		("reserved", "保留", reservedRooms, false),
+		("occupied", "入住中", occupiedRooms, false),
+		("cleaning", "待清潔", cleaningRooms, false),
+		("disabled", "停用", disabledRooms, false)
+	};
 }
 
+
 @section Styles {
-    <link rel="stylesheet" href="~/css/room-status/Index.css" asp-append-version="true" />
+	<link rel="stylesheet" href="~/css/room-status/Index.css" asp-append-version="true" />
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+	<div class="alert alert-danger alert-dismissible fade show" role="alert">
+		@TempData["ErrorMessage"]
+
+		<button type="button"
+				class="btn-close"
+				data-bs-dismiss="alert"
+				aria-label="關閉">
+		</button>
+	</div>
+}
+
+@if (TempData["SuccessMessage"] != null)
+{
+	<div class="alert alert-success alert-dismissible fade show" role="alert">
+		@TempData["SuccessMessage"]
+
+		<button type="button"
+				class="btn-close"
+				data-bs-dismiss="alert"
+				aria-label="關閉">
+		</button>
+	</div>
+}
+
+@if (Model.CapacityRisk != null)
+{
+	var confirmationAction = Model.CapacityRisk.TargetStatus == "Disabled"
+		? "UpdateDisabledStatus"
+		: "UpdateSupplyStatus";
+
+	<div class="modal fade"
+		 id="capacityRiskModal"
+		 tabindex="-1"
+		 aria-labelledby="capacityRiskModalTitle"
+		 aria-hidden="true">
+
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h2 class="modal-title fs-5" id="capacityRiskModalTitle">
+						未來可售房量風險確認
+					</h2>
+
+					<button type="button"
+							class="btn-close"
+							data-bs-dismiss="modal"
+							aria-label="關閉">
+					</button>
+				</div>
+
+				<div class="modal-body">
+					<p>
+						將房間 @Model.CapacityRisk.RoomNumber
+						@(Model.CapacityRisk.TargetStatus == "Disabled" ? "停用" : "設為保留")
+						會降低未來可售房量，並造成下列容量缺口：
+					</p>
+
+					<ul class="list-group mb-0">
+						@foreach (var shortage in Model.CapacityRisk.Shortages)
+						{
+							<li class="list-group-item d-flex justify-content-between align-items-center">
+								<span>@shortage.Date.ToString("yyyy/MM/dd")</span>
+								<span class="badge text-bg-danger rounded-pill">
+									短缺 @shortage.ShortageCount 間
+								</span>
+							</li>
+						}
+					</ul>
+
+					<form asp-action="@confirmationAction"
+						  method="post"
+						  id="capacityRiskConfirmationForm">
+						<input type="hidden" name="roomId" value="@Model.CapacityRisk.RoomId" />
+						<input type="hidden" name="targetStatus" value="@Model.CapacityRisk.TargetStatus" />
+						<input type="hidden" name="disabledReason" value="@Model.CapacityRisk.DisabledReason" />
+						<input type="hidden" name="confirmed" value="true" />
+					</form>
+				</div>
+
+				<div class="modal-footer">
+					<button type="button"
+							class="btn btn-outline-secondary"
+							data-bs-dismiss="modal">
+						取消
+					</button>
+
+					<button type="submit"
+							class="btn btn-danger"
+							form="capacityRiskConfirmationForm">
+						仍要繼續
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
 }
 
 <div class="room-status-page">
-    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3 mb-4">
-        <div class="room-status-tabs-wrapper flex-grow-1">
-            <ul class="nav nav-tabs room-status-tabs" id="roomStatusTabs" role="tablist">
-                <li class="nav-item" role="presentation"><button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all-pane" type="button" role="tab" aria-controls="all-pane" aria-selected="true">全部</button></li>
-                <li class="nav-item" role="presentation"><button class="nav-link" id="available-tab" data-bs-toggle="tab" data-bs-target="#available-pane" type="button" role="tab" aria-controls="available-pane" aria-selected="false">可入住</button></li>
-                <li class="nav-item" role="presentation"><button class="nav-link" id="reserved-tab" data-bs-toggle="tab" data-bs-target="#reserved-pane" type="button" role="tab" aria-controls="reserved-pane" aria-selected="false">保留</button></li>
-                <li class="nav-item" role="presentation"><button class="nav-link" id="occupied-tab" data-bs-toggle="tab" data-bs-target="#occupied-pane" type="button" role="tab" aria-controls="occupied-pane" aria-selected="false">入住中</button></li>
-                <li class="nav-item" role="presentation"><button class="nav-link" id="cleaning-tab" data-bs-toggle="tab" data-bs-target="#cleaning-pane" type="button" role="tab" aria-controls="cleaning-pane" aria-selected="false">待清潔</button></li>
-                <li class="nav-item" role="presentation"><button class="nav-link" id="disabled-tab" data-bs-toggle="tab" data-bs-target="#disabled-pane" type="button" role="tab" aria-controls="disabled-pane" aria-selected="false">停用</button></li>
-            </ul>
-        </div>
-        <div class="room-floor-filter">
-            <label class="visually-hidden" for="floorFilter">選擇樓層</label>
-            <select class="form-select" id="floorFilter" aria-label="選擇樓層"><option selected>全部樓層</option><option>3 樓</option><option>5 樓</option><option>6 樓</option></select>
-        </div>
-    </div>
+	<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3 mb-4">
+		<div class="room-status-tabs-wrapper flex-grow-1">
+			<ul class="nav nav-tabs room-status-tabs"
+				id="roomStatusTabs"
+				role="tablist">
 
-    <div class="tab-content" id="roomStatusTabContent">
-        <div class="tab-pane fade show active" id="all-pane" role="tabpanel" aria-labelledby="all-tab" tabindex="0">
-            <section class="room-type-group mb-5" aria-labelledby="standardAllHeading">
-                <h2 class="h5 mb-3" id="standardAllHeading">標準雙人房</h2>
-                <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xxl-4 g-3">
-                    <div class="col"><button type="button" class="room-card room-card--available card h-100 w-100 border-0 shadow-sm p-0" data-bs-toggle="modal" data-bs-target="#room301Modal"><span class="card-body d-block p-3"><span class="room-card__number d-block">301</span><span class="room-card__type d-block">標準雙人房</span><span class="room-card__states d-flex flex-wrap gap-2"><span class="badge room-state room-state--open">開放販售</span><span class="badge room-state room-state--clean">已清潔</span><span class="badge room-state room-state--available">可入住</span></span></span></button></div>
-                    <div class="col"><button type="button" class="room-card room-card--cleaning card h-100 w-100 border-0 shadow-sm p-0" data-bs-toggle="modal" data-bs-target="#room302Modal"><span class="card-body d-block p-3"><span class="room-card__number d-block">302</span><span class="room-card__type d-block">標準雙人房</span><span class="room-card__states d-flex flex-wrap gap-2"><span class="badge room-state room-state--open">開放販售</span><span class="badge room-state room-state--dirty">待清潔</span></span></span></button></div>
-                    <div class="col"><button type="button" class="room-card room-card--reserved card h-100 w-100 border-0 shadow-sm p-0" data-bs-toggle="modal" data-bs-target="#room511Modal"><span class="card-body d-block p-3"><span class="room-card__number d-block">511</span><span class="room-card__type d-block">標準雙人房</span><span class="room-card__states d-flex flex-wrap gap-2"><span class="badge room-state room-state--reserved">保留</span><span class="badge room-state room-state--clean">已清潔</span></span></span></button></div>
-                    <div class="col"><button type="button" class="room-card room-card--reserved card h-100 w-100 border-0 shadow-sm p-0" data-bs-toggle="modal" data-bs-target="#room512Modal"><span class="card-body d-block p-3"><span class="room-card__number d-block">512</span><span class="room-card__type d-block">標準雙人房</span><span class="room-card__states d-flex flex-wrap gap-2"><span class="badge room-state room-state--reserved">保留</span><span class="badge room-state room-state--dirty">待清潔</span></span></span></button></div>
-                    <div class="col"><button type="button" class="room-card room-card--disabled card h-100 w-100 border-0 shadow-sm p-0" data-bs-toggle="modal" data-bs-target="#room515Modal"><span class="card-body d-block p-3"><span class="room-card__number d-block">515</span><span class="room-card__type d-block">標準雙人房</span><span class="room-card__states d-flex flex-wrap gap-2"><span class="badge room-state room-state--disabled">停用</span><span class="badge room-state room-state--clean">已清潔</span></span><span class="room-card__meta d-block">設備維修中</span></span></button></div>
-                    <div class="col"><button type="button" class="room-card room-card--disabled card h-100 w-100 border-0 shadow-sm p-0" data-bs-toggle="modal" data-bs-target="#room516Modal"><span class="card-body d-block p-3"><span class="room-card__number d-block">516</span><span class="room-card__type d-block">標準雙人房</span><span class="room-card__states d-flex flex-wrap gap-2"><span class="badge room-state room-state--disabled">停用</span><span class="badge room-state room-state--dirty">待清潔</span></span><span class="room-card__meta d-block">設備施工中</span></span></button></div>
-                </div>
-            </section>
-            <section class="room-type-group" aria-labelledby="deluxeAllHeading">
-                <h2 class="h5 mb-3" id="deluxeAllHeading">豪華四人房</h2>
-                <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xxl-4 g-3">
-                    <div class="col"><button type="button" class="room-card room-card--occupied card h-100 w-100 border-0 shadow-sm p-0" data-bs-toggle="modal" data-bs-target="#room609Modal"><span class="card-body d-block p-3"><span class="room-card__number d-block">609</span><span class="room-card__type d-block">豪華四人房</span><span class="room-card__states d-flex flex-wrap gap-2"><span class="badge room-state room-state--occupied">入住中</span></span><span class="room-card__meta d-block">退房日 08/12</span></span></button></div>
-                </div>
-            </section>
-        </div>
+				@foreach (var tab in roomTabs)
+				{
+					<li class="nav-item" role="presentation">
+						<button class="nav-link @(tab.IsActive ? "active" : "")"
+								id="@($"{tab.Id}-tab")"
+								data-bs-toggle="tab"
+								data-bs-target="@($"#{tab.Id}-pane")"
+								type="button"
+								role="tab"
+								aria-controls="@($"{tab.Id}-pane")"
+								aria-selected="@tab.IsActive.ToString().ToLower()">
 
-        <div class="tab-pane fade" id="available-pane" role="tabpanel" aria-labelledby="available-tab" tabindex="0">
-            <section class="room-type-group" aria-labelledby="availableHeading"><h2 class="h5 mb-3" id="availableHeading">標準雙人房</h2><div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xxl-4 g-3"><div class="col"><button type="button" class="room-card room-card--available card h-100 w-100 border-0 shadow-sm p-0" data-bs-toggle="modal" data-bs-target="#room301Modal"><span class="card-body d-block p-3"><span class="room-card__number d-block">301</span><span class="room-card__type d-block">標準雙人房</span><span class="room-card__states d-flex flex-wrap gap-2"><span class="badge room-state room-state--available">可入住</span><span class="badge room-state room-state--clean">已清潔</span></span></span></button></div></div></section>
-        </div>
+							@tab.Label
+						</button>
+					</li>
+				}
+			</ul>
+		</div>
+		<div class="room-floor-filter">
+			<label class="visually-hidden" for="floorFilter">選擇樓層</label>
+			<select class="form-select" id="floorFilter" aria-label="選擇樓層">
+				<option value="" selected>全部樓層</option>
+				@foreach(var floor in Model.Floors)
+				{
+					<option value="@floor">@floor 樓</option>
+				}
+			</select>
+		</div>
+	</div>
 
-        <div class="tab-pane fade" id="reserved-pane" role="tabpanel" aria-labelledby="reserved-tab" tabindex="0">
-            <section class="room-type-group" aria-labelledby="reservedHeading"><h2 class="h5 mb-3" id="reservedHeading">標準雙人房</h2><div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xxl-4 g-3">
-                <div class="col"><button type="button" class="room-card room-card--reserved card h-100 w-100 border-0 shadow-sm p-0" data-bs-toggle="modal" data-bs-target="#room511Modal"><span class="card-body d-block p-3"><span class="room-card__number d-block">511</span><span class="room-card__type d-block">標準雙人房</span><span class="room-card__states d-flex flex-wrap gap-2"><span class="badge room-state room-state--reserved">保留</span><span class="badge room-state room-state--clean">已清潔</span></span></span></button></div>
-                <div class="col"><button type="button" class="room-card room-card--reserved card h-100 w-100 border-0 shadow-sm p-0" data-bs-toggle="modal" data-bs-target="#room512Modal"><span class="card-body d-block p-3"><span class="room-card__number d-block">512</span><span class="room-card__type d-block">標準雙人房</span><span class="room-card__states d-flex flex-wrap gap-2"><span class="badge room-state room-state--reserved">保留</span><span class="badge room-state room-state--dirty">待清潔</span></span></span></button></div>
-            </div></section>
-        </div>
+	<div class="tab-content" id="roomStatusTabContent">
+		@foreach (var tab in roomTabs)
+		{
+			<div class="tab-pane fade @(tab.IsActive ? "show active" : "")"
+				 id="@(tab.Id)-pane"
+				 role="tabpanel"
+				 aria-labelledby="@(tab.Id)-tab"
+				 tabindex="0">
 
-        <div class="tab-pane fade" id="occupied-pane" role="tabpanel" aria-labelledby="occupied-tab" tabindex="0">
-            <section class="room-type-group" aria-labelledby="occupiedHeading"><h2 class="h5 mb-3" id="occupiedHeading">豪華四人房</h2><div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xxl-4 g-3"><div class="col"><button type="button" class="room-card room-card--occupied card h-100 w-100 border-0 shadow-sm p-0" data-bs-toggle="modal" data-bs-target="#room609Modal"><span class="card-body d-block p-3"><span class="room-card__number d-block">609</span><span class="room-card__type d-block">豪華四人房</span><span class="room-card__states d-flex flex-wrap gap-2"><span class="badge room-state room-state--occupied">入住中</span></span><span class="room-card__meta d-block">退房日 08/12</span></span></button></div></div></section>
-        </div>
+				<partial name="_RoomCards" model="tab.Rooms" />
 
-        <div class="tab-pane fade" id="cleaning-pane" role="tabpanel" aria-labelledby="cleaning-tab" tabindex="0">
-            <section class="room-type-group" aria-labelledby="cleaningHeading"><h2 class="h5 mb-3" id="cleaningHeading">標準雙人房</h2><div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xxl-4 g-3">
-                <div class="col"><button type="button" class="room-card room-card--cleaning card h-100 w-100 border-0 shadow-sm p-0" data-bs-toggle="modal" data-bs-target="#room302Modal"><span class="card-body d-block p-3"><span class="room-card__number d-block">302</span><span class="room-card__type d-block">標準雙人房</span><span class="room-card__states d-flex flex-wrap gap-2"><span class="badge room-state room-state--open">開放販售</span><span class="badge room-state room-state--dirty">待清潔</span></span></span></button></div>
-                <div class="col"><button type="button" class="room-card room-card--reserved card h-100 w-100 border-0 shadow-sm p-0" data-bs-toggle="modal" data-bs-target="#room512Modal"><span class="card-body d-block p-3"><span class="room-card__number d-block">512</span><span class="room-card__type d-block">標準雙人房</span><span class="room-card__states d-flex flex-wrap gap-2"><span class="badge room-state room-state--reserved">保留</span><span class="badge room-state room-state--dirty">待清潔</span></span></span></button></div>
-                <div class="col"><button type="button" class="room-card room-card--disabled card h-100 w-100 border-0 shadow-sm p-0" data-bs-toggle="modal" data-bs-target="#room516Modal"><span class="card-body d-block p-3"><span class="room-card__number d-block">516</span><span class="room-card__type d-block">標準雙人房</span><span class="room-card__states d-flex flex-wrap gap-2"><span class="badge room-state room-state--disabled">停用</span><span class="badge room-state room-state--dirty">待清潔</span></span><span class="room-card__meta d-block">設備施工中</span></span></button></div>
-            </div></section>
-        </div>
-
-        <div class="tab-pane fade" id="disabled-pane" role="tabpanel" aria-labelledby="disabled-tab" tabindex="0">
-            <section class="room-type-group" aria-labelledby="disabledHeading"><h2 class="h5 mb-3" id="disabledHeading">標準雙人房</h2><div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xxl-4 g-3">
-                <div class="col"><button type="button" class="room-card room-card--disabled card h-100 w-100 border-0 shadow-sm p-0" data-bs-toggle="modal" data-bs-target="#room515Modal"><span class="card-body d-block p-3"><span class="room-card__number d-block">515</span><span class="room-card__type d-block">標準雙人房</span><span class="room-card__states d-flex flex-wrap gap-2"><span class="badge room-state room-state--disabled">停用</span><span class="badge room-state room-state--clean">已清潔</span></span><span class="room-card__meta d-block">設備維修中</span></span></button></div>
-                <div class="col"><button type="button" class="room-card room-card--disabled card h-100 w-100 border-0 shadow-sm p-0" data-bs-toggle="modal" data-bs-target="#room516Modal"><span class="card-body d-block p-3"><span class="room-card__number d-block">516</span><span class="room-card__type d-block">標準雙人房</span><span class="room-card__states d-flex flex-wrap gap-2"><span class="badge room-state room-state--disabled">停用</span><span class="badge room-state room-state--dirty">待清潔</span></span><span class="room-card__meta d-block">設備施工中</span></span></button></div>
-            </div></section>
-        </div>
-    </div>
+			</div>
+		}
+	</div>
 </div>
 
-<!-- 無住客房間：供應狀態與清潔狀態分開管理 -->
-<div class="modal fade" id="room301Modal" tabindex="-1" aria-labelledby="room301ModalTitle" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h2 class="modal-title fs-5" id="room301ModalTitle">房間狀態管理</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button></div><div class="modal-body"><dl class="room-modal-details row g-3 mb-4"><div class="col-6"><dt>房號</dt><dd>301</dd></div><div class="col-6"><dt>房型</dt><dd>標準雙人房</dd></div></dl><div class="room-modal-section"><h3 class="h6">供應狀態</h3><p class="mb-3"><span class="badge room-state room-state--open">開放販售</span></p><div class="d-flex flex-wrap gap-2"><button type="button" class="btn btn-outline-primary">保留</button><button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#disableRoom301Modal" data-bs-dismiss="modal">停用</button></div></div><div class="room-modal-section"><h3 class="h6">清潔狀態</h3><p class="mb-3"><span class="badge room-state room-state--clean">已清潔</span></p><button type="button" class="btn btn-outline-primary">標記為待清潔</button></div></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button></div></div></div></div>
+@foreach (var room in Model.Rooms)
+{
+	var supplyClass =
+		room.SupplyStatus == "Open" ? "room-state--open" :
+		room.SupplyStatus == "Reserved" ? "room-state--reserved" :
+		"room-state--disabled";
 
-<div class="modal fade" id="room302Modal" tabindex="-1" aria-labelledby="room302ModalTitle" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h2 class="modal-title fs-5" id="room302ModalTitle">房間狀態管理</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button></div><div class="modal-body"><dl class="room-modal-details row g-3 mb-4"><div class="col-6"><dt>房號</dt><dd>302</dd></div><div class="col-6"><dt>房型</dt><dd>標準雙人房</dd></div></dl><div class="room-modal-section"><h3 class="h6">供應狀態</h3><p class="mb-3"><span class="badge room-state room-state--open">開放販售</span></p><div class="d-flex flex-wrap gap-2"><button type="button" class="btn btn-outline-primary">保留</button><button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#disableRoom302Modal" data-bs-dismiss="modal">停用</button></div></div><div class="room-modal-section"><h3 class="h6">清潔狀態</h3><p class="mb-3"><span class="badge room-state room-state--dirty">待清潔</span></p><button type="button" class="btn btn-primary">標記為已清潔</button></div></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button></div></div></div></div>
+	var supplyText =
+		room.SupplyStatus == "Open" ? "開放販售" :
+		room.SupplyStatus == "Reserved" ? "保留" :
+		"停用";
 
-<div class="modal fade" id="room511Modal" tabindex="-1" aria-labelledby="room511ModalTitle" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h2 class="modal-title fs-5" id="room511ModalTitle">房間狀態管理</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button></div><div class="modal-body"><dl class="room-modal-details row g-3 mb-4"><div class="col-6"><dt>房號</dt><dd>511</dd></div><div class="col-6"><dt>房型</dt><dd>標準雙人房</dd></div></dl><div class="room-modal-section"><h3 class="h6">供應狀態</h3><p class="mb-3"><span class="badge room-state room-state--reserved">保留</span></p><div class="d-flex flex-wrap gap-2"><button type="button" class="btn btn-outline-primary">解除保留</button><button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#disableRoom511Modal" data-bs-dismiss="modal">停用</button></div></div><div class="room-modal-section"><h3 class="h6">清潔狀態</h3><p class="mb-3"><span class="badge room-state room-state--clean">已清潔</span></p><button type="button" class="btn btn-outline-primary">標記為待清潔</button></div></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button></div></div></div></div>
+	var cleaningClass =
+		room.CleaningStatus == "Clean"
+			? "room-state--clean"
+			: "room-state--dirty";
 
-<div class="modal fade" id="room512Modal" tabindex="-1" aria-labelledby="room512ModalTitle" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h2 class="modal-title fs-5" id="room512ModalTitle">房間狀態管理</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button></div><div class="modal-body"><dl class="room-modal-details row g-3 mb-4"><div class="col-6"><dt>房號</dt><dd>512</dd></div><div class="col-6"><dt>房型</dt><dd>標準雙人房</dd></div></dl><div class="room-modal-section"><h3 class="h6">供應狀態</h3><p class="mb-3"><span class="badge room-state room-state--reserved">保留</span></p><div class="d-flex flex-wrap gap-2"><button type="button" class="btn btn-outline-primary">解除保留</button><button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#disableRoom512Modal" data-bs-dismiss="modal">停用</button></div></div><div class="room-modal-section"><h3 class="h6">清潔狀態</h3><p class="mb-3"><span class="badge room-state room-state--dirty">待清潔</span></p><button type="button" class="btn btn-primary">標記為已清潔</button></div></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button></div></div></div></div>
+	var cleaningText =
+		room.CleaningStatus == "Clean"
+			? "已清潔"
+			: "待清潔";
 
-<div class="modal fade" id="room515Modal" tabindex="-1" aria-labelledby="room515ModalTitle" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h2 class="modal-title fs-5" id="room515ModalTitle">房間狀態管理</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button></div><div class="modal-body"><dl class="room-modal-details row g-3 mb-4"><div class="col-6"><dt>房號</dt><dd>515</dd></div><div class="col-6"><dt>房型</dt><dd>標準雙人房</dd></div><div class="col-12"><dt>停用原因</dt><dd class="room-note">設備維修中</dd></div></dl><div class="room-modal-section"><h3 class="h6">供應狀態</h3><p class="mb-3"><span class="badge room-state room-state--disabled">停用</span></p><button type="button" class="btn btn-outline-primary">恢復開放販售</button></div><div class="room-modal-section"><h3 class="h6">清潔狀態</h3><p class="mb-3"><span class="badge room-state room-state--clean">已清潔</span></p><button type="button" class="btn btn-outline-primary">標記為待清潔</button></div></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button></div></div></div></div>
 
-<div class="modal fade" id="room516Modal" tabindex="-1" aria-labelledby="room516ModalTitle" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h2 class="modal-title fs-5" id="room516ModalTitle">房間狀態管理</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button></div><div class="modal-body"><dl class="room-modal-details row g-3 mb-4"><div class="col-6"><dt>房號</dt><dd>516</dd></div><div class="col-6"><dt>房型</dt><dd>標準雙人房</dd></div><div class="col-12"><dt>停用原因</dt><dd class="room-note">設備施工中</dd></div></dl><div class="room-modal-section"><h3 class="h6">供應狀態</h3><p class="mb-3"><span class="badge room-state room-state--disabled">停用</span></p><button type="button" class="btn btn-outline-primary">恢復開放販售</button></div><div class="room-modal-section"><h3 class="h6">清潔狀態</h3><p class="mb-3"><span class="badge room-state room-state--dirty">待清潔</span></p><button type="button" class="btn btn-primary">標記為已清潔</button></div></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button></div></div></div></div>
+	@* =========================
+       入住中：唯讀詳細資訊
+       ========================= *@
+	@if (room.IsOccupied)
+	{
+		<div class="modal fade"
+			 id="room@(room.RoomId)Modal"
+			 tabindex="-1"
+			 aria-labelledby="room@(room.RoomId)ModalTitle"
+			 aria-hidden="true">
 
-<!-- 入住中房間維持唯讀 -->
-<div class="modal fade" id="room609Modal" tabindex="-1" aria-labelledby="room609ModalTitle" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content"><div class="modal-header"><h2 class="modal-title fs-5" id="room609ModalTitle">房間詳細資訊</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button></div><div class="modal-body"><dl class="room-modal-details row g-3 mb-0"><div class="col-sm-6"><dt>房號</dt><dd>609</dd></div><div class="col-sm-6"><dt>房型</dt><dd>豪華四人房</dd></div><div class="col-sm-6"><dt>主要住客姓名</dt><dd>王小明</dd></div><div class="col-sm-6"><dt>訂房電話</dt><dd>0912345678</dd></div><div class="col-sm-6"><dt>訂單編號</dt><dd>BK20260810018</dd></div><div class="col-sm-6"><dt>入住日</dt><dd>08/10</dd></div><div class="col-sm-6"><dt>預計退房日</dt><dd>08/12</dd></div><div class="col-sm-6"><dt>Check-in 時間</dt><dd>16:26</dd></div></dl></div><div class="modal-footer"><button type="button" class="btn btn-primary" data-bs-dismiss="modal">關閉</button></div></div></div></div>
+			<div class="modal-dialog modal-dialog-centered modal-lg">
+				<div class="modal-content">
 
-<!-- 停用確認：靜態展示停用原因輸入，未送至後端 -->
-<div class="modal fade" id="disableRoom301Modal" tabindex="-1" aria-labelledby="disableRoom301ModalTitle" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h2 class="modal-title fs-5" id="disableRoom301ModalTitle">確認停用房間</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button></div><div class="modal-body"><p>房號：301</p><label for="disableReason301" class="form-label">停用原因 <span class="text-danger">*</span></label><textarea id="disableReason301" class="form-control" rows="3" required aria-required="true"></textarea></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button><button type="button" class="btn btn-danger">確認停用</button></div></div></div></div>
-<div class="modal fade" id="disableRoom302Modal" tabindex="-1" aria-labelledby="disableRoom302ModalTitle" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h2 class="modal-title fs-5" id="disableRoom302ModalTitle">確認停用房間</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button></div><div class="modal-body"><p>房號：302</p><label for="disableReason302" class="form-label">停用原因 <span class="text-danger">*</span></label><textarea id="disableReason302" class="form-control" rows="3" required aria-required="true"></textarea></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button><button type="button" class="btn btn-danger">確認停用</button></div></div></div></div>
-<div class="modal fade" id="disableRoom511Modal" tabindex="-1" aria-labelledby="disableRoom511ModalTitle" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h2 class="modal-title fs-5" id="disableRoom511ModalTitle">確認停用房間</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button></div><div class="modal-body"><p>房號：511</p><label for="disableReason511" class="form-label">停用原因 <span class="text-danger">*</span></label><textarea id="disableReason511" class="form-control" rows="3" required aria-required="true"></textarea></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button><button type="button" class="btn btn-danger">確認停用</button></div></div></div></div>
-<div class="modal fade" id="disableRoom512Modal" tabindex="-1" aria-labelledby="disableRoom512ModalTitle" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h2 class="modal-title fs-5" id="disableRoom512ModalTitle">確認停用房間</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button></div><div class="modal-body"><p>房號：512</p><label for="disableReason512" class="form-label">停用原因 <span class="text-danger">*</span></label><textarea id="disableReason512" class="form-control" rows="3" required aria-required="true"></textarea></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button><button type="button" class="btn btn-danger">確認停用</button></div></div></div></div>
+					<div class="modal-header">
+						<h2 class="modal-title fs-5"
+							id="room@(room.RoomId)ModalTitle">
+							房間詳細資訊
+						</h2>
 
+						<button type="button"
+								class="btn-close"
+								data-bs-dismiss="modal"
+								aria-label="關閉">
+						</button>
+					</div>
+
+					<div class="modal-body">
+
+						<dl class="room-modal-details row g-3 mb-0">
+
+							<div class="col-sm-6">
+								<dt>房號</dt>
+								<dd>@room.RoomNumber</dd>
+							</div>
+
+							<div class="col-sm-6">
+								<dt>房型</dt>
+								<dd>@room.RoomTypeName</dd>
+							</div>
+
+							<div class="col-sm-6">
+								<dt>主要住客姓名</dt>
+								<dd>@room.PrimaryGuestName</dd>
+							</div>
+
+							<div class="col-sm-6">
+								<dt>訂房電話</dt>
+								<dd>@room.ContactPhone</dd>
+							</div>
+
+							<div class="col-sm-6">
+								<dt>訂單編號</dt>
+								<dd>@room.BookingNumber</dd>
+							</div>
+
+							<div class="col-sm-6">
+								<dt>入住日</dt>
+								<dd>
+									@(room.CheckInDate?.ToString("yyyy/MM/dd") ?? "-")
+								</dd>
+							</div>
+
+							<div class="col-sm-6">
+								<dt>預計退房日</dt>
+								<dd>
+									@(room.CheckOutDate?.ToString("yyyy/MM/dd") ?? "-")
+								</dd>
+							</div>
+
+							<div class="col-sm-6">
+								<dt>Check-in 時間</dt>
+								<dd>
+									@(room.ActualCheckInAt?.ToString("yyyy/MM/dd HH:mm") ?? "-")
+								</dd>
+							</div>
+
+						</dl>
+
+					</div>
+
+					<div class="modal-footer">
+						<button type="button"
+								class="btn btn-primary"
+								data-bs-dismiss="modal">
+							關閉
+						</button>
+					</div>
+
+				</div>
+			</div>
+		</div>
+	}
+	else
+	{
+		@* =========================
+           無住客：房況管理
+           ========================= *@
+		<div class="modal fade"
+			 id="room@(room.RoomId)Modal"
+			 tabindex="-1"
+			 aria-labelledby="room@(room.RoomId)ModalTitle"
+			 aria-hidden="true">
+
+			<div class="modal-dialog modal-dialog-centered">
+				<div class="modal-content">
+
+					<div class="modal-header">
+
+						<h2 class="modal-title fs-5"
+							id="room@(room.RoomId)ModalTitle">
+							房間狀態管理
+						</h2>
+
+						<button type="button"
+								class="btn-close"
+								data-bs-dismiss="modal"
+								aria-label="關閉">
+						</button>
+
+					</div>
+
+					<div class="modal-body">
+
+						<dl class="room-modal-details row g-3 mb-4">
+
+							<div class="col-6">
+								<dt>房號</dt>
+								<dd>@room.RoomNumber</dd>
+							</div>
+
+							<div class="col-6">
+								<dt>房型</dt>
+								<dd>@room.RoomTypeName</dd>
+							</div>
+
+							@if (room.SupplyStatus == "Disabled"
+								&& !string.IsNullOrWhiteSpace(room.DisabledReason))
+							{
+								<div class="col-12">
+									<form asp-action="UpdateDisabledReason"
+										  method="post"
+										  id="disabledReasonForm@(room.RoomId)">
+
+										<input type="hidden"
+											   name="roomId"
+											   value="@room.RoomId" />
+
+										<div class="d-flex justify-content-between align-items-center mb-2">
+											<label for="disabledReason@(room.RoomId)" class="form-label mb-0">
+												停用原因
+											</label>
+
+											<button type="button"
+													class="btn btn-sm btn-outline-secondary edit-disabled-reason-btn"
+													data-room-id="@room.RoomId">
+												修改
+											</button>
+										</div>
+
+										<textarea id="disabledReason@(room.RoomId)"
+												  name="disabledReason"
+												  class="form-control"
+												  rows="3"
+												  data-saved-value="@room.DisabledReason"
+												  readonly>@room.DisabledReason</textarea>
+
+										<div class="invalid-feedback">
+											請填寫停用原因。
+										</div>
+									</form>
+								</div>
+							}
+
+						</dl>
+
+
+						@* 供應狀態 *@
+						<div class="room-modal-section">
+
+							<h3 class="h6">供應狀態</h3>
+
+							<p class="mb-3">
+								<span class="badge room-state @supplyClass">
+									@supplyText
+								</span>
+							</p>
+
+							<div class="d-flex flex-wrap gap-2">
+
+								@if (room.SupplyStatus == "Open")
+								{
+									<form asp-action="UpdateSupplyStatus" method="post">
+										<input type="hidden" name="roomId" value="@room.RoomId" />
+										<input type="hidden" name="targetStatus" value="Reserved" />
+
+										<button type="submit" class="btn btn-outline-primary">保留</button>
+									</form>
+
+									<button type="button"
+											class="btn btn-outline-danger"
+											data-bs-toggle="modal"
+											data-bs-target="#disableRoom@(room.RoomId)Modal"
+											data-bs-dismiss="modal">
+										停用
+									</button>
+								}
+								else if (room.SupplyStatus == "Reserved")
+								{
+									<form asp-action="UpdateSupplyStatus" method="post">
+										<input type="hidden" name="roomId" value="@room.RoomId" />
+										<input type="hidden" name="targetStatus" value="Open" />
+
+										<button type="submit" class="btn btn-outline-primary">解除保留</button>
+									</form>
+
+									<button type="button"
+											class="btn btn-outline-danger"
+											data-bs-toggle="modal"
+											data-bs-target="#disableRoom@(room.RoomId)Modal"
+											data-bs-dismiss="modal">
+										停用
+									</button>
+								}
+								else if (room.SupplyStatus == "Disabled")
+								{
+									<form asp-action="UpdateDisabledStatus" method="post">
+										<input type="hidden" name="roomId" value="@room.RoomId" />
+										<input type="hidden" name="targetStatus" value="Open" />
+
+										<button type="submit"
+												class="btn btn-outline-primary">
+											恢復開放販售
+										</button>
+									</form>
+								}
+
+							</div>
+						</div>
+
+
+						@* 清潔狀態 *@
+						<div class="room-modal-section">
+
+							<h3 class="h6">清潔狀態</h3>
+
+							<p class="mb-3">
+								<span class="badge room-state @cleaningClass">
+									@cleaningText
+								</span>
+							</p>
+
+							@if (room.CleaningStatus == "Clean")
+							{
+								<form asp-action="UpdateCleaningStatus" method="post">
+									<input type="hidden" name="roomId" value="@room.RoomId" />
+									<input type="hidden" name="targetStatus" value="NeedsCleaning" />
+
+									<button type="submit" class="btn btn-outline-primary">標記為待清潔</button>
+								</form>
+							}
+							else
+							{
+								<form asp-action="UpdateCleaningStatus" method="post">
+									<input type="hidden" name="roomId" value="@room.RoomId" />
+									<input type="hidden" name="targetStatus" value="Clean" />
+
+									<button type="submit" class="btn btn-outline-primary">標記為已清潔</button>
+								</form>
+							}
+
+						</div>
+
+					</div>
+
+					<div class="modal-footer">
+						<button type="button"
+								class="btn btn-outline-secondary"
+								data-bs-dismiss="modal">
+							取消
+						</button>
+					</div>
+
+				</div>
+			</div>
+		</div>
+
+
+		@* =========================
+           停用確認 Modal
+           Disabled 已經停用了，不需要
+           ========================= *@
+		@if (room.SupplyStatus != "Disabled")
+		{
+			<div class="modal fade"
+				 id="disableRoom@(room.RoomId)Modal"
+				 tabindex="-1"
+				 aria-labelledby="disableRoom@(room.RoomId)ModalTitle"
+				 aria-hidden="true">
+
+				<div class="modal-dialog modal-dialog-centered">
+					<div class="modal-content">
+
+						<div class="modal-header">
+
+							<h2 class="modal-title fs-5"
+								id="disableRoom@(room.RoomId)ModalTitle">
+								確認停用房間
+							</h2>
+
+							<button type="button"
+									class="btn-close"
+									data-bs-dismiss="modal"
+									aria-label="關閉">
+							</button>
+
+						</div>
+
+						<div class="modal-body">
+
+							<form asp-action="UpdateDisabledStatus"
+								  method="post"
+								  id="updateDisabledStatusForm@(room.RoomId)">
+
+								<input type="hidden"
+									   name="roomId"
+									   value="@room.RoomId" />
+
+								<input type="hidden"
+									   name="targetStatus"
+									   value="Disabled" />
+
+								<p>房號：@room.RoomNumber</p>
+
+								<label for="disableReason@(room.RoomId)"
+									   class="form-label">
+									停用原因
+									<span class="text-danger">*</span>
+								</label>
+
+								<textarea id="disableReason@(room.RoomId)"
+										  name="disabledReason"
+										  class="form-control"
+										  rows="3"
+										  required
+										  aria-required="true"></textarea>
+							</form>
+						</div>
+
+						<div class="modal-footer">
+
+							<button type="button"
+									class="btn btn-outline-secondary"
+									data-bs-dismiss="modal">
+								取消
+							</button>
+
+							<button type="submit"
+									class="btn btn-danger"
+									form="updateDisabledStatusForm@(room.RoomId)">
+								確認停用
+							</button>
+
+						</div>
+
+					</div>
+				</div>
+			</div>
+		}
+	}
+}
+
+
+@section Scripts {
+	<script>
+		$("#floorFilter").on("change", function() {
+			const selectedFloor = $(this).val();
+
+			// 先篩房間卡片
+			$("[data-floor]").each(function() {
+				const roomFloor = $(this).data("floor");
+
+				if (selectedFloor === "" || roomFloor == selectedFloor) {
+					$(this).show();
+				} else {
+					$(this).hide();
+				}
+			});
+
+			// 再決定房型區塊要不要顯示
+			$(".room-type-group").each(function() {
+				const hasMatchingRoom =
+					selectedFloor === "" ||
+					$(this).find(`[data-floor="${selectedFloor}"]`).length > 0;
+
+				if (hasMatchingRoom) {
+					$(this).show();
+				} else {
+					$(this).hide();
+				}
+			});
+		});
+
+
+		$(".edit-disabled-reason-btn").on("click", function() {
+			const roomId = $(this).data("room-id");
+			const textarea = $(`#disabledReason${roomId}`);
+			const form = $(`#disabledReasonForm${roomId}`);
+			const button = $(this);
+
+			// 第一次按：進入編輯模式
+			if (textarea.prop("readonly")) {
+				textarea.prop("readonly", false);
+				textarea.focus();
+
+				button.text("儲存");
+				button
+					.removeClass("btn-outline-secondary")
+					.addClass("btn-primary");
+
+				return;
+			}
+
+			// 第二次按：準備儲存
+			const newReason = textarea.val().trim();
+
+			// 前端驗證
+			if (newReason === "") {
+				textarea.addClass("is-invalid");
+				textarea.focus();
+				return;
+			}
+
+			textarea.removeClass("is-invalid");
+
+			// AJAX POST
+			$.ajax({
+				url: form.attr("action"),
+				type: "POST",
+				data: form.serialize(),
+
+				success: function(response) {
+					textarea.val(response.disabledReason);
+					textarea.attr("data-saved-value", response.disabledReason);
+					textarea.prop("readonly", true);
+
+					button.text("修改");
+					button
+						.removeClass("btn-primary")
+						.addClass("btn-outline-secondary");
+
+					$(`.disabled-reason-meta[data-room-id="${roomId}"]`)
+						.text(response.disabledReason);
+				},
+
+				error: function() {
+					window.location.reload();
+				}
+			});
+		});
+
+		$(".modal").on("hidden.bs.modal", function() {
+			const textarea = $(this).find('textarea[name="disabledReason"]');
+			const button = $(this).find(".edit-disabled-reason-btn");
+
+			if (textarea.length === 0 || button.length === 0) {
+				return;
+			}
+
+			const savedValue = textarea.attr("data-saved-value");
+
+			textarea.val(savedValue);
+			textarea.prop("readonly", true);
+			textarea.removeClass("is-invalid");
+
+			button.text("修改");
+			button
+				.removeClass("btn-primary")
+				.addClass("btn-outline-secondary");
+		});
+	</script>
+}
+
+@if (Model.CapacityRisk != null)
+{
+	<script>
+		document.addEventListener("DOMContentLoaded", function() {
+			const modalElement = document.getElementById("capacityRiskModal");
+
+			if (modalElement) {
+				const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+				modal.show();
+			}
+		});
+	</script>
+}
+
+@if (Model.OpenModalRoomId.HasValue)
+{
+	<script>
+		document.addEventListener("DOMContentLoaded", function() {
+			const modalElement =
+				document.getElementById("room@(Model.OpenModalRoomId.Value)Modal");
+
+			if (modalElement) {
+				const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+				modal.show();
+			}
+		});
+	</script>
+}

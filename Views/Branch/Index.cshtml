@@ -1,5 +1,24 @@
-﻿@{
+﻿@model IEnumerable<HotelManagementSystem.Models.Entities.Branch>
+
+@{
     ViewData["Title"] = "分館管理";
+}
+
+<!-- 成功與失敗訊息提示 Alert 區塊 -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show shadow-sm mb-3" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="關閉"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-3" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="關閉"></button>
+    </div>
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -18,7 +37,7 @@
             <thead class="table-light">
                 <tr>
                     <th class="ps-4">分館名稱</th>
-                    <th>區域 (縣市)</th>
+                    <th>區域</th>
                     <th>地址</th>
                     <th>聯絡電話</th>
                     <th>接受新訂房</th>
@@ -26,54 +45,54 @@
                 </tr>
             </thead>
             <tbody>
-                <!-- 示範資料列 1 -->
-                <tr>
-                    <td class="fw-bold ps-4">台北館</td>
-                    <td><span class="badge bg-light text-dark border">台北市</span></td>
-                    <td>台北市中正區...</td>
-                    <td>0223456789</td>
-                    <td><span class="badge bg-success">接受</span></td>
-                    <td class="text-end pe-4">
-                        <button class="btn btn-link text-primary p-0 text-decoration-none"
-                                data-bs-toggle="modal"
-                                data-bs-target="#branchModal"
-                                data-id="1"
-                                data-name="台北館"
-                                data-region="台北市"
-                                data-phone="0223456789"
-                                data-address="台北市中正區..."
-                                data-accepts="true"
-                                data-imageurl=""
-                                data-description="近台北車站，交通便利"
-                                onclick="openBranchModal('edit', this)">
-                            編輯
-                        </button>
-                    </td>
-                </tr>
-                <!-- 示範資料列 2 -->
-                <tr>
-                    <td class="fw-bold ps-4">高雄館</td>
-                    <td><span class="badge bg-light text-dark border">高雄市</span></td>
-                    <td>高雄市前金區...</td>
-                    <td>0721234567</td>
-                    <td><span class="badge bg-secondary">停止</span></td>
-                    <td class="text-end pe-4">
-                        <button class="btn btn-link text-primary p-0 text-decoration-none"
-                                data-bs-toggle="modal"
-                                data-bs-target="#branchModal"
-                                data-id="2"
-                                data-name="高雄館"
-                                data-region="高雄市"
-                                data-phone="0721234567"
-                                data-address="高雄市前金區..."
-                                data-accepts="false"
-                                data-imageurl=""
-                                data-description="靠近市中心與捷運站"
-                                onclick="openBranchModal('edit', this)">
-                            編輯
-                        </button>
-                    </td>
-                </tr>
+                @if (Model != null && Model.Any())
+                {
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="fw-bold ps-4">@item.BranchName</td>
+                            <td>
+                                <span class="badge bg-light text-dark border">
+                                    @(string.IsNullOrEmpty(item.Region) ? "未設定" : item.Region)
+                                </span>
+                            </td>
+                            <td>@item.Address</td>
+                            <td>@item.Phone</td>
+                            <td>
+                                @if (item.AcceptsNewBookings)
+                                {
+                                    <span class="badge bg-success">接受</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">停止</span>
+                                }
+                            </td>
+                            <td class="text-end pe-4">
+                                <button class="btn btn-link text-primary p-0 text-decoration-none"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#branchModal"
+                                        data-id="@item.BranchId"
+                                        data-name="@item.BranchName"
+                                        data-region="@item.Region"
+                                        data-phone="@item.Phone"
+                                        data-address="@item.Address"
+                                        data-accepts="@item.AcceptsNewBookings.ToString().ToLower()"
+                                        data-imageurl="@item.ImageUrl"
+                                        data-description="@item.Description"
+                                        onclick="openBranchModal('edit', this)">
+                                    編輯
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">目前尚無任何分館資料</td>
+                    </tr>
+                }
             </tbody>
         </table>
     </div>
@@ -85,22 +104,29 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title fw-bold" id="branchModalTitle">分館資料維護</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
             </div>
             <div class="modal-body">
                 <form id="branchForm" asp-controller="Branch" asp-action="Save" method="post">
+                    @Html.AntiForgeryToken()
                     <!-- 隱藏欄位：儲存 PK (BranchId) -->
                     <input type="hidden" id="branchId" name="BranchId" value="0">
 
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label fw-bold">分館名稱 <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="branchName" name="BranchName" required placeholder="例如：台北館">
+                            <input type="text" class="form-control" id="branchName" name="BranchName" required placeholder="例如：台北中山商旅">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">區域 (縣市)</label>
-                            <!-- 僅提醒輸入縣市 -->
-                            <input type="text" class="form-control" id="region" name="Region" placeholder="例如：台北市、台中市（僅填縣市）">
+                            <label class="form-label fw-bold">區域 <span class="text-danger">*</span></label>
+                            <select class="form-select" id="region" name="Region" required>
+                                <option value="" disabled selected>請選擇區域</option>
+                                <option value="北部">北部</option>
+                                <option value="中部">中部</option>
+                                <option value="南部">南部</option>
+                                <option value="東部">東部</option>
+                                <option value="離島">離島</option>
+                            </select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">聯絡電話 <span class="text-danger">*</span></label>
@@ -118,8 +144,9 @@
                             <input type="text" class="form-control" id="address" name="Address" required placeholder="完整通訊地址">
                         </div>
                         <div class="col-12">
-                            <label class="form-label fw-bold">圖片網址 (ImageUrl)</label>
-                            <input type="url" class="form-control" id="imageUrl" name="ImageUrl" placeholder="https://example.com/image.jpg">
+                            <label class="form-label fw-bold">圖片網址 / 相對路徑</label>
+                            <input type="text" class="form-control" id="imageUrl" name="ImageUrl" placeholder="例如：/images/branch1.jpg 或 https://example.com/image.jpg">
+                            <div class="form-text">可填寫本地相對路徑（如：/images/branch1.jpg）或公開網路圖片網址。</div>
                         </div>
                         <div class="col-12">
                             <label class="form-label fw-bold">分館簡介</label>
@@ -151,7 +178,8 @@
                 saveBtn.textContent = '新增分館';
                 form.reset();
                 document.getElementById('branchId').value = '0';
-                document.getElementById('acceptsNewBookings').value = 'true';
+                document.getElementById('region').value = '';
+                document.getElementById('acceptsNewBookings').value = 'false';
             } else if (mode === 'edit' && btnElement) {
                 modalTitle.textContent = '編輯分館資料';
                 saveBtn.textContent = '儲存變更';
@@ -176,10 +204,12 @@
             }
 
             const name = document.getElementById('branchName').value;
-            const region = document.getElementById('region').value || '未填寫';
+            const regionSelect = document.getElementById('region');
+            const region = regionSelect.options[regionSelect.selectedIndex] ? regionSelect.options[regionSelect.selectedIndex].text : '';
             const phone = document.getElementById('phone').value;
             const address = document.getElementById('address').value;
             const accepts = document.getElementById('acceptsNewBookings').value === 'true' ? '接受新訂房' : '停止新訂房';
+            const imgUrl = document.getElementById('imageUrl').value.trim();
 
             let message = '';
 
@@ -190,7 +220,8 @@
                     `• 區域：${region}\n` +
                     `• 聯絡電話：${phone}\n` +
                     `• 分館地址：${address}\n` +
-                    `• 訂房設定：${accepts}`;
+                    `• 訂房設定：${accepts}\n` +
+                    `• 圖片路徑：${imgUrl || '未設定'}`;
             } else {
                 message = `【確認修改分館】\n\n` +
                     `確定要儲存【${name}】的變更嗎？\n` +
@@ -198,7 +229,8 @@
                     `• 區域：${region}\n` +
                     `• 聯絡電話：${phone}\n` +
                     `• 分館地址：${address}\n` +
-                    `• 訂房設定：${accepts}`;
+                    `• 訂房設定：${accepts}\n` +
+                    `• 圖片路徑：${imgUrl || '未設定'}`;
             }
 
             if (confirm(message)) {
