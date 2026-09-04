@@ -411,4 +411,30 @@
             }
         });
     </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const openModal = '@ViewData["OpenModal"]';
+
+            if (openModal === 'Create') {
+                const createModalElement =
+                    document.getElementById('createAnnouncementModal');
+
+                const createModal =
+                    bootstrap.Modal.getOrCreateInstance(createModalElement);
+
+                createModal.show();
+            }
+
+            if (openModal === 'Edit') {
+                const editModalElement =
+                    document.getElementById('editAnnouncementModal');
+
+                const editModal =
+                    bootstrap.Modal.getOrCreateInstance(editModalElement);
+
+                editModal.show();
+            }
+        });
+    </script>
 }

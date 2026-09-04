@@ -2,18 +2,24 @@
 using HotelManagementSystem.Models.Entities;
 using HotelManagementSystem.Models.ViewModels;
 using HotelManagementSystem.Models.ViewModels.Announcement;
+using HotelManagementSystem.Services;
 using Microsoft.AspNetCore.Mvc;
 
 
 namespace HotelManagementSystem.Controllers
 {
-    public class AnnouncementController : Controller
+    public class AnnouncementController : SystemAdminControllerBase
     {
         private readonly HotelManagementContext _context;
+        private readonly TaipeiClock _clock;
 
-        public AnnouncementController(HotelManagementContext context)
+        public AnnouncementController(
+            HotelManagementContext context,
+            TaipeiClock clock)
+            : base(context)
         {
             _context = context;
+            _clock = clock;
         }
 
         public IActionResult Index()
@@ -38,7 +44,7 @@ namespace HotelManagementSystem.Controllers
                 model.EndAt <= model.StartAt)
             {
                 ModelState.AddModelError(
-                    nameof(model.EndAt),
+                    "Create.EndAt",
                     "結束時間必須晚於開始時間");
             }
 
@@ -53,6 +59,8 @@ namespace HotelManagementSystem.Controllers
                         .ToList()
                 };
 
+                ViewData["OpenModal"] = "Create";
+
                 return View("Index", indexModel);
             }
 
@@ -63,7 +71,8 @@ namespace HotelManagementSystem.Controllers
                 StartAt = model.StartAt!.Value,
                 EndAt = model.EndAt!.Value,
                 IsActive = model.IsActive,
-                ShowToGuest = model.ShowToGuest
+                ShowToGuest = model.ShowToGuest,
+                CreatedAt = _clock.Now
             };
 
             _context.Announcements.Add(announcement);
@@ -84,7 +93,7 @@ namespace HotelManagementSystem.Controllers
                 model.EndAt <= model.StartAt)
             {
                 ModelState.AddModelError(
-                    nameof(model.EndAt),
+                    "Edit.EndAt",
                     "結束時間必須晚於開始時間");
             }
 
@@ -98,6 +107,8 @@ namespace HotelManagementSystem.Controllers
                         .OrderByDescending(a => a.CreatedAt)
                         .ToList()
                 };
+
+                ViewData["OpenModal"] = "Edit";
 
                 return View("Index", indexModel);
             }
