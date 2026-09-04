@@ -13,7 +13,7 @@
             background-image: none !important;
             padding-right: .75rem !important;
         }
-            /* 防止焦點停留在通過欄位時變成綠色 */
+            
             .was-validated .form-control:valid:focus,
             .was-validated .form-select:valid:focus {
                 border-color: #86b7fe !important;
@@ -132,19 +132,28 @@
                 method: 'POST',
                 body: formData
             })
-                .then(response => {
-                    if (response.ok) return response.json();
-                    throw new Error('送出失敗');
+                .then(async response => {
+                    const data = await response.json().catch(() => null);
+
+                    if (response.ok && data && data.success) {
+                        return data;
+                    }
+
+                  
+                    const errorMsg = (data && data.message) ? data.message : '系統錯誤，請稍後再試。';
+                    throw new Error(errorMsg);
                 })
                 .then(data => {
+                  
                     form.reset();
                     form.classList.remove('was-validated');
                     var successModal = new bootstrap.Modal(document.getElementById('successNoticeModal'));
                     successModal.show();
-                    })
+                })
                 .catch(error => {
-                alert('系統錯誤，請稍後再試。');
+                  
+                    alert(error.message);
                 });
-                });
+        });
     </script>
 }

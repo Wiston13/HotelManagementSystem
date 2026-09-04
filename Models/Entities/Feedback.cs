@@ -1,10 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
-
-namespace HotelManagementSystem.Models.Entities;
-
-public partial class Feedback
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+namespace HotelManagementSystem.Models.Entities
 {
+    public class Feedback
+    {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+
     public int Id { get; set; }
 
     public int BranchId { get; set; }
@@ -20,4 +23,5 @@ public partial class Feedback
     public DateTime CreatedAt { get; set; }
 
     public virtual Branch Branch { get; set; } = null!;
+}
 }

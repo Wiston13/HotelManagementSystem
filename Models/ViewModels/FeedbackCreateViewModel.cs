@@ -17,6 +17,7 @@ namespace HotelManagementSystem.Models.ViewModels
         public string Email { get; set; } = null!;
 
         [StringLength(20, ErrorMessage = "電話長度不得超過 20 個字元")]
+        [Display(Name = "電話")]
         public string? Phone { get; set; }
 
         [Required(ErrorMessage = "意見內容不可留白")]

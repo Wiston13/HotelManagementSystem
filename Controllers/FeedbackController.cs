@@ -1,4 +1,5 @@
-﻿using HotelManagementSystem.Models;
+﻿using HotelManagementSystem.Helper;
+using HotelManagementSystem.Models;
 using HotelManagementSystem.Models.Entities;
 using HotelManagementSystem.Models.ViewModels;
 using HotelManagementSystem.Services;
@@ -36,11 +37,21 @@ namespace HotelManagementSystem.Controllers
                 return BadRequest(new { success = false, message = errorMsg });
             }
 
-            // 嚴格檢查分館是否存在
+            
             var branchExists = await _context.Branches.AnyAsync(b => b.BranchId == input.BranchId);
             if (!branchExists)
             {
                 return BadRequest(new { success = false, message = "選擇的分館不存在。" });
+            }
+           
+            string? normalizedPhone = null;
+            if (!string.IsNullOrWhiteSpace(input.Phone))
+            {
+      
+                if (!PhoneHelper.TryNormalize(input.Phone, out normalizedPhone))
+                {
+                    return BadRequest(new { success = false, message = "電話格式不正確，僅能包含數字、連字號或空白，且長度須符合規範。" });
+                }
             }
 
             var feedback = new Feedback
@@ -48,7 +59,7 @@ namespace HotelManagementSystem.Controllers
                 BranchId = input.BranchId,
                 CustomerName = input.CustomerName,
                 Email = input.Email,
-                Phone = input.Phone,
+                Phone = normalizedPhone,
                 Content = input.Content,
                 CreatedAt = _clock.Now
             };
