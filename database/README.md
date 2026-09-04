@@ -52,6 +52,7 @@ Repository 內的固定密碼 `Hotel@123` 與 PasswordHash 只供本機開發／
 - 46 筆 Booking。
 - 9 筆 StayRecord。
 - 53 筆 OperationLog。
+- 6 筆 Announcements：公開有效 A／B、內部有效、未開始、已到期與期間內停用公告。
 - 5 筆 CustomerFeedbacks：分館 1（台北中山）、2（台北信義）、3（台中草悟），含有／無電話及同 Email 重複提交。
 - 回饋日期為台灣時間今天、前 1、3、7 天，供本館／跨館查詢、日期篩選、排序與 CSV 匯出情境使用。
 - Paid、CheckedIn、Completed、Cancelled、NoShow 狀態。
@@ -83,6 +84,40 @@ SQL 表名固定為 `dbo.CustomerFeedbacks`；EF 使用 `Feedback` Entity 與 `F
 本表只保存七欄；不含處理狀態、備註／回覆、訂單／住房關聯或通知紀錄。顧客提交不要求登入或訂單驗證；內部依角色查詢／匯出皆為唯讀，相關授權、輸入驗證與畫面由功能分支實作。
 
 型別與長度依 Notion「新增資料表」；七欄、單向唯讀及台灣時間依「顧客意見回饋功能規格補充」與本次確認。舊筆記中的 Status 與 SYSDATETIME() 不採用。本次只更新完整建庫與開發資料；既有部署資料庫若要加入此表，另行安排增量 SQL，不可用 `01` 重建升級。
+
+### 全域公告資料模型與情境
+
+`dbo.Announcements` 對應 `Announcement` Entity 與 `Announcements` DbSet，只保存以下八欄，全部為 NOT NULL：
+
+| 欄位 | SQL 型別 | 限制／預設值 |
+| --- | --- | --- |
+| AnnouncementId | int | PK、IDENTITY(1,1) |
+| Title | nvarchar(100) | 必填、不設 UNIQUE |
+| Content | nvarchar(1000) | 必填 |
+| StartAt | datetime2(0) | 開始顯示時間 |
+| EndAt | datetime2(0) | CHECK：EndAt > StartAt |
+| IsActive | bit | DEFAULT 1 |
+| ShowToGuest | bit | DEFAULT 0 |
+| CreatedAt | datetime2(0) | DEFAULT 明確轉成 Taipei Standard Time |
+
+Title／Content 的 CHECK 排除空字串及全由半形空格組成的值，不能取代後端完整空白、長度與日期驗證。公告為全域資料，沒有 FK；容許同標題與期間重疊。現階段資料量小，僅保留主鍵索引。
+
+EF 的 `IsActive` 初值與未設定判定值均為 true，明確設定 false 時可寫入 0；`ShowToGuest` 可保存 true／false。`CreatedAt` 只在新增時產生：未指定時用資料庫 DEFAULT，Controller 明確指定 `TaipeiClock.Now` 時保存該值，映射不會在編輯時自動重設時間。公告作者仍須在 Create 設定時間，Edit 保留原 CreatedAt。
+
+公告範例只由 `04` 插入，沿用 `@NowTaipei`。執行當下的預期如下；有效公告至少還有 7 天操作空間，未開始公告在 10 天後開始：
+
+| Id／情境 | 顧客閱讀端 | 員工閱讀端 | 管理列表 |
+| --- | --- | --- | --- |
+| 1／公開有效 A | 完整列表 | 完整列表 | 可見 |
+| 2／公開有效 B | 首頁及完整列表 | 完整列表 | 可見 |
+| 3／內部有效 | 不可見 | 首頁及完整列表 | 可見 |
+| 4／尚未開始 | 不可見 | 不可見 | 可見 |
+| 5／已到期 | 不可見 | 不可見 | 可見 |
+| 6／期間內停用 | 不可見 | 不可見 | 可見 |
+
+顧客列表順序為 2、1；員工列表為 3、2、1（ShowToGuest 不排除員工）；管理列表依 CreatedAt 遞減為 6、4、3、2、1、5。閱讀条件是 IsActive 且 StartAt <= 現在 <= EndAt，顧客再加 ShowToGuest。這些是情境資料的預期，不代表 Controller／頁面已完成整合驗證。
+
+完整初始化依序 `01 → 02 → 03 → 04`。`03` 依既有展示資料重置語意清除公告；`04` 重跑會清除公告後重建六筆，含 Identity reseed 與例外清理。公告不加入 Required Seed、不觸發通知或 OperationLog，也不修改既有回饋情境。既有部署環境若需加入公告表，另行安排增量 SQL，不得用 `01` 重建升級。
 
 ## 2. 本機初始化流程
 
