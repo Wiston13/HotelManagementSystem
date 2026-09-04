@@ -29,7 +29,7 @@ public partial class HotelManagementContext : DbContext
     public virtual DbSet<RoomType> RoomTypes { get; set; }
 
     public virtual DbSet<StayRecord> StayRecords { get; set; }
-    public DbSet<Feedback> Feedbacks { get; set; }
+ 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
