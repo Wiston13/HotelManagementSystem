@@ -11,7 +11,7 @@
     var isRoom = currentController == "Room" && currentAction == "Index";
     var isBookingExport = currentController == "BookingExport" && currentAction == "Export";
     var isOperationLog = currentController == "OperationLog" && currentAction == "Search";
-    var isFeedback = currentController == "Feedback" && currentAction == "Index";
+    var isFeedback = currentController == "FeedbackAdmin" && currentAction == "Index";
 
 
     string Check(bool isActive)
@@ -81,8 +81,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link rounded @(Check(isFeedback))"
-                               asp-controller="Feedback" asp-action="Index">
+                            <a class="nav-link rounded @(Check(isFeedback))" asp-controller="FeedbackAdmin" asp-action="Index">
                                 <i class="bi bi-chat-left-text me-2"></i>顧客意見
                             </a>
                         </li>
@@ -118,17 +117,8 @@
 
                 <div class="backoffice-layout__header d-flex justify-content-between align-items-center pb-3 mb-4 border-bottom">
                     <h2 class="h4 mb-0 fw-bold">@pageTitle</h2>
-                
-                        <div class="text-secondary small d-flex align-items-center gap-3">
-                         
-    @if (ViewBag.UnreadCount > 0)
-    {
-        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
-            <span class="visually-hidden">未讀意見</span>
-        </span>
-    }
-</a>
 
+                    <div class="text-secondary small d-flex align-items-center gap-3">
                         <i class="bi bi-person-circle me-1"></i>
                         總管理系統・@User.Identity?.Name
                     </div>

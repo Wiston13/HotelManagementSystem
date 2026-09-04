@@ -22,11 +22,6 @@ namespace HotelManagementSystem.Models.Entities
 
         public DateTime CreatedAt { get; set; }
 
-     
-        public string Status { get; set; } = "未處理";
-
-        public string? AdminReply { get; set; }
-
         public virtual Branch Branch { get; set; } = null!;
     }
 }

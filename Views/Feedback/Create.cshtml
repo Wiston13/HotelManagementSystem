@@ -43,6 +43,7 @@
                 <!-- 右側表單內容 -->
                 <div class="col-md-8">
                     <form id="feedbackForm" class="needs-validation" novalidate onsubmit="return false;">
+                        @Html.AntiForgeryToken()
 
                         <div class="mb-4">
                             <label class="form-label small fw-bold text-secondary mb-2">分館選擇 <span class="text-danger">*</span></label>
