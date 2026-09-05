@@ -18,6 +18,7 @@ namespace HotelManagementSystem.Controllers
         private readonly ILogger<BranchBookingController> _logger;
         private readonly IBookingEmailService _bookingEmailService;
         private readonly IMemoryCache _memoryCache;
+        private static readonly object ResendConfirmationEmailThrottleLock = new();
         public BranchBookingController(HotelManagementContext context, TaipeiClock clock, NoShowService noShowService, ILogger<BranchBookingController> logger, IBookingEmailService bookingEmailService, IMemoryCache memoryCache)
             : base(context)
         {
@@ -199,23 +200,25 @@ namespace HotelManagementSystem.Controllers
                 });
             }
             // 防止同一筆訂單在 10 秒內重複補寄
+            // 檢查與設定必須在同一個 lock 內完成，避免同時請求都通過檢查。
             var cacheKey = $"BookingConfirmationEmailResend:{CurrentBranchId}:{booking.BookingNumber}";
-            if (_memoryCache.TryGetValue(cacheKey, out _))
+            lock (ResendConfirmationEmailThrottleLock)
             {
-                return StatusCode(StatusCodes.Status429TooManyRequests,
-                    new
-                    {
-                        success = false,
-                        message = "確認信剛剛已送出補寄請求，請稍候再試。"
-                    });
+                if (_memoryCache.TryGetValue(cacheKey, out _))
+                {
+                    return StatusCode(StatusCodes.Status429TooManyRequests,
+                        new
+                        {
+                            success = false,
+                            message = "確認信剛剛已送出補寄請求，請稍候再試。"
+                        });
+                }
+                _memoryCache.Set(cacheKey, true, TimeSpan.FromSeconds(10));
             }
-
-            _memoryCache.Set(cacheKey, true, TimeSpan.FromSeconds(10));
 
             try
             {
                 var emailSendSucceeded = await _bookingEmailService.SendConfirmationAsync(booking, branch);
-
                 if (!emailSendSucceeded)
                 {
                     return StatusCode(StatusCodes.Status502BadGateway,
@@ -225,8 +228,7 @@ namespace HotelManagementSystem.Controllers
                             message = "確認信暫時無法補寄，請稍後再試。"
                         });
                 }
-                _logger.LogInformation("訂房確認信補寄成功。BookingNumber: {BookingNumber}", booking.BookingNumber);
-                
+                _logger.LogInformation("訂房確認信補寄成功。BookingNumber: {BookingNumber}", booking.BookingNumber);                
                 return Ok(new
                 {
                     success = true,

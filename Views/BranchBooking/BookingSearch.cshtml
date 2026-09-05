@@ -425,8 +425,10 @@
             // 表單開啟時
             bookingDetailModal.addEventListener("show.bs.modal", function(event) 
             {
-                const button = event.relatedTarget;
-
+                const button = event.relatedTarget ?? currentDetailButton;
+                if (!button) {
+                    return;
+                }
                 const bookingNum = button.getAttribute('data-bookingnum');
                 const name = button.getAttribute('data-name');
                 const roomtype = button.getAttribute('data-roomtype');
@@ -524,12 +526,13 @@
                     }, 
                     { once: true }
                 );
-                // 補寄確認 Modal 關閉後，重新顯示訂單詳細資訊
+                // 補寄確認 Modal 關閉後，使用原本來源按鈕重新顯示訂單詳細資訊
                 resendEmailConfirmModalElement.addEventListener("hidden.bs.modal", function () {
+                    const detailButton = pendingResendContext?.detailButton;
                     if (currentBookingNumber === pendingResendContext?.bookingNumber && 
                         currentDetailButton === pendingResendContext?.detailButton) 
                         {
-                            bookingDetailModalInstance.show();
+                            bookingDetailModalInstance.show(detailButton);
                         }
                     },
                     { once: true }
