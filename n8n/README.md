@@ -75,22 +75,14 @@ ASP.NET Core 會透過設定檔中的 ngrok Webhook URL 呼叫開發主機上的
 - 使用 Gmail SMTP 寄送訂房確認信。
 - n8n 回傳寄送結果 JSON。
 - 訂房成功頁顯示確認信寄送結果。
-- 訂房成功頁顯示遮罩後的收件 Email。
+- 訂房成功頁不顯示收件 Email。
 - 後台訂單查詢顯示顧客 Email。
-- 後台可修改訂單 Email。
+- 後台訂單查詢不提供 Email 修改功能。
 - 後台可補寄確認信。
 - 短時間內重複補寄會被阻擋。
 - n8n 無法連線或寄信失敗時，不會取消已成立的訂單。
 - n8n 呼叫失敗時，ASP.NET Core 會寫入 Log。
-
-尚待飯店資料庫重建後完成：
-
-- 在新版飯店資料庫加入 `LastConfirmationEmailSentAt`。
-- 重新產生 Database First Entity。
-- 寄送成功後保存最近一次寄送時間。
-- 後台訂單明細顯示資料庫中的實際寄送時間。
-- 移除目前暫時使用的寄送時間顯示資料。
-- 重新執行完整整合測試。
+- 飯店系統資料庫不儲存確認信寄送時間、寄送次數或寄送歷史。
 
 > n8n 目前使用內建 SQLite 儲存 Owner 帳號、工作流程、Credential 及 Executions。   
 > n8n SQLite 與飯店系統資料庫互相獨立，重建飯店系統資料庫不會直接影響 n8n。
@@ -233,9 +225,11 @@ workflows/hotel-booking-confirmed.json
 
 ```text
 Webhook
+→ Prepare Email Content
 → Send an Email
 → Respond to Webhook
 ```
+`Prepare Email Content` 節點負責在寄出 HTML 郵件前處理動態文字欄位，包含 HTML 編碼、避免使用者輸入的 URL 被郵件客戶端轉為自訂連結，以及清理 `tel:` 連結使用的電話字元。
 
 匯入後，原本的 Credential 不會直接在新環境使用，必須重新建立並重新選取。
 
@@ -454,6 +448,12 @@ ASP.NET Core 傳送給 n8n 的 JSON 格式如下：
 
 Request 的欄位名稱必須與 ASP.NET Core 的 `N8nBookingEmailRequest` JSON 設定一致。
 
+n8n workflow 不會改動 ASP.NET Core 傳入的原始訂房資料；動態內容僅在輸出為 Email HTML 前進行安全處理。
+
+`Prepare Email Content` 節點會針對顯示於 HTML 郵件的文字欄位進行 HTML 編碼，至少處理 `&`、`<`、`>`、`"`、`'`。姓名、分館名稱、房型名稱、地址、訂單編號、日期、金額等動態文字不得直接插入 HTML。
+
+若電話需放入 `href="tel:..."`，`href` 使用的值必須先限制為合法電話字元；目前僅保留數字與開頭的 `+`。畫面顯示用電話也不可直接顯示明顯的 HTML 屬性注入內容。
+
 ---
 
 # 八、Webhook Response 格式
@@ -542,7 +542,7 @@ Invoke-RestMethod `
     -Uri $webhookUrl `
     -Method Post `
     -Headers $headers `
-    -ContentType "application/json" `
+    -ContentType "application/json; charset=utf-8" `
     -Body $body
 ```
 
@@ -616,6 +616,9 @@ N8n:WebhookSecret
 - Workflow Execution 執行成功。
 - 指定的 Email 收到訂房成功通知信。
 - Email 內容中的訂房資料正確。
+- 姓名、分館名稱、房型、地址等動態內容若包含 HTML 標籤，信件中只顯示文字，不會被當成 HTML 執行。
+- 姓名若包含 HTML 連結或網址，信件中不會產生可點擊的自訂連結。
+- 一般中文姓名與包含 `&` 的分館名稱仍可正常顯示。
 
 ---
 
@@ -645,6 +648,9 @@ http://localhost:5678/webhook/hotel-booking-confirmed
 - n8n Workflow Execution 成功。
 - 指定的 Email 收到訂房成功通知信。
 - Email 內容中的訂房資料正確。
+- 姓名、分館名稱、房型、地址等動態內容若包含 HTML 標籤，信件中只顯示文字，不會被當成 HTML 執行。
+- 姓名若包含 HTML 連結或網址，信件中不會產生可點擊的自訂連結。
+- 一般中文姓名與包含 `&` 的分館名稱仍可正常顯示。
 
 ---
 

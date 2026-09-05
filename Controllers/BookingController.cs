@@ -403,15 +403,6 @@ namespace HotelManagementSystem.Controllers
                         booking.BookingNumber);
                 }
 
-                // TODO：
-                // Bookings 新增 LastConfirmationEmailSentAt 後
-                // 使用 _taipeiClock.Now 更新並儲存最近一次寄送時間。
-                // if (emailSendSucceeded)
-                // {
-                //     booking.LastConfirmationEmailSentAt = _taipeiClock.Now;
-                //     await _context.SaveChangesAsync();
-                // }
-
                 // 暫存本次寄信結果，供 GET Success 顯示寄送狀態
                 TempData["ConfirmationEmailSent"] = emailSendSucceeded;
 
@@ -464,7 +455,6 @@ namespace HotelManagementSystem.Controllers
                 RoomTypeName = booking.RoomTypeNameSnapshot,
                 CheckInDate = booking.CheckInDate,
                 CheckOutDate = booking.CheckOutDate,
-                MaskedEmail = MaskEmail(booking.Email),
                 ConfirmationEmailSent = confirmationEmailSent                
             };
 
@@ -518,31 +508,6 @@ namespace HotelManagementSystem.Controllers
                    (expiryYear == currentYear && expiryMonth < currentMonth);
         }
 
-        // 遮罩 Email 的帳號部分
-        private static string MaskEmail(string? email)
-        {
-            if (string.IsNullOrWhiteSpace(email))
-            {
-                return string.Empty;
-            }
-            email = email.Trim();
-
-            var atIndex = email.IndexOf('@');
-            if (atIndex <= 0 || atIndex == email.Length - 1)
-            {
-                return "***";
-            }
-
-            var localPart = email[..atIndex];
-            var domainPart = email[atIndex..];
-            var maskedLocalPart = localPart.Length switch
-            {
-                1 => "*",
-                2 => $"{localPart[0]}*",
-                _ => $"{localPart[0]}***{localPart[^1]}"
-            };
-            return $"{maskedLocalPart}{domainPart}";
-        }
 
         [HttpGet]
         public async Task<IActionResult> Lookup(string BookingNum, string Phone)
@@ -588,6 +553,7 @@ namespace HotelManagementSystem.Controllers
             model.Name = booking.BookerName;
             model.Price = booking.TotalAmount.ToString("#,##0.##", System.Globalization.CultureInfo.GetCultureInfo("zh-TW"));
             model.BookingStatus = StatusDisplayHelper.GetBookingStatusText(booking.BookingStatus);
+            model.Email = booking.Email;
             return View(model);
         }
 

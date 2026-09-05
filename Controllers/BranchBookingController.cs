@@ -111,11 +111,7 @@ namespace HotelManagementSystem.Controllers
                 StartDate = new DateTime(x.CheckInDate.Year, x.CheckInDate.Month, x.CheckInDate.Day),
                 EndDate = new DateTime(x.CheckOutDate.Year, x.CheckOutDate.Month, x.CheckOutDate.Day),
                 Price = "NT$ " + x.TotalAmount.ToString("#,##0.##", culture),
-                Email = x.Email,
-
-                // 資料庫新增欄位後改為 x.LastConfirmationEmailSentAt
-                LastConfirmationEmailSentAt = null
-
+                Email = x.Email
             }).ToList();
 
             foreach (var b in bookingData)
@@ -126,109 +122,6 @@ namespace HotelManagementSystem.Controllers
             return View(bookingData);
         }
 
-
-        // 修改指定訂單的 Email
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateBookingEmail([FromBody] UpdateBookingEmailInputViewModel? input)
-        {
-            // 無法取得前端傳入的資料
-            if (input == null)
-            {
-                return BadRequest(new
-                {
-                    success = false,
-                    message = "未收到修改 Email 所需的資料。"
-                });
-            }
-
-            // 移除訂單編號及 Email 前後的空白
-            input.BookingNumber = input.BookingNumber?.Trim() ?? string.Empty;
-            input.NewEmail = input.NewEmail?.Trim() ?? string.Empty;
-
-            // 使用整理後的內容重新執行 ViewModel 驗證
-            ModelState.Clear();
-            if (!TryValidateModel(input))
-            {
-                var errorMessage = ModelState.Values
-                    .SelectMany(value => value.Errors)
-                    .Select(error => error.ErrorMessage)
-                    .FirstOrDefault(message =>
-                        !string.IsNullOrWhiteSpace(message))
-                    ?? "輸入資料格式不正確。";
-                return BadRequest(new
-                {
-                    success = false,
-                    message = errorMessage
-                });
-            }
-
-            // 只允許查詢並修改目前員工所屬分館的訂單
-            var booking = await _context.Bookings
-                .FirstOrDefaultAsync(booking =>
-                    booking.BookingNumber == input.BookingNumber &&
-                    booking.BranchId == CurrentBranchId);
-            if (booking == null)
-            {
-                return NotFound(new
-                {
-                    success = false,
-                    message = "找不到指定訂單，或無法執行此操作。"
-                });
-            }
-
-            // 訂房確認信目前只適用於已付款訂單
-            if (booking.BookingStatus != "Paid")
-            {
-                return BadRequest(new
-                {
-                    success = false,
-                    message = "只有已付款訂單可以修改確認信 Email。"
-                });
-            }
-
-            // 新 Email 與目前 Email 相同時，不需要更新資料庫
-            if (string.Equals(
-                booking.Email,
-                input.NewEmail,
-                StringComparison.OrdinalIgnoreCase))
-            {
-                return Ok(new
-                {
-                    success = true,
-                    email = booking.Email,
-                    message = "Email 未變更。"
-                });
-            }
-
-            // 更新訂單的 Email
-            booking.Email = input.NewEmail;
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateException exception)
-            {
-                // 不記錄完整 Email，避免個資出現在 Log 中
-                _logger.LogError(
-                    exception,
-                    "修改訂單 Email 時發生資料庫錯誤。BookingNumber: {BookingNumber}",
-                    booking.BookingNumber);
-                return StatusCode(
-                    StatusCodes.Status500InternalServerError,
-                    new
-                    {
-                        success = false,
-                        message = "Email 暫時無法修改，請稍後再試。"
-                    });
-            }
-            return Ok(new
-            {
-                success = true,
-                email = booking.Email,
-                message = "Email 已修改完成。"
-            });
-        }
 
         // 將訂房確認信補寄至訂單目前儲存的 Email。
         [HttpPost]
@@ -253,9 +146,7 @@ namespace HotelManagementSystem.Controllers
                 var errorMessage = ModelState.Values
                     .SelectMany(value => value.Errors)
                     .Select(error => error.ErrorMessage)
-                    .FirstOrDefault(message =>
-                        !string.IsNullOrWhiteSpace(message))
-                    ?? "輸入資料格式不正確。";
+                    .FirstOrDefault(message => !string.IsNullOrWhiteSpace(message)) ?? "輸入資料格式不正確。";
                 return BadRequest(new
                 {
                     success = false,
@@ -311,8 +202,7 @@ namespace HotelManagementSystem.Controllers
             var cacheKey = $"BookingConfirmationEmailResend:{CurrentBranchId}:{booking.BookingNumber}";
             if (_memoryCache.TryGetValue(cacheKey, out _))
             {
-                return StatusCode(
-                    StatusCodes.Status429TooManyRequests,
+                return StatusCode(StatusCodes.Status429TooManyRequests,
                     new
                     {
                         success = false,
@@ -328,25 +218,15 @@ namespace HotelManagementSystem.Controllers
 
                 if (!emailSendSucceeded)
                 {
-                    return StatusCode(
-                        StatusCodes.Status502BadGateway,
+                    return StatusCode(StatusCodes.Status502BadGateway,
                         new
                         {
                             success = false,
                             message = "確認信暫時無法補寄，請稍後再試。"
                         });
                 }
-
-                // TODO：
-                // 資料庫新增 LastConfirmationEmailSentAt 後啟用。
-                // 寄信成功後，保存最近一次寄送時間
-                //var sentAt = _clock.Now;
-                //booking.LastConfirmationEmailSentAt = sentAt;
-                //await _context.SaveChangesAsync();
-
-                _logger.LogInformation(
-                    "訂房確認信補寄成功。BookingNumber: {BookingNumber}",
-                    booking.BookingNumber);
+                _logger.LogInformation("訂房確認信補寄成功。BookingNumber: {BookingNumber}", booking.BookingNumber);
+                
                 return Ok(new
                 {
                     success = true,
@@ -355,12 +235,8 @@ namespace HotelManagementSystem.Controllers
             }
             catch (Exception exception)
             {
-                _logger.LogError(
-                    exception,
-                    "補寄訂房確認信時發生未預期錯誤。BookingNumber: {BookingNumber}",
-                    booking.BookingNumber);
-                return StatusCode(
-                    StatusCodes.Status502BadGateway,
+                _logger.LogError(exception, "補寄訂房確認信時發生未預期錯誤。BookingNumber: {BookingNumber}", booking.BookingNumber);
+                return StatusCode(StatusCodes.Status502BadGateway,
                     new
                     {
                         success = false,

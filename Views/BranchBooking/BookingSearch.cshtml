@@ -148,8 +148,7 @@
                                             data-enddate="@item.EndDate.ToString("yyyy/MM/dd")"
                                             data-phone="@item.Phone"
                                             data-price="@item.Price" 
-                                            data-email="@item.Email" 
-                                            data-lastemailsentat="@(item.LastConfirmationEmailSentAt?.ToString("yyyy/MM/dd HH:mm") ?? "")">
+                                            data-email="@item.Email">
                                         查看
                                     </button>
 
@@ -214,65 +213,13 @@
                             <p id="modalStatus" class="mb-0">-</p>
                         </div>
                         
-                        <!-- 確認信相關功能 -->
+                        <!-- 電子信箱與補寄確認信 -->
                         <div class="col-12 mt-3">
                             <div class="border-top pt-3">
-                                <p class="small fw-semibold text-secondary mb-2">
-                                    確認信
-                                </p>
-                                <!-- Email 純文字顯示狀態 -->
-                                <div id="emailDisplayArea"
-                                     class="d-flex align-items-center justify-content-between gap-3">
+                                <div class="d-flex align-items-center justify-content-between gap-3">
                                     <div class="flex-grow-1">
-                                        <span class="text-secondary small">Email</span>
+                                        <span class="text-secondary small">電子信箱</span>
                                         <p id="modalEmail" class="mb-0 text-break">-</p>
-                                    </div>
-                                    <button type="button"
-                                            id="editEmailBtn"
-                                            class="btn btn-sm btn-outline-primary">
-                                        修改 Email
-                                    </button>
-                                </div>
-                                
-                                <!-- Email 編輯狀態 -->
-                                <div id="emailEditArea" class="d-none mt-2">
-                                    <label for="newEmailInput"
-                                           class="form-label small text-secondary">
-                                        新的 Email
-                                    </label>
-                                    <input type="email"
-                                           id="newEmailInput"
-                                           class="form-control"
-                                           autocomplete="email"
-                                           form="bookingEmailActionForm">
-
-                                    <div id="emailEditError"
-                                         class="invalid-feedback">
-                                    </div>
-
-                                    <div class="d-flex justify-content-end gap-2 mt-2">
-                                        <button type="button"
-                                                id="cancelEmailEditBtn"
-                                                class="btn btn-sm btn-outline-secondary">
-                                            取消
-                                        </button>
-                                        <button type="button"
-                                                id="saveEmailBtn"
-                                                class="btn btn-sm btn-primary">
-                                            儲存
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <!-- 最近寄送時間及補寄按鈕 -->
-                                <div class="d-flex align-items-center justify-content-between gap-3 mt-3">
-                                    <div>
-                                        <span class="text-secondary small">
-                                            最近一次寄送時間
-                                        </span>
-                                        <p id="modalLastEmailSentAt" class="mb-0">
-                                            尚無紀錄
-                                        </p>
                                     </div>
                                     <button type="button"
                                             id="resendEmailBtn"
@@ -281,12 +228,6 @@
                                         補寄確認信
                                     </button>
                                 </div>
-
-                                <p id="emailUpdateMessage"
-                                   class="d-none small mt-2 mb-0"
-                                   role="status"
-                                   aria-live="polite">
-                                </p>
                             </div>
                         </div>
 
@@ -439,413 +380,341 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/zh.js"></script>
 
     <script>
-            document.addEventListener("DOMContentLoaded", function() {
-                const searchForm = document.getElementById("searchForm");
-                const keyword = document.getElementById("keyword");
+        document.addEventListener("DOMContentLoaded", function() {
+            const searchForm = document.getElementById("searchForm");
+            const keyword = document.getElementById("keyword");
 
-                const overtimeWarn = document.getElementById("overtimeWarn");
+            const overtimeWarn = document.getElementById("overtimeWarn");
 
-                const goToCancelBtn = document.getElementById('goToCancelBtn');
-                const confirmCancelBtn = document.getElementById('confirmCancelBtn');
-                const cancelReasonSection = document.getElementById('cancelReasonSection');
-                const finalSubmitCancelBtn = document.getElementById('finalSubmitCancelBtn');
-                const cancelBookingNum = document.getElementById('cancelBookingNum');
-                const modalStatus = document.getElementById('modalStatus');
-                const overInputWarnning = document.getElementById('overInputWarnning');
+            const goToCancelBtn = document.getElementById('goToCancelBtn');
+            const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+            const cancelReasonSection = document.getElementById('cancelReasonSection');
+            const finalSubmitCancelBtn = document.getElementById('finalSubmitCancelBtn');
+            const cancelBookingNum = document.getElementById('cancelBookingNum');
+            const modalStatus = document.getElementById('modalStatus');
+            const overInputWarnning = document.getElementById('overInputWarnning');
 
-                const confirmActionModal = new bootstrap.Modal(document.getElementById('confirmActionModal'));
+            const confirmActionModal = new bootstrap.Modal(document.getElementById('confirmActionModal'));
 
-                const cancelReasonSelect = document.getElementById('cancelReasonSelect');
-                const cancelMemo = document.getElementById('cancelMemo');
-                //modal帶入資料
-                const bookingDetailModal = document.getElementById("bookingDetailModal");
+            const cancelReasonSelect = document.getElementById('cancelReasonSelect');
+            const cancelMemo = document.getElementById('cancelMemo');
+            //modal帶入資料
+            const bookingDetailModal = document.getElementById("bookingDetailModal");
                 
-                const modalEmail = document.getElementById('modalEmail');
-                const emailDisplayArea = document.getElementById('emailDisplayArea');
-                const emailEditArea = document.getElementById('emailEditArea');
-                const editEmailBtn = document.getElementById('editEmailBtn');
-                const newEmailInput = document.getElementById('newEmailInput');
-                const emailEditError = document.getElementById('emailEditError');
-                const cancelEmailEditBtn = document.getElementById('cancelEmailEditBtn');
-                const saveEmailBtn = document.getElementById('saveEmailBtn');
-                const emailUpdateMessage = document.getElementById('emailUpdateMessage');
-                const updateBookingEmailUrl = '@Url.Action("UpdateBookingEmail", "BranchBooking")';
-                const emailActionToken = document.querySelector('#bookingEmailActionForm input[name="__RequestVerificationToken"]').value;
-                const modalLastEmailSentAt = document.getElementById("modalLastEmailSentAt");
+            const modalEmail = document.getElementById('modalEmail');            
+            const emailActionToken = document.querySelector('#bookingEmailActionForm input[name="__RequestVerificationToken"]').value;            
 
-                const resendEmailConfirmModalElement = document.getElementById("resendEmailConfirmModal");
-                const resendEmailTarget = document.getElementById("resendEmailTarget");
-                const resendEmailResult = document.getElementById("resendEmailResult");
-                const confirmResendEmailBtn = document.getElementById("confirmResendEmailBtn");
-                const cancelResendEmailBtn = document.getElementById("cancelResendEmailBtn");
-                const bookingDetailModalInstance = bootstrap.Modal.getOrCreateInstance(bookingDetailModal);
-                const resendEmailConfirmModal = bootstrap.Modal.getOrCreateInstance(resendEmailConfirmModalElement);
-                const resendConfirmationEmailUrl = '@Url.Action("ResendConfirmationEmail", "BranchBooking")';
+            const resendEmailConfirmModalElement = document.getElementById("resendEmailConfirmModal");
+            const resendEmailTarget = document.getElementById("resendEmailTarget");
+            const resendEmailResult = document.getElementById("resendEmailResult");
+            const confirmResendEmailBtn = document.getElementById("confirmResendEmailBtn");
+            const cancelResendEmailBtn = document.getElementById("cancelResendEmailBtn");
+            const bookingDetailModalInstance = bootstrap.Modal.getOrCreateInstance(bookingDetailModal);
+            const resendEmailConfirmModal = bootstrap.Modal.getOrCreateInstance(resendEmailConfirmModalElement);
+            const resendConfirmationEmailUrl = '@Url.Action("ResendConfirmationEmail", "BranchBooking")';
 
-                let currentStartDate = null;
-                let currentBookingNumber = "";
-                let currentEmail = "";
-                let currentDetailButton = null;
-                let canManageConfirmationEmail = false;  //-->宣告是否可以管理確認信
-                // 表單開啟時
-                bookingDetailModal.addEventListener("show.bs.modal", function(event) {
-                    const button = event.relatedTarget;
+            let currentStartDate = null;
+            let currentBookingNumber = "";
+            let currentEmail = "";
+            let currentDetailButton = null;
+            let canManageConfirmationEmail = false;  //-->宣告是否可以管理確認信
+            let emailSaveRequestId = 0;
+            let resendEmailRequestId = 0;
+            let pendingResendContext = null;
 
-                    const bookingNum = button.getAttribute('data-bookingnum');
-                    const name = button.getAttribute('data-name');
-                    const roomtype = button.getAttribute('data-roomtype');
-                    const bookingStatus = button.getAttribute('data-bookingstatus');
-                    const createTime = button.getAttribute('data-createtime');
-                    const phone = button.getAttribute('data-phone');
-                    const bookingDate = button.getAttribute('data-bookingdate');
-                    const startDate = button.getAttribute('data-startdate');
-                    const endDate = button.getAttribute('data-enddate');
-                    const price = button.getAttribute('data-price');
-                    const email = button.getAttribute('data-email');
-                    const lastEmailSentAt = button.getAttribute("data-lastemailsentat");
+            // 表單開啟時
+            bookingDetailModal.addEventListener("show.bs.modal", function(event) 
+            {
+                const button = event.relatedTarget;
 
-                    currentStartDate = startDate;
-                    currentBookingNumber = bookingNum;
-                    currentEmail = email ?? "";
-                    currentDetailButton = button;
+                const bookingNum = button.getAttribute('data-bookingnum');
+                const name = button.getAttribute('data-name');
+                const roomtype = button.getAttribute('data-roomtype');
+                const bookingStatus = button.getAttribute('data-bookingstatus');
+                const createTime = button.getAttribute('data-createtime');
+                const phone = button.getAttribute('data-phone');
+                const bookingDate = button.getAttribute('data-bookingdate');
+                const startDate = button.getAttribute('data-startdate');
+                const endDate = button.getAttribute('data-enddate');
+                const price = button.getAttribute('data-price');
+                const email = button.getAttribute('data-email');
 
-                    modalEmail.textContent = currentEmail || "-";
-                    modalLastEmailSentAt.textContent = lastEmailSentAt || "尚無紀錄";   
-                    emailUpdateMessage.classList.add("d-none");
-                    emailDisplayArea.classList.remove("d-none");
-                    emailEditArea.classList.add("d-none");
-                    newEmailInput.value = currentEmail;
-                    newEmailInput.classList.remove("is-invalid");
-                    emailEditError.textContent = "";
-                    // 只有已付款訂單可以修改確認信 Email
-                    canManageConfirmationEmail = bookingStatus === "已付款";
-                    editEmailBtn.disabled = !canManageConfirmationEmail;
-                    resendEmailBtn.disabled = !canManageConfirmationEmail;
-                    
+                currentStartDate = startDate;
+                currentBookingNumber = bookingNum;
+                currentEmail = email ?? "";
+                currentDetailButton = button;
 
-                    document.getElementById('modalBookingNum').textContent = bookingNum;
-                    document.getElementById('modalName').textContent = name;
-                    document.getElementById('modalRoomtype').textContent = roomtype;
-                    document.getElementById('modalStatus').textContent = bookingStatus;
-                    document.getElementById('modalBookingDate').textContent = startDate + " - " + endDate;
-                    document.getElementById('modalPhone').textContent = phone ?? "";
-                    document.getElementById('modalCreateTime').textContent = createTime;
-                    document.getElementById('modalPrice').textContent = price;
-                    
-                    if (bookingStatus === "已付款") {
-                        goToCancelBtn.classList.add("btn-outline-danger");
-                        goToCancelBtn.classList.remove("btn-outline-secondary");
-                        goToCancelBtn.disabled = false;
-                    }
-                    else {
-                        goToCancelBtn.classList.add("btn-outline-secondary");
-                        goToCancelBtn.classList.remove("btn-outline-danger");
-                        goToCancelBtn.disabled = true;
-                    }                
-                });
+                confirmResendEmailBtn.classList.remove("d-none");
+                confirmResendEmailBtn.disabled = false;
+                confirmResendEmailBtn.textContent = "確認補寄";
+                cancelResendEmailBtn.textContent = "取消";
+                resendEmailResult.textContent = "";
+                resendEmailResult.className = "d-none small mt-3 mb-0";
 
-                // 表單關閉時
-                bookingDetailModal.addEventListener('hidden.bs.modal', function() {
-                    // 隱藏取消原因區塊
-                    cancelReasonSection.classList.add('d-none');
-
-                    // 恢復按鈕原本的顯示狀態
-                    goToCancelBtn.classList.remove('d-none');
-                    confirmCancelBtn.classList.add('d-none');
-
-                    // 恢復警告字樣隱藏
-                    overtimeWarn.classList.add("d-none");
-                    confirmCancelBtn.disabled = false;
-
-                    // 清空輸入框
-                    cancelReasonSelect.value = "請選擇...";
-                    cancelMemo.value = "";
-                });
-
+                document.getElementById('modalBookingNum').textContent = bookingNum;
+                document.getElementById('modalName').textContent = name;
+                document.getElementById('modalRoomtype').textContent = roomtype;
+                document.getElementById('modalStatus').textContent = bookingStatus;
+                document.getElementById('modalBookingDate').textContent = startDate + " - " + endDate;
+                document.getElementById('modalPhone').textContent = phone ?? "";
+                document.getElementById('modalCreateTime').textContent = createTime;
+                document.getElementById('modalPrice').textContent = price;
                 
-                // 進入 Email 編輯狀態
-                editEmailBtn.addEventListener("click", function () {
-                    emailDisplayArea.classList.add("d-none");
-                    emailEditArea.classList.remove("d-none");
+                modalEmail.textContent = currentEmail || "-";
+                
+                // 只有已付款訂單可以補寄確認信
+                canManageConfirmationEmail = bookingStatus === "已付款";
+                resendEmailBtn.disabled = !canManageConfirmationEmail;                
 
-                    newEmailInput.value = currentEmail;
-                    newEmailInput.classList.remove("is-invalid");
-                    emailEditError.textContent = "";
-                    // Email 尚未儲存時，不允許補寄
-                    resendEmailBtn.disabled = true;
+                if (bookingStatus === "已付款") {
+                    goToCancelBtn.classList.add("btn-outline-danger");
+                    goToCancelBtn.classList.remove("btn-outline-secondary");
+                    goToCancelBtn.disabled = false;
+                }
+                else {
+                    goToCancelBtn.classList.add("btn-outline-secondary");
+                    goToCancelBtn.classList.remove("btn-outline-danger");
+                    goToCancelBtn.disabled = true;
+                }                
+            });
 
-                    newEmailInput.focus();
-                });
+            // 表單關閉時
+            bookingDetailModal.addEventListener('hidden.bs.modal', function() 
+            {
+                // 隱藏取消原因區塊
+                cancelReasonSection.classList.add('d-none');
 
-                // 取消修改 Email
-                cancelEmailEditBtn.addEventListener("click", function () {
-                    newEmailInput.value = currentEmail;
-                    newEmailInput.classList.remove("is-invalid");
-                    emailEditError.textContent = "";
+                // 恢復按鈕原本的顯示狀態
+                goToCancelBtn.classList.remove('d-none');
+                confirmCancelBtn.classList.add('d-none');
 
-                    emailEditArea.classList.add("d-none");
-                    emailDisplayArea.classList.remove("d-none");
+                // 恢復警告字樣隱藏
+                overtimeWarn.classList.add("d-none");
+                confirmCancelBtn.disabled = false;
 
-                    resendEmailBtn.disabled = !canManageConfirmationEmail;
-                });
+                // 清空輸入框
+                cancelReasonSelect.value = "請選擇...";
+                cancelMemo.value = "";
+            });
+                
+            
 
-                // 儲存新的 Email
-                saveEmailBtn.addEventListener("click", async function () {
-                    const newEmail = newEmailInput.value.trim();
+            // 開啟補寄確認視窗
+            resendEmailBtn.addEventListener("click", function () 
+            {
+                if (!canManageConfirmationEmail || currentBookingNumber === "" || currentEmail === "") {
+                    return;
+                }
+                pendingResendContext = {
+                    bookingNumber: currentBookingNumber,
+                    email: currentEmail, 
+                    detailButton: currentDetailButton
+                };
+                resendEmailTarget.textContent = pendingResendContext.email;
+                resendEmailResult.textContent = "";
+                resendEmailResult.className = "d-none small mt-3 mb-0";
 
-                    newEmailInput.value = newEmail;
-                    newEmailInput.classList.remove("is-invalid");
-                    emailEditError.textContent = "";
-                    emailUpdateMessage.classList.add("d-none");
-                    if (newEmail === "") {
-                        newEmailInput.classList.add("is-invalid");
-                        emailEditError.textContent = "請輸入新的 Email。";
-                        return;
-                    }
-                    if (!newEmailInput.checkValidity()) {
-                        newEmailInput.classList.add("is-invalid");
-                        emailEditError.textContent = "Email 格式不正確。";
-                        return;
-                    }
-                    saveEmailBtn.disabled = true;
-                    saveEmailBtn.textContent = "儲存中...";
+                confirmResendEmailBtn.classList.remove("d-none");
+                confirmResendEmailBtn.disabled = false;
+                confirmResendEmailBtn.textContent = "確認補寄";
+                cancelResendEmailBtn.textContent = "取消";
+                // 訂單 Modal 完全關閉後，再開啟補寄確認 Modal
+                bookingDetailModal.addEventListener("hidden.bs.modal", function () { 
+                    resendEmailConfirmModal.show();
+                    }, 
+                    { once: true }
+                );
+                // 補寄確認 Modal 關閉後，重新顯示訂單詳細資訊
+                resendEmailConfirmModalElement.addEventListener("hidden.bs.modal", function () {
+                    if (currentBookingNumber === pendingResendContext?.bookingNumber && 
+                        currentDetailButton === pendingResendContext?.detailButton) 
+                        {
+                            bookingDetailModalInstance.show();
+                        }
+                    },
+                    { once: true }
+                );
+                bookingDetailModalInstance.hide();
+            });
 
-                    try {
-                        const response = await fetch(updateBookingEmailUrl, {
+            // 確認補寄訂房確認信
+            confirmResendEmailBtn.addEventListener("click", async function () 
+            {
+                const requestContext = pendingResendContext;
+                if (!requestContext || requestContext.bookingNumber === "" || requestContext.email === "") {
+                    return;
+                }
+                
+                const requestId = ++resendEmailRequestId;
+                const isCurrentResendRequest = () => 
+                    requestId === resendEmailRequestId && 
+                    pendingResendContext === requestContext;
+
+                confirmResendEmailBtn.disabled = true;
+                confirmResendEmailBtn.textContent = "補寄中...";
+                resendEmailResult.textContent = "";
+                resendEmailResult.className = "d-none small mt-3 mb-0";
+
+                try {
+                    const response = await fetch(resendConfirmationEmailUrl,
+                        {
                             method: "POST",
                             headers: {
                                 "Content-Type": "application/json",
                                 "RequestVerificationToken": emailActionToken
                             },
                             body: JSON.stringify({
-                                bookingNumber: currentBookingNumber,
-                                newEmail: newEmail
+                                bookingNumber: requestContext.bookingNumber
                             })
-                        });
-                        const result = await response.json().catch(() => null);
-                        if (!response.ok || result?.success !== true) {
-                            throw new Error(
-                                result?.message ?? "Email 暫時無法修改，請稍後再試。"
-                            );
                         }
-                        currentEmail = result.email;
-                        modalEmail.textContent = currentEmail;
-                        // 同步更新原本「查看」按鈕的 Email，
-                        // 關閉並重新開啟 Modal 時仍會顯示新資料
-                        currentDetailButton?.setAttribute("data-email", currentEmail);
-                        emailEditArea.classList.add("d-none");
-                        emailDisplayArea.classList.remove("d-none");                        
-                        // Email 儲存完成後恢復補寄按鈕
-                        resendEmailBtn.disabled = !canManageConfirmationEmail;
-                        emailUpdateMessage.textContent = result.message;
-                        emailUpdateMessage.className = "small mt-2 mb-0 text-success";
-                    }
-                    catch (error) {
-                        newEmailInput.classList.add("is-invalid");
-                        emailEditError.textContent = error.message ?? "Email 暫時無法修改，請稍後再試。";
-                    }
-                    finally {
-                        saveEmailBtn.disabled = false;
-                        saveEmailBtn.textContent = "儲存";
-                    }
-                });
-
-                // 開啟補寄確認視窗
-                resendEmailBtn.addEventListener("click", function () {
-                    if (!canManageConfirmationEmail || currentBookingNumber === "" || currentEmail === "") {
-                        return;
-                    }
-                    resendEmailTarget.textContent = currentEmail;
-                    resendEmailResult.textContent = "";
-                    resendEmailResult.className = "d-none small mt-3 mb-0";
-
-                    confirmResendEmailBtn.classList.remove("d-none");
-                    confirmResendEmailBtn.disabled = false;
-                    confirmResendEmailBtn.textContent = "確認補寄";
-                    cancelResendEmailBtn.textContent = "取消";
-                    // 訂單 Modal 完全關閉後，再開啟補寄確認 Modal
-                    bookingDetailModal.addEventListener("hidden.bs.modal", function () {
-                            resendEmailConfirmModal.show();
-                        },
-                        { once: true }
                     );
-                    // 補寄確認 Modal 關閉後，重新顯示訂單詳細資訊
-                    resendEmailConfirmModalElement.addEventListener("hidden.bs.modal", function () {
-                            bookingDetailModalInstance.show();
-                        },
-                        { once: true }
-                    );
-                    bookingDetailModalInstance.hide();
-                });
-
-                // 確認補寄訂房確認信
-                confirmResendEmailBtn.addEventListener("click", async function () {
-                        confirmResendEmailBtn.disabled = true;
-                        confirmResendEmailBtn.textContent = "補寄中...";
-                        resendEmailResult.textContent = "";
-                        resendEmailResult.className = "d-none small mt-3 mb-0";
-
-                        try {
-                            const response = await fetch(resendConfirmationEmailUrl,
-                                {
-                                    method: "POST",
-                                    headers: {
-                                        "Content-Type": "application/json",
-                                        "RequestVerificationToken":
-                                            emailActionToken
-                                    },
-                                    body: JSON.stringify({
-                                        bookingNumber:
-                                            currentBookingNumber
-                                    })
-                                }
-                            );
-                            const result = await response.json().catch(() => null);
-                            if (!response.ok || result?.success !== true) 
-                            {
-                                throw new Error(result?.message ?? "確認信暫時無法補寄，請稍後再試。");
-                            }
-                            resendEmailResult.textContent = result.message;
-                            resendEmailResult.className = "small mt-3 mb-0 text-success";
-                            // 成功後不再顯示確認補寄按鈕
-                            confirmResendEmailBtn.classList.add("d-none");
-                            cancelResendEmailBtn.textContent = "返回訂單";
-                        }
-                        catch (error) {
-                            resendEmailResult.textContent = error.message ?? "確認信暫時無法補寄，請稍後再試。";
-                            resendEmailResult.className = "small mt-3 mb-0 text-danger";
-                            confirmResendEmailBtn.disabled = false;
-                            confirmResendEmailBtn.textContent = "重新嘗試";
-                        }
+                    const result = await response.json().catch(() => null);
+                    if (!response.ok || result?.success !== true) 
+                    {
+                        throw new Error(result?.message ?? "確認信暫時無法補寄，請稍後再試。");
                     }
-                );
 
-
-                // 驗證合法輸入
-                searchForm.addEventListener("submit", function(e) {
-                    if (keyword.value.trim() == "") {
-                        e.preventDefault();
-                        keyword.classList.add("is-invalid");
+                    if (isCurrentResendRequest()) {
+                        resendEmailResult.textContent = result.message;
+                        resendEmailResult.className = "small mt-3 mb-0 text-success";
+                        // 成功後不再顯示確認補寄按鈕
+                        confirmResendEmailBtn.classList.add("d-none");
+                        cancelResendEmailBtn.textContent = "返回訂單";
                     }
-                })
-
-                keyword.addEventListener("input", function() {
-                    if (keyword.value.trim() != "") {
-                        this.classList.remove("is-invalid");
-                    }
-                })
-
-                goToCancelBtn.addEventListener("click", function() {
-                    confirmCancelBtn.classList.remove("d-none");
-                    cancelReasonSection.classList.remove("d-none");
-                })
-
-                cancelReasonSelect.addEventListener('change', function() {
-                    cancelReasonSelect.classList.remove('is-invalid');
-
-                    overtimeWarn.classList.add("d-none");
-                    confirmCancelBtn.disabled = false;
-
-                    if (cancelReasonSelect.value === "顧客因素") {
-                        const checkInDate = new Date(currentStartDate);
-
-                        const deadline = new Date(checkInDate);
-                        deadline.setDate(deadline.getDate() - 1);
-                        deadline.setHours(23, 59, 59, 999);
-
-                        if (new Date() > deadline) {
-
-                            overtimeWarn.classList.remove("d-none");
-                            confirmCancelBtn.disabled = true;
-                            return;
-                        }
-                    }
-                })
-                // 取消理由超過500字驗證
-                cancelMemo.addEventListener('input', function() {
-                if (cancelMemo.value.length > 500) {
-                    cancelMemo.value = cancelMemo.value.slice(0, 500);
-                    cancelMemo.classList.add('is-invalid');
-                    overInputWarnning.classList.remove('d-none');
                 }
-                else{
-                    cancelMemo.classList.remove('is-invalid');
-                    overInputWarnning.classList.add('d-none');
-                }
-                })
-
-                cancelMemo.addEventListener('click',function(){
-                    cancelMemo.classList.remove('is-invalid');
-                    overInputWarnning.classList.add('d-none');
-
-                })
-
-                confirmCancelBtn.addEventListener('click', function() {
-                    let isValid = true;
-                    
-                    if (cancelMemo.value.trim() === "") {
-                        cancelMemo.classList.add('is-invalid');
-                        isValid = false;
-                    }
-                    if (cancelReasonSelect.value === "請選擇..." || cancelReasonSelect.value === "") {
-                        cancelReasonSelect.classList.add('is-invalid');
-                        isValid = false;
-                    }
-                    if (!isValid) {
-                        return;
-                    }
-
-                    confirmActionModal.show();
-                })
-
-                finalSubmitCancelBtn.addEventListener('click', function() {
-                    const cancelCause = cancelReasonSelect.value;
-                    const cancelTime = new Date().toLocaleString();
-
-                    //注入aspFrom的值
-                    cancelBookingNum.value = modalBookingNum.textContent;
-                    document.getElementById('cancelCause').value = cancelCause;
-                    document.getElementById('cancelReason').value = cancelMemo.value;
-                    // alert(cancelCause);
-
-                    confirmActionModal.hide();
-                    bootstrap.Modal.getInstance(document.getElementById('bookingDetailModal')).hide();
-                })
-
-                
-            })
-
-            
-
-
-            // 日期顯示區
-            let maxRangeDate = new Date();
-            maxRangeDate.setDate(maxRangeDate.getDate() + 60);
-            flatpickr("#dateTime", {
-                mode: "range",
-                maxDate: maxRangeDate,
-                dateFormat: "Y-m-d",
-                altInput: true,
-                altFormat: "Y.m.d",
-                showMonths: 1,
-                locale: {
-                    weekdays: {
-                        shorthand: ["日", "一", "二", "三", "四", "五", "六"],
-                        longhand: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"]
-                    }, months: {
-                        shorthand: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],
-                        longhand: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"]
-                    },
-                    rangeSeparator: " - ",
-                },
-                onClose: function(selectedDates, dateStr, instance) {
-                    // 如果選了兩個日期，且起訖是同一天
-                    if (selectedDates.length === 2 && selectedDates[0].getTime() === selectedDates[1].getTime()) {
-                        let nextDay = new Date(selectedDates[0]);
-                        nextDay.setDate(nextDay.getDate() + 1); // 自動加一天
-                        instance.setDate([selectedDates[0], nextDay], true);
+                catch (error) {
+                    if (isCurrentResendRequest()) {
+                        resendEmailResult.textContent = error.message ?? "確認信暫時無法補寄，請稍後再試。";
+                        resendEmailResult.className = "small mt-3 mb-0 text-danger";
+                        confirmResendEmailBtn.disabled = false;
+                        confirmResendEmailBtn.textContent = "重新嘗試";
                     }
                 }
             });
+
+
+            // 驗證合法輸入
+            searchForm.addEventListener("submit", function(e) {
+                if (keyword.value.trim() == "") {
+                    e.preventDefault();
+                    keyword.classList.add("is-invalid");
+                }
+            })
+
+            keyword.addEventListener("input", function() {
+                if (keyword.value.trim() != "") {
+                    this.classList.remove("is-invalid");
+                }
+            })
+
+            goToCancelBtn.addEventListener("click", function() {
+                confirmCancelBtn.classList.remove("d-none");
+                cancelReasonSection.classList.remove("d-none");
+            })
+
+            cancelReasonSelect.addEventListener('change', function() {
+                cancelReasonSelect.classList.remove('is-invalid');
+
+                overtimeWarn.classList.add("d-none");
+                confirmCancelBtn.disabled = false;
+
+                if (cancelReasonSelect.value === "顧客因素") {
+                    const checkInDate = new Date(currentStartDate);
+
+                    const deadline = new Date(checkInDate);
+                    deadline.setDate(deadline.getDate() - 1);
+                    deadline.setHours(23, 59, 59, 999);
+
+                    if (new Date() > deadline) {
+
+                        overtimeWarn.classList.remove("d-none");
+                        confirmCancelBtn.disabled = true;
+                        return;
+                    }
+                }
+            })
+            // 取消理由超過500字驗證
+            cancelMemo.addEventListener('input', function() {
+            if (cancelMemo.value.length > 500) {
+                cancelMemo.value = cancelMemo.value.slice(0, 500);
+                cancelMemo.classList.add('is-invalid');
+                overInputWarnning.classList.remove('d-none');
+            }
+            else{
+                cancelMemo.classList.remove('is-invalid');
+                overInputWarnning.classList.add('d-none');
+            }
+            })
+
+            cancelMemo.addEventListener('click',function(){
+                cancelMemo.classList.remove('is-invalid');
+                overInputWarnning.classList.add('d-none');
+
+            })
+
+            confirmCancelBtn.addEventListener('click', function() {
+                let isValid = true;
+                    
+                if (cancelMemo.value.trim() === "") {
+                    cancelMemo.classList.add('is-invalid');
+                    isValid = false;
+                }
+                if (cancelReasonSelect.value === "請選擇..." || cancelReasonSelect.value === "") {
+                    cancelReasonSelect.classList.add('is-invalid');
+                    isValid = false;
+                }
+                if (!isValid) {
+                    return;
+                }
+
+                confirmActionModal.show();
+            })
+
+            finalSubmitCancelBtn.addEventListener('click', function() {
+                const cancelCause = cancelReasonSelect.value;
+                const cancelTime = new Date().toLocaleString();
+
+                //注入aspFrom的值
+                cancelBookingNum.value = modalBookingNum.textContent;
+                document.getElementById('cancelCause').value = cancelCause;
+                document.getElementById('cancelReason').value = cancelMemo.value;
+                // alert(cancelCause);
+
+                confirmActionModal.hide();
+                bootstrap.Modal.getInstance(document.getElementById('bookingDetailModal')).hide();
+            })
+                
+        })
+
+
+        // 日期顯示區
+        let maxRangeDate = new Date();
+        maxRangeDate.setDate(maxRangeDate.getDate() + 60);
+        flatpickr("#dateTime", {
+            mode: "range",
+            maxDate: maxRangeDate,
+            dateFormat: "Y-m-d",
+            altInput: true,
+            altFormat: "Y.m.d",
+            showMonths: 1,
+            locale: {
+                weekdays: {
+                    shorthand: ["日", "一", "二", "三", "四", "五", "六"],
+                    longhand: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"]
+                }, months: {
+                    shorthand: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],
+                    longhand: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"]
+                },
+                rangeSeparator: " - ",
+            },
+            onClose: function(selectedDates, dateStr, instance) {
+                // 如果選了兩個日期，且起訖是同一天
+                if (selectedDates.length === 2 && selectedDates[0].getTime() === selectedDates[1].getTime()) {
+                    let nextDay = new Date(selectedDates[0]);
+                    nextDay.setDate(nextDay.getDate() + 1); // 自動加一天
+                    instance.setDate([selectedDates[0], nextDay], true);
+                }
+            }
+        });
     </script>
 }

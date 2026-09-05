@@ -13,6 +13,6 @@
         public DateTime EndDate { get; set; }
         public string? Price { get; set; }
         public string Email { get; set; } = string.Empty;
-        public DateTime? LastConfirmationEmailSentAt { get; set; }
+
     }
 }
