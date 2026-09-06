@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace HotelManagementSystem.Controllers
 {
+    // 系統公告管理
     public class AnnouncementController : SystemAdminControllerBase
     {
         private readonly HotelManagementContext _context;
