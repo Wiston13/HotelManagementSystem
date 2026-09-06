@@ -33,17 +33,17 @@
 
 					<div class="col-12 col-lg-5">
 						<label for="orderNo" class="form-label">訂單編號<span class="text-danger">*</span></label>
-						<small class="text-secondary fw-normal ms-1">請輸入完整訂單編號。</small>
+						<small class="text-secondary fw-normal ms-1">格式：BK + 12 位數字</small>
 
 						<!-- 改用 asp-for，它會自動生成 id="OrderNo" name="OrderNo" value="..." -->
-						<input asp-for="BookingNum" class="form-control" id="orderNo" placeholder="例如：BK26090100020001" />
+						<input asp-for="BookingNum" class="form-control" id="orderNo" placeholder="請輸入完整訂單編號" />
 					</div>
 
 					<div class="col-12 col-lg-5">
 						<label for="phone" class="form-label">聯絡電話<span class="text-danger">*</span></label>
 
 						<!-- 改用 asp-for -->
-						<input asp-for="Phone" class="form-control" id="phone" placeholder="例如：0912345678" />
+						<input asp-for="Phone" class="form-control" id="phone" placeholder="請輸入訂房時填寫的聯絡電話" />
 					</div>
 
 					<div class="col-12 col-lg-2 d-grid">

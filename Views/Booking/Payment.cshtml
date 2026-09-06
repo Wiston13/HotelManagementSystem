@@ -35,7 +35,6 @@
 	<!-- 新增流程提醒 -->
 	<p class="text-secondary ms-3 mb-4">
 		*付款成功後，訂房才算完成。<br />
-		本系統使用模擬付款流程，不會實際扣款。
 	</p>
 
 
@@ -76,7 +75,7 @@
 							<label class="form-label">
 								姓名 <span class="text-danger">*</span>
 							</label>
-							<input class="form-control" type="text" id="txtName" name="BookerName" value="@TempData["BookerName"]" required placeholder="例如：王小明"
+							<input class="form-control" type="text" id="txtName" name="BookerName" value="@TempData["BookerName"]" required placeholder="請輸入訂房人姓名"
 								   pattern="[^\d]*" maxlength="50"
 								   oninput="this.value = this.value.replace(/\d/g, '')"
 								   data-error-target="#nameError">
@@ -87,7 +86,7 @@
 							<label class="form-label">
 								聯絡電話 <span class="text-danger">*</span>
 							</label>
-							<input class="form-control" type="tel" id="txtPhone" name="ContactPhone" value="@TempData["ContactPhone"]" required placeholder="例如：0912345678" data-error-target="#phoneError">
+							<input class="form-control" type="tel" id="txtPhone" name="ContactPhone" value="@TempData["ContactPhone"]" required placeholder="請輸入可聯絡的電話" data-error-target="#phoneError">
 							<div id="phoneError" class="text-danger small mt-1 d-none">請輸入正確的聯絡電話格式。</div>
 						</div>
 						<!-- 電子信箱欄位 -->
@@ -95,7 +94,7 @@
 							<label class="form-label">
 								電子信箱 <span class="text-danger">*</span>
 							</label>
-							<input class="form-control" type="email" id="txtEmail" name="Email" value="@TempData["Email"]" required placeholder="例如：name@example.com" data-error-target="#emailError">
+							<input class="form-control" type="email" id="txtEmail" name="Email" value="@TempData["Email"]" required placeholder="請輸入可正常收信的電子信箱" data-error-target="#emailError">
 							<div id="emailError" class="text-danger small mt-1 d-none">請輸入正確的電子信箱格式。</div>
 						</div>
 					</div>
@@ -122,7 +121,7 @@
 											<path d="M2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm13 2v1.5H1V4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1M1 7.5h14V12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1z" />
 										</svg>
 									</span>
-									<input class="form-control" type="text" id="txtCardNumber" name="CardNumber" required placeholder="4242 4242 4242 4242" maxlength="19" data-error-target="#cardError">
+									<input class="form-control" type="text" id="txtCardNumber" name="CardNumber" required placeholder="XXXX XXXX XXXX XXXX" maxlength="19" data-error-target="#cardError">
 								</div>
 								<div id="cardError" class="text-danger small mt-1 d-none">此卡號無效。</div>
 							</div>
@@ -149,7 +148,7 @@
 									<label class="form-label">
 										CVC 安全碼 <span class="text-danger">*</span>
 									</label>
-									<input class="form-control text-center" type="password" id="txtCvc" name="Cvc" required placeholder="336" maxlength="3" data-error-target="#cvcError">
+									<input class="form-control text-center" type="password" id="txtCvc" name="Cvc" required placeholder="XXX" maxlength="3" data-error-target="#cvcError">
 									<div id="cvcError" class="text-danger small mt-1 d-none">請輸入安全碼。</div>
 								</div>
 							</div>
