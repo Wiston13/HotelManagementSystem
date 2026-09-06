@@ -18,10 +18,10 @@
 
 <div class="container my-4">
 
-    <!-- 返回首頁 (後續記得處理返回後資料傳遞等部分) -->
+    <!-- 返回首頁 -->
     <a asp-controller="Home"
        asp-action="Index"
-       class="btn btn-link px-0 text-decoration-none mb-2">
+       class="btn btn-link customer-back-link px-0 text-decoration-none mb-2">
         ← 修改查詢條件
     </a>
 
@@ -78,7 +78,7 @@
 
                         <div class="text-end align-self-end">
                             @* 價格 *@
-                            <h4 class="text-primary fw-bold mb-2">
+                            <h4 class="customer-primary-text fw-bold mb-2">
                                 NT$ @room.NightlyPrice.ToString("#,##0.##", System.Globalization.CultureInfo.GetCultureInfo("zh-TW"))
                                 <small class="fs-6 fw-normal">／晚</small>
                             </h4>
@@ -117,7 +117,7 @@
 
                 <div class="d-flex justify-content-between py-2 border-bottom">
                     <span class="text-muted">房型</span>
-                    <strong id="displayRoomName" class="text-primary">請選擇房型</strong>
+                    <strong id="displayRoomName" class="customer-selection-text">請選擇房型</strong>
                 </div>
 
                 <div class="d-flex justify-content-between py-2 border-bottom">
