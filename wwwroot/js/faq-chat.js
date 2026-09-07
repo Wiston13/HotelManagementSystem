@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
-    const avatarUrl = "https://www.gstatic.com/images/branding/product/2x/googleg_48dp.png";
+    const avatarUrl = "/images/faq-sun.png";
     const errorMessage = "客服目前暫時無法回覆，請稍後再試。";
     const welcomeMessage = "你好，我是旅宿小助手！\n可以協助你了解訂房、入住、退房及訂單查詢等常見問題。";
     const suggestedQuestions = [

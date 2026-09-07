@@ -7,7 +7,7 @@
     --faq-border: #dce3ea;
     --faq-shadow: 0 14px 40px rgba(38, 58, 77, 0.2);
     --faq-edge: 24px;
-    --faq-toggle-size: 56px;
+    --faq-toggle-size: 84px;
     position: relative;
     z-index: 1080;
     color: var(--faq-text);
@@ -55,10 +55,10 @@
     padding: 0;
     place-items: center;
     overflow: visible;
-    background: var(--faq-primary);
+    background: transparent;
     border: 0;
     border-radius: 50%;
-    box-shadow: 0 8px 24px rgba(38, 82, 119, 0.3);
+    box-shadow: none;
     cursor: pointer;
     transition: background-color 160ms ease, box-shadow 160ms ease;
 }
@@ -119,8 +119,8 @@
 }
 
 .faq-chat-toggle__robot {
-    width: 34px;
-    height: 34px;
+    width: 74px;
+    height: 74px;
     object-fit: contain;
     transition: opacity 160ms ease, transform 160ms ease;
 }
@@ -129,8 +129,8 @@
     position: absolute;
     width: 16px;
     height: 16px;
-    border-right: 3px solid #ffffff;
-    border-bottom: 3px solid #ffffff;
+    border-right: 3px solid #2f3a45;
+    border-bottom: 3px solid #2f3a45;
     opacity: 0;
     transform: translateY(-4px) rotate(45deg);
     transition: opacity 160ms ease, transform 160ms ease;
