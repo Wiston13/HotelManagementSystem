@@ -92,7 +92,7 @@ namespace HotelManagementSystem.Controllers
                         bookingStatusLog.OperationTypeId = 1;
                         bookingStatusLog.TargetType = "Branch";
                         bookingStatusLog.TargetIdentifier = branch.BranchName;
-                        bookingStatusLog.Description = $"建立{branch.BranchName}商旅";
+                        bookingStatusLog.Description = $"建立分館：{branch.BranchName}。";
 
                         _context.Add(bookingStatusLog);
                         await _context.SaveChangesAsync();
@@ -157,7 +157,7 @@ namespace HotelManagementSystem.Controllers
                         bookingStatusLog.OperationTypeId = 2;
                         bookingStatusLog.TargetType = "Branch";
                         bookingStatusLog.TargetIdentifier = branch.BranchName;
-                        bookingStatusLog.Description = $"修改{branch.BranchName}商旅資料";
+                        bookingStatusLog.Description = $"修改分館資料：{branch.BranchName}。";
                         _context.Add(bookingStatusLog);
                     }
                 }
@@ -172,7 +172,7 @@ namespace HotelManagementSystem.Controllers
                         OperationTypeId = isBookingOpenOrStopped,
                         TargetType = "Branch",
                         TargetIdentifier = branch.BranchName,
-                        Description = $"修改{branch.BranchName}商旅資料 將{branch.BranchName}商旅設定為{temp}新訂房。"
+                        Description = $"將分館 {branch.BranchName} 設定為{temp}新訂房。"
                     };
 
                     _context.Add(updateLog);

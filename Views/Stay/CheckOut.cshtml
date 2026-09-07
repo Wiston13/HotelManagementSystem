@@ -70,10 +70,10 @@
                         </div>
                         <div class="check-out-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
                             <p class="detail-label text-secondary mb-0">Check-in</p>
-                            <p class="detail-value check-in-time fw-semibold text-end mb-0">@Model.CheckInAt</p>
+                            <p class="detail-value check-in-time fw-semibold text-end mb-0">@(Model.CheckInAt?.ToString("yyyy/MM/dd HH:mm") ?? "")</p>
                         </div>
                         <div class="check-out-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
-                            <p class="detail-label text-secondary mb-0">房型快照</p>
+                            <p class="detail-label text-secondary mb-0">房型</p>
                             <p class="detail-value room-type fw-semibold text-end mb-0">@Model.RoomTypeName</p>
                         </div>
                         <div class="check-out-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
@@ -89,7 +89,7 @@
                         </div>
                         <div class="check-out-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
                             <p class="detail-label text-secondary mb-0">預定退房</p>
-                            <p class="detail-value scheduled-check-out fw-semibold text-end mb-0">@Model.CheckOutDate</p>
+                            <p class="detail-value scheduled-check-out fw-semibold text-end mb-0">@Model.CheckOutDate.ToString("yyyy/MM/dd")</p>
                         </div>
                         <div class="check-out-detail-row d-flex align-items-start justify-content-between gap-3 py-3 text-start">
                             <p class="detail-label text-secondary mb-0">訂單編號</p>

@@ -18,4 +18,10 @@
     </PackageReference>
   </ItemGroup>
 
+	<ItemGroup>
+		<Compile Remove="HotelManagementSystem.Tests\**\*.cs" />
+		<Content Remove="HotelManagementSystem.Tests\**\*" />
+		<None Remove="HotelManagementSystem.Tests\**\*" />
+	</ItemGroup>
+	
 </Project>

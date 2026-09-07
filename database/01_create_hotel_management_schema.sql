@@ -1,12 +1,12 @@
 /*
-    HotelManagementSystem - 第一版完整資料庫 DDL
+    HotelManagementSystem - 資料庫 Schema
     SQL Server
 
     注意：
     1. 此腳本為開發／測試用可重建版本。
     2. 若資料表已存在，會依相依順序 DROP 後重新建立，因此原資料會被刪除。
-    3. OperationTypes 的固定類型與其他測試資料請放在 SampleData 腳本中。
-    4. 第一版所有業務日期與時間以台灣時間（Asia/Taipei）為準。
+    3. OperationTypes 固定類型由 02_required_seed.sql 建立。
+    4. 所有業務日期與時間以台灣時間（Asia/Taipei）為準。
 */
 
 USE [master];
@@ -37,6 +37,7 @@ GO
 /* =========================================================
    重新建立資料表：先依 FK 相依順序刪除
    ========================================================= */
+DROP TABLE IF EXISTS [dbo].[Announcements];
 DROP TABLE IF EXISTS [dbo].[OperationLogs];
 DROP TABLE IF EXISTS [dbo].[StayRecords];
 DROP TABLE IF EXISTS [dbo].[Bookings];
@@ -44,6 +45,7 @@ DROP TABLE IF EXISTS [dbo].[Rooms];
 DROP TABLE IF EXISTS [dbo].[Employees];
 DROP TABLE IF EXISTS [dbo].[OperationTypes];
 DROP TABLE IF EXISTS [dbo].[RoomTypes];
+DROP TABLE IF EXISTS [dbo].[CustomerFeedbacks];
 DROP TABLE IF EXISTS [dbo].[Branches];
 GO
 
@@ -109,7 +111,7 @@ CREATE TABLE [dbo].[RoomTypes]
 GO
 
 /* =========================================================
-   3. Rooms 實體房間
+   3. Rooms 房間
    ========================================================= */
 CREATE TABLE [dbo].[Rooms]
 (
@@ -199,11 +201,11 @@ GO
 /* =========================================================
    5. Bookings 訂單
 
-   第一版簡化：
+   目前資料模型：
    - 付款方式固定信用卡，不另存欄位
    - 付款金額 = TotalAmount
    - 付款時間 = CreatedAt
-   - Email 只執行一次寄送動作，不保存寄送結果／時間
+   - Email 欄位目前保存訂房聯絡 Email；寄送時機、結果保存與其他資料需求待 Email 功能規格定案
    - NoShow 不另存 NoShowAt，由 CheckOutDate 當日 12:00 推導
    ========================================================= */
 CREATE TABLE [dbo].[Bookings]
@@ -302,7 +304,7 @@ GO
 
 /* =========================================================
    6. StayRecords 住房紀錄
-   一張訂單第一版最多一筆住房紀錄
+   一張訂單最多一筆住房紀錄
    ========================================================= */
 CREATE TABLE [dbo].[StayRecords]
 (
@@ -361,7 +363,7 @@ CREATE TABLE [dbo].[StayRecords]
 GO
 
 /*
-   保證同一間實體房間同一時間最多一筆「尚未退房」住房紀錄。
+   保證同一間房間同一時間最多一筆「尚未退房」住房紀錄。
    歷史已退房紀錄不受此限制。
 */
 CREATE UNIQUE INDEX [UX_StayRecords_ActiveRoom]
@@ -427,7 +429,81 @@ CREATE TABLE [dbo].[OperationLogs]
 GO
 
 /* =========================================================
-   第一版常用查詢索引
+   9. CustomerFeedbacks 顧客意見回饋
+   開放式單向收集；內部僅查詢／匯出，不保存處理狀態或回覆。
+   ========================================================= */
+CREATE TABLE [dbo].[CustomerFeedbacks]
+(
+    [Id]              int IDENTITY(1,1) NOT NULL,
+    [BranchId]        int NOT NULL,
+    [CustomerName]    nvarchar(50) NOT NULL,
+    [Email]           varchar(254) NOT NULL,
+    [Phone]           varchar(20) NULL,
+    [Content]         nvarchar(500) NOT NULL,
+    [CreatedAt]       datetime2(0) NOT NULL
+        CONSTRAINT [DF_CustomerFeedbacks_CreatedAt]
+        DEFAULT (CONVERT(datetime2(0), SYSDATETIMEOFFSET() AT TIME ZONE 'Taipei Standard Time')),
+
+    CONSTRAINT [PK_CustomerFeedbacks]
+        PRIMARY KEY ([Id]),
+
+    CONSTRAINT [FK_CustomerFeedbacks_Branches]
+        FOREIGN KEY ([BranchId])
+        REFERENCES [dbo].[Branches] ([BranchId])
+        ON DELETE NO ACTION,
+
+    CONSTRAINT [CK_CustomerFeedbacks_CustomerName]
+        CHECK (LEN(LTRIM(RTRIM([CustomerName]))) > 0),
+
+    CONSTRAINT [CK_CustomerFeedbacks_Email]
+        CHECK (LEN(LTRIM(RTRIM([Email]))) > 0),
+
+    CONSTRAINT [CK_CustomerFeedbacks_Content]
+        CHECK (LEN(LTRIM(RTRIM([Content]))) > 0),
+
+    /* 後端先移除空白與半形連字號；未填保存 NULL，有值只接受 ASCII 數字。 */
+    CONSTRAINT [CK_CustomerFeedbacks_Phone]
+        CHECK ([Phone] IS NULL OR (DATALENGTH([Phone]) > 0 AND [Phone] COLLATE Latin1_General_100_BIN2 NOT LIKE '%[^0-9]%'))
+);
+GO
+
+/* =========================================================
+   10. Announcements 全域公告
+   閱讀端依啟用、有效期間與顧客可見性查詢；不保存到期狀態。
+   公告量小，先使用主鍵索引，不限制同時存在多則有效公告。
+   ========================================================= */
+CREATE TABLE [dbo].[Announcements]
+(
+    [AnnouncementId]    int IDENTITY(1,1) NOT NULL,
+    [Title]             nvarchar(100) NOT NULL,
+    [Content]           nvarchar(1000) NOT NULL,
+    [StartAt]           datetime2(0) NOT NULL,
+    [EndAt]             datetime2(0) NOT NULL,
+    [IsActive]          bit NOT NULL
+        CONSTRAINT [DF_Announcements_IsActive] DEFAULT (1),
+    [ShowToGuest]       bit NOT NULL
+        CONSTRAINT [DF_Announcements_ShowToGuest] DEFAULT (0),
+    [CreatedAt]         datetime2(0) NOT NULL
+        CONSTRAINT [DF_Announcements_CreatedAt]
+        DEFAULT (CONVERT(datetime2(0), SYSDATETIMEOFFSET() AT TIME ZONE 'Taipei Standard Time')),
+
+    CONSTRAINT [PK_Announcements]
+        PRIMARY KEY ([AnnouncementId]),
+
+    CONSTRAINT [CK_Announcements_DateRange]
+        CHECK ([EndAt] > [StartAt]),
+
+    /* 排除空字串與全由半形空格組成的值；完整空白與輸入驗證仍由後端負責。 */
+    CONSTRAINT [CK_Announcements_Title]
+        CHECK (LEN(LTRIM(RTRIM([Title]))) > 0),
+
+    CONSTRAINT [CK_Announcements_Content]
+        CHECK (LEN(LTRIM(RTRIM([Content]))) > 0)
+);
+GO
+
+/* =========================================================
+   常用查詢索引
    ========================================================= */
 
 /* 查房／房量計算 */
@@ -448,7 +524,7 @@ ON [dbo].[Bookings] ([BookingStatus], [CheckOutDate])
 INCLUDE ([BookingNumber]);
 GO
 
-/* 管理員依分館＋成立日期區間匯出 CSV */
+/* 依分館與成立時間查詢訂單 */
 CREATE INDEX [IX_Bookings_Branch_CreatedAt]
 ON [dbo].[Bookings] ([BranchId], [CreatedAt]);
 GO
@@ -485,6 +561,16 @@ GO
 /* 操作紀錄：依操作者帳號查詢 */
 CREATE INDEX [IX_OperationLogs_Operator_OperatedAt]
 ON [dbo].[OperationLogs] ([OperatorEmployeeNumber], [OperatedAt] DESC);
+GO
+
+/* 顧客意見：員工本館／管理員指定分館，依填寫日期查詢與排序。 */
+CREATE INDEX [IX_CustomerFeedbacks_Branch_CreatedAt]
+ON [dbo].[CustomerFeedbacks] ([BranchId], [CreatedAt] DESC);
+GO
+
+/* 顧客意見：管理員全部分館的填寫日期區間查詢與匯出。 */
+CREATE INDEX [IX_CustomerFeedbacks_CreatedAt]
+ON [dbo].[CustomerFeedbacks] ([CreatedAt] DESC);
 GO
 
 /* =========================================================

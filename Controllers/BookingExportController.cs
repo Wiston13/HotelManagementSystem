@@ -69,7 +69,11 @@ namespace HotelManagementSystem.Controllers
                     total_amount = x.booking.TotalAmount,
                     status = StatusDisplayHelper.GetBookingStatusText(x.booking.BookingStatus),
 
-                    cancel_cause = x.booking.CancellationCause ?? "",
+                    cancel_cause = x.booking.CancellationCause == "GuestRequest"
+                        ? "顧客因素"
+                        : x.booking.CancellationCause == "HotelUnableToFulfill"
+                            ? "飯店因素"
+                            : x.booking.CancellationCause ?? "",
                     cancel_reason = x.booking.CancellationReason ?? "",
                     cancel_emp = x.booking.CancelledByEmployeeNumber ?? "",
                     cancel_at = x.booking.CancelledAt.HasValue ? x.booking.CancelledAt.Value.ToString("yyyy-MM-dd HH:mm:ss") : "",

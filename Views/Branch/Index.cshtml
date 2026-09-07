@@ -9,7 +9,7 @@
 {
     <div class="alert alert-success alert-dismissible fade show shadow-sm mb-3" role="alert">
         <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="關閉"></button>
     </div>
 }
 
@@ -17,7 +17,7 @@
 {
     <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-3" role="alert">
         <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="關閉"></button>
     </div>
 }
 
@@ -104,7 +104,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title fw-bold" id="branchModalTitle">分館資料維護</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
             </div>
             <div class="modal-body">
                 <form id="branchForm" asp-controller="Branch" asp-action="Save" method="post">

@@ -54,7 +54,7 @@
 
                 <!-- 2. 入住日期區間 (簡單 input，供後續套用日曆插件) -->
                 <div class="col-md-3">
-                    <label for="dateRange" class="form-label small fw-bold text-secondary">
+                    <label for="dateTime" class="form-label small fw-bold text-secondary">
                         入住日期區間 <span class="text-muted fw-normal">(選填)</span>
                     </label>
                     <div class="input-group">
@@ -97,8 +97,12 @@
 
     
 
-    <!-- 查詢結果列表區塊 -->
-    <div class="@(Model != null && Model.Any() ? "" : "d-none")">
+	<!-- 查詢結果列表區塊 -->
+	@if (!string.IsNullOrWhiteSpace(ViewBag.Keyword as string) && (Model == null || !Model.Any()))
+	{
+		<div class="alert alert-secondary">查無符合條件的訂單資料。</div>
+	}
+	<div class="@(Model != null && Model.Any() ? "" : "d-none")">
         <h5>查詢訂單數量：@Model.Count 筆</h5>
         </div>
     <div id="resultList" class="card border-0 shadow-sm @(Model != null && Model.Any() ? "" : "d-none")">
@@ -126,7 +130,7 @@
                                 <td>@item.StartDate.ToString("yyyy/MM/dd") - @item.EndDate.ToString("yyyy/MM/dd")</td>
                                 <td>@item.Name</td>
                                 <td>@item.Roomtype</td>
-                                <td>@(item.Phone!=null&&item.Phone.Length>4?item.Phone.Insert(4, "-"):item.Phone)</td>
+                                <td>@item.Phone</td>
                                 <td><span class="badge @BookingStatusStyle(item.BookingStatus) px-2 py-1">@item.BookingStatus</span></td>
                                 <td class="text-end pe-4">
 
@@ -138,7 +142,7 @@
                                             data-bookingnum="@item.BookingNum"
                                             data-name="@item.Name"
                                             data-roomtype="@item.Roomtype"
-                                            data-createtime="@item.BookingDate"
+                                            data-createtime="@item.BookingDate.ToString("yyyy/MM/dd HH:mm")"
                                             data-bookingstatus="@item.BookingStatus"
                                             data-startdate="@item.StartDate.ToString("yyyy/MM/dd")"
                                             data-enddate="@item.EndDate.ToString("yyyy/MM/dd")"
@@ -166,7 +170,7 @@
                 <!-- Modal 標題 -->
                 <div class="modal-header bg-light">
                     <h5 class="modal-title fw-bold text-dark" id="bookingDetailModalLabel">訂單詳細資訊</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
                 </div>
 
                 <!-- Modal 內容 (對應附圖的排版) -->
@@ -214,7 +218,7 @@
                 <div id="cancelReasonSection" class="d-none mt-4 mx-1 p-3 bg-light border rounded">
                     <h6 class="fw-bold text-danger mb-3">請填寫取消原因</h6>
                     <div class="mb-3">
-                        <label class="form-label">選擇取消原因<span class="text-danger">*必填</span></label>
+                        <label class="form-label">選擇取消因素<span class="text-danger">*必填</span></label>
                         <select class="form-select" id="cancelReasonSelect">
                             <option value="請選擇..." disabled selected>請選擇...</option>
                             <option value="顧客因素">顧客因素</option>
@@ -231,7 +235,7 @@
                             顧客因素取消須於入住日前一日 23:59 前完成。
                         </div>
                         <div id="overInputWarnning" class="text-danger mt-1 me-1 d-none">
-                            取消理由不能超過500個字。
+                            取消理由不能超過 500 個字。
                     </div>
                         <button type="button" id="confirmCancelBtn" class="btn btn-danger btn-sm d-none px-3">
                             確認取消訂單
@@ -267,7 +271,7 @@
             <div class="modal-content border-0 shadow">
                 <div class="modal-header bg-danger text-white py-2">
                     <h6 class="modal-title fw-bold" id="confirmActionModalLabel">系統提示</h6>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="關閉"></button>
                 </div>
                 <div class="modal-body text-center py-4">
                     <p class="mb-0 fw-semibold">確定要執行取消此訂單嗎？<br><span class="text-muted small">此動作無法復原。</span></p>
@@ -348,7 +352,7 @@
                     document.getElementById('modalRoomtype').textContent = roomtype;
                     document.getElementById('modalStatus').textContent = bookingStatus;
                     document.getElementById('modalBookingDate').textContent = startDate + " - " + endDate;
-                    document.getElementById('modalPhone').textContent = phone && phone.length > 4 ? phone.slice(0, 4) + "-" + phone.slice(4) : (phone ?? "");
+                    document.getElementById('modalPhone').textContent = phone ?? "";
                     document.getElementById('modalCreateTime').textContent = createTime;
                     document.getElementById('modalPrice').textContent = price;
 
