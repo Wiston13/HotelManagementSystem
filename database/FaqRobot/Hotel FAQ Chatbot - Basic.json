@@ -40,20 +40,6 @@
     },
     {
       "parameters": {
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
-      "typeVersion": 1.4,
-      "position": [
-        288,
-        -96
-      ],
-      "id": "7efc8600-4929-43f3-9dd0-3e9551a714cc",
-      "name": "When chat message received",
-      "webhookId": "6c0eb203-5a4a-4ea8-9ca7-03ae73966c06"
-    },
-    {
-      "parameters": {
         "assignments": {
           "assignments": [
             {
@@ -93,8 +79,8 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        288,
-        -224
+        400,
+        -176
       ],
       "id": "d4dc5e78-d22f-43fa-a93d-4f5f937f1cde",
       "name": "Webhook",
@@ -130,17 +116,6 @@
           {
             "node": "AI Agent",
             "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "When chat message received": {
-      "main": [
-        [
-          {
-            "node": "Edit Fields",
-            "type": "main",
             "index": 0
           }
         ]
@@ -186,7 +161,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "269d0b18-8d50-4ad9-9167-935441d60730",
+  "versionId": "3d24ccda-10aa-49df-8de7-ea1250d1dfd2",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "b27803072219c3a221845c7d22684c2163753990ac71bfad1f8949cc33ca51e8"
