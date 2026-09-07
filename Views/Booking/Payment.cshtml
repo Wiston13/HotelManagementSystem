@@ -2,11 +2,6 @@
 	For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 *@
 
-@*
-	飯店管理系統 - 模擬付款頁面原型
-	已完全修正所有標籤閉合與跑版問題，內嵌姓名防呆與卡號自動空格功能
-*@
-
 @{
     ViewData["Title"] = "付款";
 }
@@ -16,18 +11,16 @@
 
 <div class="container py-4">
 
-	<!-- 返回房型選擇頁 (後續記得處理返回後資料傳遞等部分) -->
+	<!-- 返回房型選擇頁，保留原查詢條件 -->
 	<a asp-controller="Booking"
 	   asp-action="RoomSelection"
 	   asp-route-branchId="@Model.BranchId"
 	   asp-route-checkIn="@Model.CheckInDate.ToString("yyyy-MM-dd")"
 	   asp-route-checkOut="@Model.CheckOutDate.ToString("yyyy-MM-dd")"
 	   asp-route-guestCount="@Model.GuestCount"
-	   class="btn btn-link px-0 text-decoration-none mb-2">
+	   class="customer-back-link text-decoration-none d-inline-block mb-2">
 		← 重新選擇房型
 	</a>
-
-
 
 	<!-- 三、頁面標題與副標題 -->
 	<h1 class="h3 fw-bold mb-2">填寫訂房人資料與付款資訊</h1>
@@ -37,14 +30,12 @@
 		*付款成功後，訂房才算完成。<br />
 	</p>
 
-
 	@if (TempData["PaymentError"] != null)
 	{
 		<div class="alert alert-danger mb-4" role="alert">
 			@TempData["PaymentError"]
 		</div>
 	}
-
 
 	<!-- 表單開始：使用 ASP.NET Core 標準 Tag Helper 確保標籤完美解析 -->
 	<form id="paymentForm" asp-controller="Booking" asp-action="Success" method="post" class="needs-validation" novalidate>
@@ -65,7 +56,7 @@
 			<div class="col-12 col-lg-8">
 
 				<!-- 訂房人資料 -->
-				<div class="card mb-4">
+				<div class="card mb-4 payment-section-card">
 					<div class="card-header fw-semibold">
 						訂房人資料
 					</div>
@@ -101,7 +92,7 @@
 				</div>
 
 				<!-- 付款資訊 -->
-				<div class="card">
+				<div class="card mb-4 payment-section-card">
 					<div>
 						<div class="card-header fw-semibold">
 							付款資訊
@@ -171,7 +162,6 @@
 
 						</div>
 					</div>
-
 					
 				</div>
 			</div>			
@@ -181,8 +171,7 @@
 			<div class="col-12 col-lg-4">
 				
 				<!-- 訂房確認區塊 -->
-				<div class="card">
-
+				<div class="card payment-summary">
 					<div class="card-header fw-semibold">
 						訂房資訊
 					</div>
