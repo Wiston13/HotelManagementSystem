@@ -327,7 +327,7 @@ namespace HotelManagementSystem.Controllers
                 // 指定測試卡號模擬付款失敗
                 if (normalizedCardNumber == "4000000000000002")
                 {
-                    TempData["PaymentError"] = "付款失敗，訂單尚未建立，請確認付款資訊後重新嘗試。";
+                    TempData["PaymentError"] = "付款失敗，訂單尚未建立。請確認付款資訊後重新嘗試。";
                     TempData["BookerName"] = input.BookerName;
                     TempData["ContactPhone"] = input.ContactPhone;
                     TempData["Email"] = input.Email;
