@@ -32,7 +32,6 @@ public partial class HotelManagementContext : DbContext
 
     public virtual DbSet<StayRecord> StayRecords { get; set; }
 
-    public virtual DbSet<Announcement> Announcements { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
