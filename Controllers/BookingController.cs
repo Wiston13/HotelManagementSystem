@@ -77,15 +77,6 @@ namespace HotelManagementSystem.Controllers
                 .Where(r => r.AvailableRooms > 0)
                 .ToList();
 
-            // 沒有任何可預訂房型，回到首頁
-            if (!availableRoomTypes.Any())
-            {
-                TempData["NoAvailableRoom"] =
-                    "很抱歉，目前沒有符合查詢條件的可訂房間，請調整查詢條件後再試一次。";
-
-                return RedirectToAction("Index", "Home");
-            }
-
             // 計算入住晚數
             var nights = checkOut.DayNumber - checkIn.DayNumber;
 

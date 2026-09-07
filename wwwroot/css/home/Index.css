@@ -186,12 +186,13 @@
         background-color: #3f5551;
         border-color: #3f5551;
     }
-    /* 被點擊後取得 focus，不要蓋過 active */
+    /* 滑鼠點擊後，不顯示外圈 */
     .region-scroll .btn:focus {
-        box-shadow: 0 0 0 0.16rem rgba(63, 85, 81, 0.10);
+        box-shadow: none;
     }
-    .region-scroll .btn.active:focus {
-        box-shadow: 0 0 0 0.16rem rgba(63, 85, 81, 0.14);
+    /* 使用鍵盤 Tab 操作時，才顯示焦點 */
+    .region-scroll .btn:focus-visible {
+        box-shadow: 0 0 0 0.16rem rgba(63, 85, 81, 0.18);
     }
 
 .branch-card-wrapper {

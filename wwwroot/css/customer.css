@@ -231,7 +231,54 @@
     color: rgba(63, 85, 81, 0.70);
 }
 
-/* 房型選擇頁（選擇的房型文字） */
+
+/* =========================
+   房型選擇頁
+   ========================= */
+/* 無搜尋結果 */
+.room-empty-state {
+    padding: 3rem 2rem;
+    text-align: center;
+    background-color: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(63, 85, 81, 0.12);
+    border-radius: 10px;
+    color: #3f5551;
+}
+    .room-empty-state p {
+        line-height: 1.7;
+    }
+
+/* 房型選擇按鈕：一般狀態 */
+.btn-select-room {
+    color: #3f5b56;
+    background-color: #fff;
+    border-color: #718681;
+}
+    /* Hover */
+    .btn-select-room:hover {
+        color: #3f5b56;
+        background-color: #eef2f1;
+        border-color: #526c67;
+    }
+    /* Focus / 點擊 */
+    .btn-select-room:focus,
+    .btn-select-room:focus-visible,
+    .btn-select-room:active {
+        outline: none;
+        border-color: #3f5b56;
+        box-shadow: 0 0 0 0.2rem rgba(63, 91, 86, 0.18);
+    }
+    /* 已選擇 */
+    .btn-select-room.selected,
+    .btn-select-room.selected:hover,
+    .btn-select-room.selected:focus,
+    .btn-select-room.selected:active {
+        color: #fff;
+        background-color: #3f5b56;
+        border-color: #3f5b56;
+    }
+
+/* 選擇的房型文字 */
 .customer-selection-text {
     color: #b8871d;
     font-weight: 600;
