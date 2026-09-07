@@ -436,9 +436,9 @@ CREATE TABLE [dbo].[CustomerFeedbacks]
 (
     [Id]              int IDENTITY(1,1) NOT NULL,
     [BranchId]        int NOT NULL,
-    [CustomerName]    nvarchar(254) NOT NULL,
-    [Email]           nvarchar(254) NOT NULL,
-    [Phone]           nvarchar(20) NULL,
+    [CustomerName]    nvarchar(50) NOT NULL,
+    [Email]           varchar(254) NOT NULL,
+    [Phone]           varchar(20) NULL,
     [Content]         nvarchar(500) NOT NULL,
     [CreatedAt]       datetime2(0) NOT NULL
         CONSTRAINT [DF_CustomerFeedbacks_CreatedAt]
@@ -463,7 +463,7 @@ CREATE TABLE [dbo].[CustomerFeedbacks]
 
     /* 後端先移除空白與半形連字號；未填保存 NULL，有值只接受 ASCII 數字。 */
     CONSTRAINT [CK_CustomerFeedbacks_Phone]
-        CHECK ([Phone] IS NULL OR (DATALENGTH([Phone]) > 0 AND [Phone] COLLATE Latin1_General_100_BIN2 NOT LIKE N'%[^0-9]%'))
+        CHECK ([Phone] IS NULL OR (DATALENGTH([Phone]) > 0 AND [Phone] COLLATE Latin1_General_100_BIN2 NOT LIKE '%[^0-9]%'))
 );
 GO
 

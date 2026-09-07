@@ -71,9 +71,9 @@ SQL 表名固定為 `dbo.CustomerFeedbacks`；EF 使用 `Feedback` Entity 與 `F
 | --- | --- | --- |
 | Id | int | PK、IDENTITY(1,1)、NOT NULL |
 | BranchId | int | NOT NULL、FK → Branches.BranchId、ON DELETE NO ACTION |
-| CustomerName | nvarchar(254) | NOT NULL、不可空字串／全由半形空格組成 |
-| Email | nvarchar(254) | NOT NULL、不可空字串／全由半形空格組成；不設 UNIQUE |
-| Phone | nvarchar(20) | NULL 或 1～20 碼 ASCII 0～9 |
+| CustomerName | nvarchar(50) | NOT NULL、不可空字串／全由半形空格組成 |
+| Email | varchar(254) | NOT NULL、不可空字串／全由半形空格組成；不設 UNIQUE |
+| Phone | varchar(20) | NULL 或 1～20 碼 ASCII 0～9 |
 | Content | nvarchar(500) | NOT NULL、不可空字串／全由半形空格組成 |
 | CreatedAt | datetime2(0) | NOT NULL、DEFAULT 明確轉成 Taipei Standard Time |
 

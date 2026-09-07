@@ -155,7 +155,7 @@ public partial class HotelManagementContext : DbContext
                 table.HasCheckConstraint("CK_CustomerFeedbacks_CustomerName", "LEN(LTRIM(RTRIM([CustomerName]))) > 0");
                 table.HasCheckConstraint("CK_CustomerFeedbacks_Email", "LEN(LTRIM(RTRIM([Email]))) > 0");
                 table.HasCheckConstraint("CK_CustomerFeedbacks_Content", "LEN(LTRIM(RTRIM([Content]))) > 0");
-                table.HasCheckConstraint("CK_CustomerFeedbacks_Phone", "[Phone] IS NULL OR (DATALENGTH([Phone]) > 0 AND [Phone] COLLATE Latin1_General_100_BIN2 NOT LIKE N'%[^0-9]%')");
+                table.HasCheckConstraint("CK_CustomerFeedbacks_Phone", "[Phone] IS NULL OR (DATALENGTH([Phone]) > 0 AND [Phone] COLLATE Latin1_General_100_BIN2 NOT LIKE '%[^0-9]%')");
             });
 
             entity.HasKey(e => e.Id).HasName("PK_CustomerFeedbacks");
@@ -167,9 +167,9 @@ public partial class HotelManagementContext : DbContext
 
             entity.Property(e => e.Id).UseIdentityColumn(1, 1);
             entity.Property(e => e.BranchId).IsRequired();
-            entity.Property(e => e.CustomerName).IsRequired().HasMaxLength(254).IsUnicode(true);
-            entity.Property(e => e.Email).IsRequired().HasMaxLength(254).IsUnicode(true);
-            entity.Property(e => e.Phone).IsRequired(false).HasMaxLength(20).IsUnicode(true);
+            entity.Property(e => e.CustomerName).IsRequired().HasMaxLength(50).IsUnicode(true);
+            entity.Property(e => e.Email).IsRequired().HasMaxLength(254).IsUnicode(false);
+            entity.Property(e => e.Phone).IsRequired(false).HasMaxLength(20).IsUnicode(false);
             entity.Property(e => e.Content).IsRequired().HasMaxLength(500).IsUnicode(true);
             entity.Property(e => e.CreatedAt)
                 .HasColumnType("datetime2(0)")
