@@ -42,12 +42,14 @@ BEGIN TRY
     BEGIN TRANSACTION;
 
     /* 依 FK 相依順序清除，避免與舊版單檔測資重複寫入。 */
+    DELETE FROM [dbo].[Announcements];
     DELETE FROM [dbo].[OperationLogs];
     DELETE FROM [dbo].[StayRecords];
     DELETE FROM [dbo].[Bookings];
     DELETE FROM [dbo].[Rooms];
     DELETE FROM [dbo].[Employees] WHERE [Role] = 'BranchEmployee';
     DELETE FROM [dbo].[RoomTypes];
+    DELETE FROM [dbo].[CustomerFeedbacks];
     DELETE FROM [dbo].[Branches];
 
     DECLARE @SamplePasswordHash varchar(255) =
