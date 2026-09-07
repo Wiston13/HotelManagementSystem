@@ -4,6 +4,12 @@
 
 @model HotelManagementSystem.Models.ViewModels.Booking.RoomSelectionViewModel
 
+<!-- 插件區 -->
+@*flatpickr 用來調整日期選取版型的插件*@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/zh.js"></script>
+
 @{
     ViewData["Title"] = "選擇房型";
 }
@@ -18,20 +24,74 @@
 
 <div class="container my-4">
 
-    <!-- 返回首頁 -->
-    <a asp-controller="Home"
-       asp-action="Index"
-       class="btn btn-link customer-back-link px-0 text-decoration-none mb-2">
-        ← 修改查詢條件
-    </a>
-
-
     <!-- 上方標題與查詢條件摘要 --> 
-    <h1 class="fw-bold">@Model.BranchName | 可售房型</h1>
+    <div class="mb-3">
+        <h1 class="h3 fw-bold mb-1">選擇房型</h1>
+        <p class="text-secondary mb-0">
+            可調整查詢條件，查看可售房型。
+        </p>
+    </div>
 
-    <p class="text-muted">
-        @Model.CheckInDate.ToString("yyyy/MM/dd") － @Model.CheckOutDate.ToString("yyyy/MM/dd")
-    </p>
+    <!-- 查詢條件篩選區 -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <!-- 分館 -->
+                <div class="col-md-4">
+                    <label for="filterBranch"
+                           class="form-label small text-muted">
+                        分館
+                    </label>
+                    <select id="filterBranch" class="form-select">
+                        @foreach (var branch in Model.Branches)
+                        {
+                            if (branch.BranchId == Model.BranchId)
+                            {
+                                <option value="@branch.BranchId" selected>@branch.BranchName</option>
+                            }
+                            else
+                            {
+                                <option value="@branch.BranchId">@branch.BranchName</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <!-- 日期 -->
+                <div class="col-md-5">
+                    <label for="filterDateRange"
+                           class="form-label small text-muted">
+                        入住日期－退房日期
+                    </label>
+                    <input type="text"
+                           id="filterDateRange"
+                           class="form-control"
+                           readonly />
+                </div>
+                <!-- 入住人數 -->
+                <div class="col-md-3">
+                    <label for="filterGuestCount"
+                           class="form-label small text-muted">
+                        入住人數
+                    </label>
+                    <select id="filterGuestCount"
+                            class="form-select">
+                        @foreach (var guest in Model.GuestOptions)
+                        {
+                            if (guest == Model.GuestCount)
+                            {
+                                <option value="@guest" selected>@guest 人</option>
+                            }
+                            else
+                            {
+                                <option value="@guest">@guest 人</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+            </div>
+        </div>
+    </div>
 
 
     <div class="row mt-4">
@@ -172,7 +232,125 @@
 </div>
 
 @section Scripts {
-    <script>        
+    <script>
+        // ===============================
+        // 房型選擇頁：查詢條件
+        // ===============================
+        const filterBranch = document.getElementById("filterBranch");
+        const filterDateRange = document.getElementById("filterDateRange");
+        const filterGuestCount = document.getElementById("filterGuestCount");
+        // 目前查詢中的日期
+        const currentCheckIn = "@Model.CheckInDate.ToString("yyyy-MM-dd")";
+        const currentCheckOut = "@Model.CheckOutDate.ToString("yyyy-MM-dd")";
+        // 今天日期與最晚可訂日
+        let todayDate = "@Model.Today.ToString("yyyy-MM-dd")";
+        let maxRangeDate = new Date(todayDate);
+        maxRangeDate.setDate(maxRangeDate.getDate() + 60);
+        // ===============================
+        // 日期選擇器
+        // ===============================
+        flatpickr("#filterDateRange", {
+            mode: "range",
+            minDate: todayDate,
+            maxDate: maxRangeDate,
+            dateFormat: "Y-m-d",
+            altInput: true,
+            altFormat: "Y.m.d",
+            showMonths: 2,
+            // 進入頁面時，顯示目前的查詢日期
+            defaultDate: [
+                currentCheckIn,
+                currentCheckOut
+            ],
+            // 與首頁使用相同中文設定
+            locale: {
+                weekdays: {
+                    shorthand: ["日", "一", "二", "三", "四", "五", "六"],
+                    longhand: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"]
+                },
+                months: {
+                    shorthand: [
+                        "1月", "2月", "3月", "4月",
+                        "5月", "6月", "7月", "8月",
+                        "9月", "10月", "11月", "12月"
+                    ],
+                    longhand: [
+                        "1月", "2月", "3月", "4月",
+                        "5月", "6月", "7月", "8月",
+                        "9月", "10月", "11月", "12月"
+                    ]
+                },
+                rangeSeparator: " - "
+            },
+            onClose: function(selectedDates, dateStr, instance) {
+                // 沒有完整選到兩個日期就不重新查詢
+                if (selectedDates.length !== 2) {
+                    return;
+                }
+                let checkIn = selectedDates[0];
+                let checkOut = selectedDates[1];
+                // 如果入住日與退房日相同，退房日自動加一天
+                if (checkIn.getTime() === checkOut.getTime()) {
+                    let nextDay = new Date(checkIn);
+                    nextDay.setDate(nextDay.getDate() + 1);
+                    // 避免退房日超過最晚可訂日
+                    if (nextDay > maxRangeDate) {
+                        return;
+                    }
+                    checkOut = nextDay;
+                    instance.setDate(
+                        [checkIn, checkOut],
+                        false
+                    );
+                }
+                // 日期選完後重新查詢
+                reloadRoomSelection(checkIn, checkOut);
+            }
+        });
+        // ===============================
+        // 分館改變 → 重新查詢
+        // ===============================
+        filterBranch.addEventListener("change", function() {
+            reloadRoomSelection();
+        });
+        // ===============================
+        // 入住人數改變 → 重新查詢
+        // ===============================
+        filterGuestCount.addEventListener("change", function() {
+            reloadRoomSelection();
+        });
+        // ===============================
+        // 重新查詢 RoomSelection
+        // ===============================
+        function reloadRoomSelection(newCheckIn, newCheckOut) {
+            let branchId = filterBranch.value;
+            let guestCount = filterGuestCount.value;
+            // 預設使用目前頁面的日期
+            let checkIn = currentCheckIn;
+            let checkOut = currentCheckOut;
+            // 如果是使用者重新選日期，就改用新的日期
+            if (newCheckIn && newCheckOut) {
+                checkIn = formatDate(newCheckIn);
+                checkOut = formatDate(newCheckOut);
+            }
+            let targetUrl =
+                `/Booking/RoomSelection` +
+                `?branchId=${branchId}` +
+                `&checkIn=${checkIn}` +
+                `&checkOut=${checkOut}` +
+                `&guestCount=${guestCount}`;
+            window.location.href = targetUrl;
+        }
+        // ===============================
+        // Date → yyyy-MM-dd
+        // ===============================
+        function formatDate(date) {
+            let year = date.getFullYear();
+            let month = String(date.getMonth() + 1).padStart(2, "0");
+            let day = String(date.getDate()).padStart(2, "0");
+            return `${year}-${month}-${day}`;
+        }
+
 
         // 房型選擇
         document.querySelectorAll('.btn-select-room')

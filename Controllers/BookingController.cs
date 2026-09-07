@@ -77,6 +77,27 @@ namespace HotelManagementSystem.Controllers
                 .Where(r => r.AvailableRooms > 0)
                 .ToList();
 
+            // 查詢目前可接受新訂房的分館，供頁面篩選使用
+            var branches = _context.Branches
+                .Where(b => b.AcceptsNewBookings)
+                .Select(b => new HotelManagementSystem.Models.ViewModels.Home.BranchViewModel
+                {
+                    BranchId = b.BranchId,
+                    BranchName = b.BranchName,
+                    AcceptsNewBookings = b.AcceptsNewBookings
+                })
+                .ToList();
+
+            // 查詢目前分館可選擇的入住人數
+            var guestOptions = _context.RoomTypes
+                .Where(r =>
+                    r.BranchId == branchId &&
+                    r.IsActive)
+                .Select(r => (int)r.MaxOccupancy)
+                .Distinct()
+                .OrderBy(x => x)
+                .ToList();
+
             // 計算入住晚數
             var nights = checkOut.DayNumber - checkIn.DayNumber;
 
@@ -88,7 +109,11 @@ namespace HotelManagementSystem.Controllers
                 CheckOutDate = checkOut,
                 Nights = nights,
                 GuestCount = guestCount,
-                RoomTypes = availableRoomTypes
+                RoomTypes = availableRoomTypes,
+
+                Branches = branches,
+                GuestOptions = guestOptions,
+                Today = _taipeiClock.Today
             };
 
             return View(model);
