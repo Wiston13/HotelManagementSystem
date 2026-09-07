@@ -12,6 +12,7 @@
     - 重設情境用房間供應／清潔狀態
     - 訂單、住房紀錄、取消、No-show、操作紀錄
     - 5 筆單向顧客意見，供本館／跨館唯讀查詢與日期篩選、匯出
+    - 6 筆全域公告，供顧客／員工首頁、完整列表與管理列表驗證
     - 所有相對日期以執行當下的台灣日期為基準
 
     可重跑方式：
@@ -51,6 +52,7 @@ BEGIN TRY
         THROW 50002, N'展示基準資料不完整，請依序執行 01_create_hotel_management_schema.sql、02_required_seed.sql、03_demo_data.sql。', 1;
     END;
 
+    DELETE FROM [dbo].[Announcements];
     DELETE FROM [dbo].[OperationLogs];
     DELETE FROM [dbo].[StayRecords];
     DELETE FROM [dbo].[Bookings];
@@ -540,6 +542,50 @@ BEGIN TRY
     SET IDENTITY_INSERT [dbo].[CustomerFeedbacks] OFF;
     SET @IdentityInsertTable = NULL;
 
+    /* =========================================================
+       6. Announcements：六筆展示公告，不觸發通知或 OperationLog
+       執行當下：顧客首頁為 2、列表為 2/1；員工首頁為 3、列表為 3/2/1。
+       管理列表依 CreatedAt 遞減為 6/4/3/2/1/5。
+       有效公告至少還有 7 天操作空間；未開始公告 10 天後才顯示。
+       ========================================================= */
+    SET @IdentityInsertTable = N'dbo.Announcements';
+    SET IDENTITY_INSERT [dbo].[Announcements] ON;
+
+    INSERT INTO [dbo].[Announcements]
+    (
+        [AnnouncementId], [Title], [Content], [StartAt], [EndAt],
+        [IsActive], [ShowToGuest], [CreatedAt]
+    )
+    VALUES
+    (1, N'【展示】公開有效公告 A：網站使用提醒',
+        N'此為展示公告。查詢住宿資訊時，可先閱讀網站上的住宿指南。',
+        DATEADD(DAY,-3,@NowTaipei), DATEADD(DAY,7,@NowTaipei),
+        1, 1, DATEADD(DAY,-6,@NowTaipei)),
+    (2, N'【展示】公開有效公告 B：住宿資料提醒',
+        N'此為展示公告。請確認自行填寫的住宿日期與聯絡資料，其他網站公告可由完整列表閱讀。',
+        DATEADD(DAY,-2,@NowTaipei), DATEADD(DAY,8,@NowTaipei),
+        1, 1, DATEADD(DAY,-5,@NowTaipei)),
+    (3, N'【展示】內部有效公告：員工操作提醒',
+        N'此為員工閱讀的展示公告。辦理住宿作業前，請確認畫面上的訂單與房間資訊。',
+        DATEADD(DAY,-1,@NowTaipei), DATEADD(DAY,9,@NowTaipei),
+        1, 0, DATEADD(DAY,-4,@NowTaipei)),
+    (4, N'【展示】尚未開始公告：網站閱讀提醒',
+        N'此為未來期間的展示公告，用於確認開始時間之前不會出現在閱讀端。',
+        DATEADD(DAY,10,@NowTaipei), DATEADD(DAY,17,@NowTaipei),
+        1, 1, DATEADD(DAY,-3,@NowTaipei)),
+    (5, N'【展示】已到期公告：歷史網站提醒',
+        N'此為已到期的展示公告，供管理列表查閱歷史內容，不應出現在顧客或員工閱讀列表。',
+        DATEADD(DAY,-14,@NowTaipei), DATEADD(DAY,-7,@NowTaipei),
+        1, 1, DATEADD(DAY,-15,@NowTaipei)),
+    (6, N'【展示】停用公告：住宿指南提醒',
+        N'此為期間內停用的展示公告，用於確認停用後不會出現在閱讀端。',
+        DATEADD(HOUR,-12,@NowTaipei), DATEADD(DAY,10,@NowTaipei),
+        0, 1, DATEADD(HOUR,-18,@NowTaipei));
+
+    SET IDENTITY_INSERT [dbo].[Announcements] OFF;
+    SET @IdentityInsertTable = NULL;
+
+    DBCC CHECKIDENT ('dbo.Announcements', RESEED, 6) WITH NO_INFOMSGS;
     DBCC CHECKIDENT ('dbo.CustomerFeedbacks', RESEED, 5) WITH NO_INFOMSGS;
     DBCC CHECKIDENT ('dbo.StayRecords',   RESEED, 9)  WITH NO_INFOMSGS;
     DBCC CHECKIDENT ('dbo.OperationLogs', RESEED, 53) WITH NO_INFOMSGS;
@@ -551,7 +597,8 @@ BEGIN TRY
            (SELECT COUNT(*) FROM [dbo].[Bookings]) AS [Bookings],
            (SELECT COUNT(*) FROM [dbo].[StayRecords]) AS [StayRecords],
            (SELECT COUNT(*) FROM [dbo].[OperationLogs]) AS [OperationLogs],
-           (SELECT COUNT(*) FROM [dbo].[CustomerFeedbacks]) AS [CustomerFeedbacks];
+           (SELECT COUNT(*) FROM [dbo].[CustomerFeedbacks]) AS [CustomerFeedbacks],
+           (SELECT COUNT(*) FROM [dbo].[Announcements]) AS [Announcements];
 
     SELECT
         RIGHT('000' + CONVERT(varchar(3), [ScenarioId]), 3) AS [ScenarioId],
@@ -571,6 +618,8 @@ BEGIN CATCH
         SET IDENTITY_INSERT [dbo].[OperationLogs] OFF;
     ELSE IF @IdentityInsertTable = N'dbo.CustomerFeedbacks'
         SET IDENTITY_INSERT [dbo].[CustomerFeedbacks] OFF;
+    ELSE IF @IdentityInsertTable = N'dbo.Announcements'
+        SET IDENTITY_INSERT [dbo].[Announcements] OFF;
 
     IF @@TRANCOUNT > 0
         ROLLBACK TRANSACTION;

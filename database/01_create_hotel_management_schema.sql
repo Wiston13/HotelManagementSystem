@@ -37,6 +37,7 @@ GO
 /* =========================================================
    重新建立資料表：先依 FK 相依順序刪除
    ========================================================= */
+DROP TABLE IF EXISTS [dbo].[Announcements];
 DROP TABLE IF EXISTS [dbo].[OperationLogs];
 DROP TABLE IF EXISTS [dbo].[StayRecords];
 DROP TABLE IF EXISTS [dbo].[Bookings];
@@ -435,9 +436,9 @@ CREATE TABLE [dbo].[CustomerFeedbacks]
 (
     [Id]              int IDENTITY(1,1) NOT NULL,
     [BranchId]        int NOT NULL,
-    [CustomerName]    nvarchar(254) NOT NULL,
-    [Email]           nvarchar(254) NOT NULL,
-    [Phone]           nvarchar(20) NULL,
+    [CustomerName]    nvarchar(50) NOT NULL,
+    [Email]           varchar(254) NOT NULL,
+    [Phone]           varchar(20) NULL,
     [Content]         nvarchar(500) NOT NULL,
     [CreatedAt]       datetime2(0) NOT NULL
         CONSTRAINT [DF_CustomerFeedbacks_CreatedAt]
@@ -462,7 +463,42 @@ CREATE TABLE [dbo].[CustomerFeedbacks]
 
     /* 後端先移除空白與半形連字號；未填保存 NULL，有值只接受 ASCII 數字。 */
     CONSTRAINT [CK_CustomerFeedbacks_Phone]
-        CHECK ([Phone] IS NULL OR (DATALENGTH([Phone]) > 0 AND [Phone] COLLATE Latin1_General_100_BIN2 NOT LIKE N'%[^0-9]%'))
+        CHECK ([Phone] IS NULL OR (DATALENGTH([Phone]) > 0 AND [Phone] COLLATE Latin1_General_100_BIN2 NOT LIKE '%[^0-9]%'))
+);
+GO
+
+/* =========================================================
+   10. Announcements 全域公告
+   閱讀端依啟用、有效期間與顧客可見性查詢；不保存到期狀態。
+   公告量小，先使用主鍵索引，不限制同時存在多則有效公告。
+   ========================================================= */
+CREATE TABLE [dbo].[Announcements]
+(
+    [AnnouncementId]    int IDENTITY(1,1) NOT NULL,
+    [Title]             nvarchar(100) NOT NULL,
+    [Content]           nvarchar(1000) NOT NULL,
+    [StartAt]           datetime2(0) NOT NULL,
+    [EndAt]             datetime2(0) NOT NULL,
+    [IsActive]          bit NOT NULL
+        CONSTRAINT [DF_Announcements_IsActive] DEFAULT (1),
+    [ShowToGuest]       bit NOT NULL
+        CONSTRAINT [DF_Announcements_ShowToGuest] DEFAULT (0),
+    [CreatedAt]         datetime2(0) NOT NULL
+        CONSTRAINT [DF_Announcements_CreatedAt]
+        DEFAULT (CONVERT(datetime2(0), SYSDATETIMEOFFSET() AT TIME ZONE 'Taipei Standard Time')),
+
+    CONSTRAINT [PK_Announcements]
+        PRIMARY KEY ([AnnouncementId]),
+
+    CONSTRAINT [CK_Announcements_DateRange]
+        CHECK ([EndAt] > [StartAt]),
+
+    /* 排除空字串與全由半形空格組成的值；完整空白與輸入驗證仍由後端負責。 */
+    CONSTRAINT [CK_Announcements_Title]
+        CHECK (LEN(LTRIM(RTRIM([Title]))) > 0),
+
+    CONSTRAINT [CK_Announcements_Content]
+        CHECK (LEN(LTRIM(RTRIM([Content]))) > 0)
 );
 GO
 

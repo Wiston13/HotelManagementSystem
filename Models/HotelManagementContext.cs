@@ -12,6 +12,8 @@ public partial class HotelManagementContext : DbContext
     {
     }
 
+    public virtual DbSet<Announcement> Announcements { get; set; }
+
     public virtual DbSet<Booking> Bookings { get; set; }
 
     public virtual DbSet<Branch> Branches { get; set; }
@@ -33,6 +35,34 @@ public partial class HotelManagementContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<Announcement>(entity =>
+        {
+            entity.ToTable("Announcements", "dbo", table =>
+            {
+                table.HasCheckConstraint("CK_Announcements_DateRange", "[EndAt] > [StartAt]");
+                table.HasCheckConstraint("CK_Announcements_Title", "LEN(LTRIM(RTRIM([Title]))) > 0");
+                table.HasCheckConstraint("CK_Announcements_Content", "LEN(LTRIM(RTRIM([Content]))) > 0");
+            });
+
+            entity.HasKey(e => e.AnnouncementId).HasName("PK_Announcements");
+            entity.Property(e => e.AnnouncementId).UseIdentityColumn(1, 1);
+            entity.Property(e => e.Title).IsRequired().HasMaxLength(100).IsUnicode(true);
+            entity.Property(e => e.Content).IsRequired().HasMaxLength(1000).IsUnicode(true);
+            entity.Property(e => e.StartAt).HasColumnType("datetime2(0)").HasPrecision(0);
+            entity.Property(e => e.EndAt).HasColumnType("datetime2(0)").HasPrecision(0);
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true, "DF_Announcements_IsActive")
+                // true 與資料庫預設值一致；明確指定 false 時仍須寫入 0。
+                .HasSentinel(true);
+            entity.Property(e => e.ShowToGuest)
+                .HasDefaultValue(false, "DF_Announcements_ShowToGuest");
+            entity.Property(e => e.CreatedAt)
+                .HasColumnType("datetime2(0)")
+                .HasPrecision(0)
+                .HasDefaultValueSql("(CONVERT([datetime2](0),(sysdatetimeoffset() AT TIME ZONE 'Taipei Standard Time')))", "DF_Announcements_CreatedAt")
+                .ValueGeneratedOnAdd();
+        });
+
         modelBuilder.Entity<Booking>(entity =>
         {
             entity.HasKey(e => e.BookingNumber);
@@ -126,7 +156,7 @@ public partial class HotelManagementContext : DbContext
                 table.HasCheckConstraint("CK_CustomerFeedbacks_CustomerName", "LEN(LTRIM(RTRIM([CustomerName]))) > 0");
                 table.HasCheckConstraint("CK_CustomerFeedbacks_Email", "LEN(LTRIM(RTRIM([Email]))) > 0");
                 table.HasCheckConstraint("CK_CustomerFeedbacks_Content", "LEN(LTRIM(RTRIM([Content]))) > 0");
-                table.HasCheckConstraint("CK_CustomerFeedbacks_Phone", "[Phone] IS NULL OR (DATALENGTH([Phone]) > 0 AND [Phone] COLLATE Latin1_General_100_BIN2 NOT LIKE N'%[^0-9]%')");
+                table.HasCheckConstraint("CK_CustomerFeedbacks_Phone", "[Phone] IS NULL OR (DATALENGTH([Phone]) > 0 AND [Phone] COLLATE Latin1_General_100_BIN2 NOT LIKE '%[^0-9]%')");
             });
 
             entity.HasKey(e => e.Id).HasName("PK_CustomerFeedbacks");
@@ -138,9 +168,9 @@ public partial class HotelManagementContext : DbContext
 
             entity.Property(e => e.Id).UseIdentityColumn(1, 1);
             entity.Property(e => e.BranchId).IsRequired();
-            entity.Property(e => e.CustomerName).IsRequired().HasMaxLength(254).IsUnicode(true);
-            entity.Property(e => e.Email).IsRequired().HasMaxLength(254).IsUnicode(true);
-            entity.Property(e => e.Phone).IsRequired(false).HasMaxLength(20).IsUnicode(true);
+            entity.Property(e => e.CustomerName).IsRequired().HasMaxLength(50).IsUnicode(true);
+            entity.Property(e => e.Email).IsRequired().HasMaxLength(254).IsUnicode(false);
+            entity.Property(e => e.Phone).IsRequired(false).HasMaxLength(20).IsUnicode(false);
             entity.Property(e => e.Content).IsRequired().HasMaxLength(500).IsUnicode(true);
             entity.Property(e => e.CreatedAt)
                 .HasColumnType("datetime2(0)")
