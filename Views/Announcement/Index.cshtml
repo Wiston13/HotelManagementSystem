@@ -84,6 +84,13 @@
                                         data-show-to-guest="@announcement.ShowToGuest.ToString().ToLower()">
                                     編輯
                                 </button>
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-danger ms-1 delete-announcement-btn"
+                                        data-id="@announcement.AnnouncementId"
+                                        data-title="@announcement.Title">
+                                    刪除
+                                </button>
+                                 
                             </td>
                         </tr>
                     }
@@ -337,6 +344,62 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade"
+     id="deleteAnnouncementModal"
+     tabindex="-1"
+     aria-hidden="true">
+
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <form asp-controller="Announcement"
+                  asp-action="Delete"
+                  method="post">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">確認刪除公告</h5>
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal">
+                    </button>
+                </div>
+
+                <div class="modal-body">
+
+                    <input type="hidden"
+                           name="id"
+                           id="deleteAnnouncementId" />
+
+                    <p class="mb-0">
+                        確定要刪除公告
+                        <strong id="deleteAnnouncementTitle"></strong>
+                        嗎？
+                    </p>
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+                        取消
+                    </button>
+
+                    <button type="submit"
+                            class="btn btn-danger">
+                        確認刪除
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 
@@ -435,6 +498,22 @@
 
                 editModal.show();
             }
+        });
+
+        document.querySelectorAll(".delete-announcement-btn").forEach(button => {
+            button.addEventListener("click", function() {
+                const id = this.dataset.id;
+                const title = this.dataset.title;
+
+                document.getElementById("deleteAnnouncementId").value = id;
+                document.getElementById("deleteAnnouncementTitle").textContent = title;
+
+                const deleteModal = new bootstrap.Modal(
+                    document.getElementById("deleteAnnouncementModal")
+                );
+
+                deleteModal.show();
+            });
         });
     </script>
 }

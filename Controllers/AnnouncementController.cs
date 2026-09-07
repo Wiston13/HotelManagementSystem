@@ -77,6 +77,20 @@ namespace HotelManagementSystem.Controllers
             };
 
             _context.Announcements.Add(announcement);
+
+            var operationLog = new OperationLog
+            {
+                TargetBranchId = null,
+                OperatedAt = _clock.Now,
+                OperatorEmployeeNumber = CurrentEmployeeNumber!,
+                OperationTypeId = 26, // AnnouncementCreated
+                TargetType = "Announcement",
+                TargetIdentifier = announcement.Title,
+                Description = $"新增系統公告：{announcement.Title}。"
+            };
+
+            _context.OperationLogs.Add(operationLog);
+
             _context.SaveChanges();
 
             TempData["SuccessMessage"] = "公告新增成功";
@@ -131,9 +145,58 @@ namespace HotelManagementSystem.Controllers
             announcement.IsActive = model.IsActive;
             announcement.ShowToGuest = model.ShowToGuest;
 
+            var operationLog = new OperationLog
+            {
+                TargetBranchId = null,
+                OperatedAt = _clock.Now,
+                OperatorEmployeeNumber = CurrentEmployeeNumber!,
+                OperationTypeId = 27, // AnnouncementUpdated
+                TargetType = "Announcement",
+                TargetIdentifier = announcement.Title,
+                Description = $"修改系統公告：{announcement.Title}。"
+            };
+
+            _context.OperationLogs.Add(operationLog);
+
             _context.SaveChanges();
 
             TempData["SuccessMessage"] = "公告修改成功";
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Delete(int id)
+        {
+            var announcement = _context.Announcements
+                .FirstOrDefault(a => a.AnnouncementId == id);
+
+            if (announcement == null)
+            {
+                TempData["ErrorMessage"] = "找不到要刪除的公告";
+                return RedirectToAction(nameof(Index));
+            }
+
+            string deletedTitle = announcement.Title;
+
+            var operationLog = new OperationLog
+            {
+                TargetBranchId = null,
+                OperatedAt = _clock.Now,
+                OperatorEmployeeNumber = CurrentEmployeeNumber!,
+                OperationTypeId = 28, // AnnouncementDeleted
+                TargetType = "Announcement",
+                TargetIdentifier = deletedTitle,
+                Description = $"刪除系統公告：{deletedTitle}。"
+            };
+
+            _context.Announcements.Remove(announcement);
+            _context.OperationLogs.Add(operationLog);
+
+            _context.SaveChanges();
+
+            TempData["SuccessMessage"] = "公告刪除成功";
 
             return RedirectToAction(nameof(Index));
         }

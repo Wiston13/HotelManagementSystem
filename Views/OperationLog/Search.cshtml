@@ -26,6 +26,8 @@
                         </label>
                         <select id="branchSelect" class="form-control">
                             <option value="">全部分館</option>
+                            <option value="system">全系統</option>
+
                             @if (ViewBag.Branches != null)
                             {
                                 foreach (var branch in ViewBag.Branches)
