@@ -11,7 +11,7 @@
 
 第一次部署完成後，該部署資料庫即成為 Database Deployment Baseline。因此不要建立 `001_initial_schema.sql` 或 `001_baseline.sql`，去表示一段實際不存在的 migration history。
 
-第一支真正的 `deploy/001`，必須是第一次部署後首次需要修改既有資料庫的功能。例如未來若新增公告功能並需要資料庫變更，檔名可能是 `001_add_announcements.sql`；這只是命名範例，本輪沒有建立該 SQL，也不代表公告 Schema 已定案。
+第一次正式部署已完成，production 仍為該次部署的既有 baseline。顧客意見回饋與公告 Schema 已定案，本次新增 `001_add_customer_feedbacks.sql` 與 `002_add_announcements.sql`；兩支尚未正式執行，可在 PR merge 前修正，正式套用後即依第 5 節保留歷史。
 
 ## 2. Production 與 Demo／Scenario 界線
 
@@ -55,11 +55,11 @@ Local／Test／Demo 環境可依序使用 `01 → 02 → 03 → 04`。
 NNN_description.sql
 ```
 
-例如：
+目前待部署 SQL：
 
 ```text
-001_add_announcements.sql
-002_add_customer_feedback.sql
+001_add_customer_feedbacks.sql
+002_add_announcements.sql
 ```
 
 一支 script 對應一個明確的 Schema／Required Data 變更。不得使用日期命名、不得重複流水號。
@@ -67,8 +67,10 @@ NNN_description.sql
 部署既有資料庫時，依檔名編號順序執行尚未套用的 SQL：
 
 ```text
-001 → 002 → 003
+001_add_customer_feedbacks.sql → 002_add_announcements.sql
 ```
+
+執行前須明確選定目標資料庫；這兩支 SQL 不含 USE、不建立資料庫，且資料表已存在時會報錯停止。Fresh DB 已由 `01` 建立兩表，不須再套用這兩支 SQL。`001` 需要既有 `dbo.Branches`。
 
 不得跳號或改變順序。專案目前沒有自動 migration tracking，因此 deployment 紀錄或 PR 必須明確記載各部署環境最後套用的 deploy SQL；本規則不要求新增 Schema version table。
 
