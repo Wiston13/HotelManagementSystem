@@ -111,7 +111,7 @@ namespace HotelManagementSystem.Controllers
                 BookingStatus = x.BookingStatus,
                 StartDate = x.StartDate,
                 EndDate = x.EndDate,
-                Price = "NT$ " + x.TotalAmount.ToString("#,##0.##", System.Globalization.CultureInfo.GetCultureInfo("zh-TW"))
+                Price = "NT$ " + x.TotalAmount.ToString("#,##0.##", System.Globalization.CultureInfo.GetCultureInfo("zh-TW")),
                 Email = x.Email
             }).ToList();
 
@@ -154,6 +154,8 @@ namespace HotelManagementSystem.Controllers
                     message = errorMessage
                 });
             }
+            // 補寄前重新依共同規則補判 No-Show
+            await _noShowService.UpdateNoShowsAsync();
             // 後端重新查詢訂單，並限制只能操作目前員工所屬分館
             var booking = await _context.Bookings
                 .FirstOrDefaultAsync(booking =>
