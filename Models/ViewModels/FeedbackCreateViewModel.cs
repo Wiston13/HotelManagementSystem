@@ -16,7 +16,7 @@ namespace HotelManagementSystem.Models.ViewModels
         [StringLength(254, ErrorMessage = "信箱長度不得超過 254 個字元")]
         public string Email { get; set; } = null!;
 
-        [StringLength(20, ErrorMessage = "電話長度不得超過 20 個字元")]
+        
         [Display(Name = "電話")]
         public string? Phone { get; set; }
 
