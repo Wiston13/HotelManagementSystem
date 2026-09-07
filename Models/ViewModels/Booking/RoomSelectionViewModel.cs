@@ -18,12 +18,14 @@ public class RoomSelectionViewModel
 
     public List<RoomTypeViewModel> RoomTypes { get; set; } = new();
 
+    // 該分館是否有符合入住人數的房型
+    public bool HasMatchingRoomType { get; set; }
     // 房型選擇頁的分館下拉選單
     public List<BranchViewModel> Branches { get; set; } = new();
     // 房型選擇頁的入住人數下拉選單
     public List<int> GuestOptions { get; set; } = new();
     // 台北時間的今天日期
-    public DateOnly Today { get; set; }
+    public DateOnly Today { get; set; }    
 }
 
 public class RoomTypeViewModel

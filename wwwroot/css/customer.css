@@ -248,6 +248,43 @@
         line-height: 1.7;
     }
 
+/* 房型卡片 */
+.room-type-card {
+    background-color: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(63, 85, 81, 0.10);
+    border-radius: 12px;
+    box-shadow: 0 3px 12px rgba(40, 55, 52, 0.06);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+    .room-type-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(63, 85, 81, 0.18);
+        box-shadow: 0 7px 20px rgba(40, 55, 52, 0.09);
+    }
+.room-type-name {
+    color: #2f3f3c;
+    letter-spacing: 0.01em;
+}
+.room-bed-type {
+    color: #7a8885;
+    font-size: 0.95rem;
+}
+.room-occupancy-badge {
+    display: inline-block;
+    padding: 0.25rem 0.55rem;
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: #687975;
+    background-color: #f4f7f6;
+    border: 1px solid rgba(63, 85, 81, 0.12);
+    border-radius: 6px;
+}
+.room-description {
+    color: #7d8785;
+    font-size: 0.93rem;
+    line-height: 1.6;
+}
+
 /* 房型選擇按鈕：一般狀態 */
 .btn-select-room {
     color: #3f5b56;
@@ -278,6 +315,13 @@
         border-color: #3f5b56;
     }
 
+/* 右側房型選擇摘要 */
+.room-selection-summary {
+    background-color: #f8faf9;
+    border: 1px solid rgba(63, 85, 81, 0.18);
+    border-radius: 12px;
+    box-shadow: 0 5px 18px rgba(40, 55, 52, 0.08);
+}
 /* 選擇的房型文字 */
 .customer-selection-text {
     color: #b8871d;

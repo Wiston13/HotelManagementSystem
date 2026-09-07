@@ -43,6 +43,16 @@ namespace HotelManagementSystem.Controllers
                 return NotFound("找不到指定的分館，或該分館目前不開放訂房。");
             }
 
+            // 查詢所有目前可訂分館中，已啟用房型的入住人數
+            var guestOptions = _context.RoomTypes
+                .Where(r =>
+                    r.IsActive &&
+                    _context.Branches.Any(b => b.BranchId == r.BranchId && b.AcceptsNewBookings))
+                .Select(r => (int)r.MaxOccupancy)
+                .Distinct()
+                .OrderBy(x => x)
+                .ToList();
+
             // 查詢該分館符合入住人數且已啟用的房型
             var roomTypes = _context.RoomTypes
                 .Where(r =>
@@ -86,17 +96,7 @@ namespace HotelManagementSystem.Controllers
                     BranchName = b.BranchName,
                     AcceptsNewBookings = b.AcceptsNewBookings
                 })
-                .ToList();
-
-            // 查詢目前分館可選擇的入住人數
-            var guestOptions = _context.RoomTypes
-                .Where(r =>
-                    r.BranchId == branchId &&
-                    r.IsActive)
-                .Select(r => (int)r.MaxOccupancy)
-                .Distinct()
-                .OrderBy(x => x)
-                .ToList();
+                .ToList();            
 
             // 計算入住晚數
             var nights = checkOut.DayNumber - checkIn.DayNumber;
@@ -110,10 +110,10 @@ namespace HotelManagementSystem.Controllers
                 Nights = nights,
                 GuestCount = guestCount,
                 RoomTypes = availableRoomTypes,
-
+                HasMatchingRoomType = roomTypes.Any(),
                 Branches = branches,
                 GuestOptions = guestOptions,
-                Today = _taipeiClock.Today
+                Today = _taipeiClock.Today                
             };
 
             return View(model);
