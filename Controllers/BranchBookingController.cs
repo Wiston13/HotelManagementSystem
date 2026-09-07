@@ -94,7 +94,6 @@ namespace HotelManagementSystem.Controllers
             foreach (var b in bookingData)
             {
                 b.BookingStatus = StatusDisplayHelper.GetBookingStatusText(b.BookingStatus);
-                b.Price =  b.Price). ("#,##0.##", System.Globalization.CultureInfo.GetCultureInfo("zh-TW"));
             }
 
             return View(bookingData);
