@@ -25,7 +25,10 @@ namespace HotelManagementSystem.Controllers
         {
             var viewModel = new RoomIndexViewModel
             {
-                Branches = await _context.Branches.AsNoTracking().ToListAsync(),
+                Branches = await _context.Branches
+                        .AsNoTracking()
+                        .Where(b => b.BranchId != 0)
+                        .ToListAsync(),
                 RoomTypes = await _context.RoomTypes.AsNoTracking().ToListAsync(),
                 Rooms = await _context.Rooms
                     .Include(r => r.RoomType)
@@ -96,7 +99,9 @@ namespace HotelManagementSystem.Controllers
 
                 // 驗證分館
                 var branchExists = await _context.Branches
-                    .AnyAsync(b => b.BranchId == model.BranchId);
+                            .AnyAsync(b =>
+                                    b.BranchId == model.BranchId &&
+                                    b.BranchId != 0);
 
                 if (!branchExists)
                 {

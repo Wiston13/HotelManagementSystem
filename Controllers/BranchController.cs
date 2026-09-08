@@ -25,6 +25,7 @@ namespace HotelManagementSystem.Controllers
         {
             var branches = await _context.Branches
                 .AsNoTracking()
+                .Where(b => b.BranchId != 0)
                 .OrderBy(b => b.BranchId)
                 .ToListAsync();
 
@@ -61,7 +62,12 @@ namespace HotelManagementSystem.Controllers
 
                 TempData["ErrorMessage"] = "儲存失敗：" + string.Join(" | ", errors);
 
-                var branches = await _context.Branches.AsNoTracking().OrderBy(b => b.BranchId).ToListAsync();
+                var branches = await _context.Branches
+                        .AsNoTracking()
+                        .Where(b => b.BranchId != 0)
+                        .OrderBy(b => b.BranchId)
+                        .ToListAsync();
+
                 return View("Index", branches);
             }
 
@@ -184,7 +190,13 @@ namespace HotelManagementSystem.Controllers
             catch (Exception)
             {
                 TempData["ErrorMessage"] = "資料庫儲存失敗，請稍後再試。";
-                var branches = await _context.Branches.AsNoTracking().OrderBy(b => b.BranchId).ToListAsync();
+
+                var branches = await _context.Branches
+                    .AsNoTracking()
+                    .Where(b => b.BranchId != 0)
+                    .OrderBy(b => b.BranchId)
+                    .ToListAsync();
+
                 return View("Index", branches);
             }
 

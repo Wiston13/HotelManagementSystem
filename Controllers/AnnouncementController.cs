@@ -80,7 +80,7 @@ namespace HotelManagementSystem.Controllers
 
             var operationLog = new OperationLog
             {
-                TargetBranchId = null,
+                TargetBranchId = 0,
                 OperatedAt = _clock.Now,
                 OperatorEmployeeNumber = CurrentEmployeeNumber!,
                 OperationTypeId = 26, // AnnouncementCreated
@@ -138,6 +138,13 @@ namespace HotelManagementSystem.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
+            bool oldIsActive = announcement.IsActive;
+            string oldTitle = announcement.Title;
+            string oldContent = announcement.Content;
+            DateTime oldStartAt = announcement.StartAt;
+            DateTime oldEndAt = announcement.EndAt;
+            bool oldShowToGuest = announcement.ShowToGuest;
+
             announcement.Title = model.Title;
             announcement.Content = model.Content;
             announcement.StartAt = model.StartAt!.Value;
@@ -145,19 +152,46 @@ namespace HotelManagementSystem.Controllers
             announcement.IsActive = model.IsActive;
             announcement.ShowToGuest = model.ShowToGuest;
 
-            var operationLog = new OperationLog
+            bool hasOtherChanges =
+                oldTitle != announcement.Title ||
+                oldContent != announcement.Content ||
+                oldStartAt != announcement.StartAt ||
+                oldEndAt != announcement.EndAt ||
+                oldShowToGuest != announcement.ShowToGuest;
+
+            if (hasOtherChanges)
             {
-                TargetBranchId = null,
-                OperatedAt = _clock.Now,
-                OperatorEmployeeNumber = CurrentEmployeeNumber!,
-                OperationTypeId = 27, // AnnouncementUpdated
-                TargetType = "Announcement",
-                TargetIdentifier = announcement.Title,
-                Description = $"修改系統公告：{announcement.Title}。"
-            };
+                var operationLog = new OperationLog
+                {
+                    TargetBranchId = 0,
+                    OperatedAt = _clock.Now,
+                    OperatorEmployeeNumber = CurrentEmployeeNumber!,
+                    OperationTypeId = 27, // AnnouncementUpdated
+                    TargetType = "Announcement",
+                    TargetIdentifier = announcement.Title,
+                    Description = $"修改系統公告：{announcement.Title}。"
+                };
 
-            _context.OperationLogs.Add(operationLog);
+                _context.OperationLogs.Add(operationLog);
+            }
 
+            if (oldIsActive != model.IsActive)
+            {
+                var statusLog = new OperationLog
+                {
+                    TargetBranchId = 0,
+                    OperatedAt = _clock.Now,
+                    OperatorEmployeeNumber = CurrentEmployeeNumber!,
+                    OperationTypeId = model.IsActive ? 30 : 29,
+                    TargetType = "Announcement",
+                    TargetIdentifier = announcement.Title,
+                    Description = model.IsActive
+                        ? $"啟用系統公告：{announcement.Title}。"
+                        : $"停用系統公告：{announcement.Title}。"
+                };
+
+                _context.OperationLogs.Add(statusLog);
+            }
             _context.SaveChanges();
 
             TempData["SuccessMessage"] = "公告修改成功";
@@ -182,7 +216,7 @@ namespace HotelManagementSystem.Controllers
 
             var operationLog = new OperationLog
             {
-                TargetBranchId = null,
+                TargetBranchId = 0,
                 OperatedAt = _clock.Now,
                 OperatorEmployeeNumber = CurrentEmployeeNumber!,
                 OperationTypeId = 28, // AnnouncementDeleted

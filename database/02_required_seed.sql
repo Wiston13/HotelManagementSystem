@@ -9,6 +9,7 @@
     4. 04_development_scenarios.sql（開發情境資料）
 
     本檔責任：
+    - 系統保留分館資料（BranchId = 0，代表全系統）
     - OperationTypes 固定操作類型
     - 初始總系統管理員帳號
 
@@ -43,8 +44,45 @@ BEGIN TRY
     DECLARE @SamplePasswordHash varchar(255) =
         'AQAAAAIAAYagAAAAEAARIjNEVWZ3iJmqu8zd7v+PeRFk6r5bp/etR1cXSVRJ3jQ7XCpEip30m5ie+Qu5vg==';
 
+/* =========================================================
+   1. Branches：系統保留分館
+   BranchId = 0 代表全系統，不是真實營運分館
+   僅供全系統層級資料與 OperationLog 使用
+   ========================================================= */
+SET @IdentityInsertTable = N'dbo.Branches';
+SET IDENTITY_INSERT [dbo].[Branches] ON;
+
+INSERT INTO [dbo].[Branches]
+(
+    [BranchId],
+    [BranchName],
+    [Phone],
+    [Address],
+    [Description],
+    [AcceptsNewBookings],
+    [Region],
+    [ImageUrl]
+)
+VALUES
+(
+    0,
+    N'全系統',
+    '',
+    N'',
+    N'系統保留資料，不代表實際營運分館',
+    0,
+    NULL,
+    NULL
+);
+
+SET IDENTITY_INSERT [dbo].[Branches] OFF;
+SET @IdentityInsertTable = NULL;
+
+/* 下一筆一般新增分館仍從 BranchId = 1 開始 */
+DBCC CHECKIDENT ('dbo.Branches', RESEED, 0) WITH NO_INFOMSGS;
+
     /* =========================================================
-       1. Employees：初始總系統管理員
+       2. Employees：初始總系統管理員
        ========================================================= */
     INSERT INTO [dbo].[Employees]
     (
@@ -54,7 +92,7 @@ BEGIN TRY
     ('E20260807001', N'系統管理員', 1, NULL, @SamplePasswordHash, 'SystemAdmin');
 
     /* =========================================================
-       2. OperationTypes：固定 ID 1～25
+       3. OperationTypes：固定 ID 1～30
 
        StayController 目前以 22 / 23 寫入 Check-in / Check-out，
        因此保留既有 ID 與代碼，避免種子資料和程式不相容。
@@ -89,21 +127,30 @@ BEGIN TRY
     (22, 'CheckIn',                   N'Check-in'),
     (23, 'CheckOut',                  N'Check-out'),
     (24, 'RoomDisabledReasonUpdated', N'修改房間停用原因'),
-    (25, 'EmployeePasswordChanged',   N'員工修改密碼');
+    (25, 'EmployeePasswordChanged',   N'員工修改密碼'),
+    (26, 'AnnouncementCreated',       N'新增公告'),
+    (27, 'AnnouncementUpdated',       N'修改公告'),
+    (28, 'AnnouncementDeleted',       N'刪除公告'),
+    (29, 'AnnouncementDisabled',      N'停用公告'),
+    (30, 'AnnouncementEnabled',     N'啟用公告');
 
     SET IDENTITY_INSERT [dbo].[OperationTypes] OFF;
     SET @IdentityInsertTable = NULL;
 
     /* 固定 ID 寫入後校正 seed，下一筆一般 INSERT 從 MAX + 1 接續。 */
-    DBCC CHECKIDENT ('dbo.OperationTypes', RESEED, 25) WITH NO_INFOMSGS;
+    DBCC CHECKIDENT ('dbo.OperationTypes', RESEED, 30) WITH NO_INFOMSGS;
 
     COMMIT TRANSACTION;
 
     SELECT N'必要初始化資料完成' AS [Result],
-           (SELECT COUNT(*) FROM [dbo].[OperationTypes]) AS [OperationTypes],
-           (SELECT COUNT(*) FROM [dbo].[Employees] WHERE [Role] = 'SystemAdmin') AS [SystemAdmins];
+       (SELECT COUNT(*) FROM [dbo].[Branches] WHERE [BranchId] = 0) AS [SystemBranches],
+       (SELECT COUNT(*) FROM [dbo].[OperationTypes]) AS [OperationTypes],
+       (SELECT COUNT(*) FROM [dbo].[Employees] WHERE [Role] = 'SystemAdmin') AS [SystemAdmins];
 END TRY
 BEGIN CATCH
+    IF @IdentityInsertTable = N'dbo.Branches'
+        SET IDENTITY_INSERT [dbo].[Branches] OFF;
+
     IF @IdentityInsertTable = N'dbo.OperationTypes'
         SET IDENTITY_INSERT [dbo].[OperationTypes] OFF;
 

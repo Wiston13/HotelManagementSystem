@@ -7,7 +7,7 @@ public partial class OperationLog
 {
     public int OperationLogId { get; set; }
 
-    public int? TargetBranchId { get; set; }
+    public int TargetBranchId { get; set; }
 
     public DateTime OperatedAt { get; set; }
 
