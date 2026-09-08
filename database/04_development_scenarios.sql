@@ -47,7 +47,7 @@ BEGIN TRY
        OR (SELECT COUNT(*) FROM [dbo].[RoomTypes]) <> 24
        OR (SELECT COUNT(*) FROM [dbo].[Rooms]) <> 188
        OR (SELECT COUNT(*) FROM [dbo].[Employees]) <> 19
-       OR (SELECT COUNT(*) FROM [dbo].[OperationTypes]) <> 25
+       OR (SELECT COUNT(*) FROM [dbo].[OperationTypes]) <> 30
     BEGIN
         THROW 50002, N'展示基準資料不完整，請依序執行 01_create_hotel_management_schema.sql、02_required_seed.sql、03_demo_data.sql。', 1;
     END;

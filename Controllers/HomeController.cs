@@ -21,6 +21,8 @@ namespace HotelManagementSystem.Controllers
 
         public IActionResult Index()
         {
+            var now = _taipeiClock.Now;
+
             var model = new HomeViewModel
             {
                 Today = _taipeiClock.Today,
@@ -49,10 +51,48 @@ namespace HotelManagementSystem.Controllers
                         MaxOccupancy = r.MaxOccupancy,
                         IsActive = r.IsActive
                     })
-                    .ToList()
+                    .ToList(),
+
+                Announcements = _context.Announcements
+                            .Where(a => a.IsActive
+                                              && a.ShowToGuest
+                                              && a.StartAt <= now
+                                              && a.EndAt >= now)
+                            .OrderByDescending(a => a.StartAt)
+                            .Take(1)
+                            .Select(a => new HomeAnnouncementViewModel
+                             {
+                                    Title = a.Title,
+                                    Content = a.Content,
+                                    StartAt = a.StartAt,
+                                    EndAt = a.EndAt
+                              })
+                              .ToList()
             };
 
             return View(model);
+        }
+
+        public IActionResult Announcements()
+        {
+            var now = _taipeiClock.Now;
+
+            var announcements = _context.Announcements
+                .Where(a => a.IsActive
+                         && a.ShowToGuest
+                         && a.StartAt <= now
+                         && a.EndAt >= now)
+                .OrderByDescending(a => a.StartAt)
+                .Select(a => new HomeAnnouncementViewModel
+                {
+                    Title = a.Title,
+                    Content = a.Content,
+                    StartAt = a.StartAt,
+                    EndAt = a.EndAt
+                })
+                .ToList();
+
+            return View(announcements);
         }
 
         public IActionResult GuestGuide()

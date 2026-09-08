@@ -11,7 +11,7 @@
 
 第一次部署完成後，該部署資料庫即成為 Database Deployment Baseline。因此不要建立 `001_initial_schema.sql` 或 `001_baseline.sql`，去表示一段實際不存在的 migration history。
 
-第一次正式部署已完成，production 仍為該次部署的既有 baseline。顧客意見回饋與公告 Schema 已定案，本次新增 `001_add_customer_feedbacks.sql` 與 `002_add_announcements.sql`；兩支尚未正式執行，可在 PR merge 前修正，正式套用後即依第 5 節保留歷史。
+第一次正式部署已完成，production 仍為該次部署的既有 baseline。顧客意見回饋與公告 Schema 已定案，本次新增 `001_add_customer_feedbacks.sql` 與 `002_add_announcements.sql`；其中 `002` 同時將 `OperationLogs.TargetBranchId` 改為 nullable，並新增公告操作類型 26～30。兩支尚未正式執行，可在 PR merge 前修正，正式套用後即依第 5 節保留歷史。
 
 ## 2. Production 與 Demo／Scenario 界線
 
@@ -70,7 +70,7 @@ NNN_description.sql
 001_add_customer_feedbacks.sql → 002_add_announcements.sql
 ```
 
-執行前須明確選定目標資料庫；這兩支 SQL 不含 USE、不建立資料庫，且資料表已存在時會報錯停止。Fresh DB 已由 `01` 建立兩表，不須再套用這兩支 SQL。`001` 需要既有 `dbo.Branches`。
+執行前須明確選定目標資料庫；這兩支 SQL 不含 USE、不建立資料庫，且資料表已存在時會報錯停止。Fresh DB 已由 `01` 建立兩表，不須再套用這兩支 SQL。`001` 需要既有 `dbo.Branches`；`002` 需要既有 `dbo.Branches`、`dbo.OperationLogs` 與 `dbo.OperationTypes`，並負責新增公告表、允許全系統操作紀錄使用 nullable `TargetBranchId`，以及加入公告操作類型 26～30。
 
 不得跳號或改變順序。專案目前沒有自動 migration tracking，因此 deployment 紀錄或 PR 必須明確記載各部署環境最後套用的 deploy SQL；本規則不要求新增 Schema version table。
 

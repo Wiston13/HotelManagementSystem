@@ -252,6 +252,49 @@
     });
 </script>
 
+@if (Model.Announcements.Count > 0)
+{
+    <div class="container mt-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-megaphone me-2"></i>
+                    最新消息
+                </h5>
+            </div>
+
+            <div class="card-body">
+                @foreach (var announcement in Model.Announcements)
+                {
+                    <div class="mb-3">
+                        <h6 class="fw-bold mb-1">
+                            @announcement.Title
+                        </h6>
+
+                        <p class="mb-1">
+                            @announcement.Content
+                        </p>
+
+                        <small class="text-muted">
+                            公告期間：
+                            @announcement.StartAt.ToString("yyyy/MM/dd HH:mm")
+                            ～
+                            @announcement.EndAt.ToString("yyyy/MM/dd HH:mm")
+                        </small>
+                    </div>
+                }
+
+                <div class="text-end mt-3">
+                    <a asp-controller="Home"
+                       asp-action="Announcements"
+                       class="btn btn-sm btn-outline-primary">
+                        查看更多消息
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 <div class="container my-5">
     <!-- 1. 區域選擇按鈕區塊 -->

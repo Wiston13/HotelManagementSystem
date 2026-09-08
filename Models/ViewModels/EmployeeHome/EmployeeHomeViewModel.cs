@@ -9,6 +9,8 @@
         public List<StayItemViewModel> PendingCheckOuts { get; set; } = new();
 
         public List<RoomCleaningItemViewModel> RoomsToClean { get; set; } = new();
+
+        public List<AnnouncementItemViewModel> Announcements { get; set; } = new();
     }
 
     public class PendingCheckInItemViewModel
@@ -46,5 +48,16 @@
         public string RoomTypeName { get; set; } = null!;
 
         public short Floor { get; set; }
+    }
+
+    public class AnnouncementItemViewModel
+    {
+        public string Title { get; set; } = string.Empty;
+
+        public string Content { get; set; } = string.Empty;
+
+        public DateTime StartAt { get; set; }
+
+        public DateTime EndAt { get; set; }
     }
 }
