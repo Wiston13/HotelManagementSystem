@@ -197,6 +197,16 @@
     color: var(--customer-primary) !important;
 }
 
+/* 顧客端表單：瀏覽器自動填入 */
+.customer-content input:-webkit-autofill,
+.customer-content input:-webkit-autofill:hover,
+.customer-content input:-webkit-autofill:focus,
+.customer-content input:-webkit-autofill:active {
+    -webkit-text-fill-color: #212529;
+    -webkit-box-shadow: 0 0 0 1000px #fff inset;
+    box-shadow: 0 0 0 1000px #fff inset;
+}
+
 /* 外框主要按鈕 */
 .customer-home-page .btn-outline-primary,
 .customer-inner-page .btn-outline-primary {
@@ -368,6 +378,15 @@
     color: #8b3f3f;
     background-color: #fdf3f3;
     border: 1px solid #edcccc;
+    border-radius: 10px;
+    padding: 0.9rem 1rem;
+}
+
+/* 訂單查詢：查無資料提示 */
+.lookup-warning-alert {
+    color: #7a5b22;
+    background-color: #fff9e8;
+    border-color: #ead9a3;
     border-radius: 10px;
     padding: 0.9rem 1rem;
 }
