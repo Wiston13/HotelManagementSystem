@@ -26,9 +26,8 @@ namespace HotelManagementSystem.Controllers
                 .ToListAsync();
 
             ViewBag.Branches = await _context.Branches
-                    .Where(b => b.BranchId != 0)
-                    .OrderBy(b => b.BranchId)
-                    .ToListAsync();
+                .OrderBy(b => b.BranchId)
+                .ToListAsync();
 
             return View(employeeList);
         }
@@ -47,10 +46,7 @@ namespace HotelManagementSystem.Controllers
                 return Json(new { success = false, message = "請輸入初始密碼" });
             }
 
-            var branchExists = await _context.Branches
-                    .AnyAsync(b =>
-                            b.BranchId == branchId &&
-                            b.BranchId != 0);
+            var branchExists = await _context.Branches.AnyAsync(b => b.BranchId == branchId);
             if (!branchExists)
             {
                 return Json(new { success = false, message = "選取的分館不存在，請重新選擇。" });
@@ -131,10 +127,7 @@ namespace HotelManagementSystem.Controllers
                 return Json(new { success = false, message = "員工姓名不可為空！" });
             }
 
-            var branchExists = await _context.Branches
-                    .AnyAsync(b =>
-                            b.BranchId == branchId &&
-                            b.BranchId != 0);
+            var branchExists = await _context.Branches.AnyAsync(b => b.BranchId == branchId);
             if (!branchExists)
             {
                 return Json(new { success = false, message = "選取的分館不存在，請重新選擇。" });

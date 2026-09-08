@@ -22,9 +22,7 @@ namespace HotelManagementSystem.Controllers
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            ViewBag.Branches = await _context.Branches
-                    .Where(b => b.BranchId != 0)
-                    .ToListAsync();
+            ViewBag.Branches = await _context.Branches.ToListAsync();
 
             var roomTypes = await _context.RoomTypes.ToListAsync();
             return View(roomTypes);
@@ -60,10 +58,7 @@ namespace HotelManagementSystem.Controllers
 
                 TempData["ErrorMessage"] = "儲存失敗：" + string.Join(" | ", errors);
 
-                ViewBag.Branches = await _context.Branches
-                            .Where(b => b.BranchId != 0)
-                            .ToListAsync();
-
+                ViewBag.Branches = await _context.Branches.ToListAsync();
                 return View("Index", await _context.RoomTypes.ToListAsync());
             }
 
@@ -72,8 +67,7 @@ namespace HotelManagementSystem.Controllers
                 if (model.RoomTypeId == 0)
                 {
                     var branchExists = await _context.Branches
-                            .AnyAsync(b => b.BranchId == model.BranchId
-                                                    && b.BranchId != 0);
+                    .AnyAsync(b => b.BranchId == model.BranchId);
 
                     if (!branchExists)
                     {
@@ -177,10 +171,7 @@ namespace HotelManagementSystem.Controllers
             catch (Exception)
             {
                 TempData["ErrorMessage"] = "資料庫儲存失敗";
-                ViewBag.Branches = await _context.Branches
-                        .Where(b => b.BranchId != 0)
-                        .ToListAsync();
-
+                ViewBag.Branches = await _context.Branches.ToListAsync();
                 return View("Index", await _context.RoomTypes.ToListAsync());
             }
         }

@@ -52,7 +52,11 @@ namespace HotelManagementSystem.Controllers
 
                 if (!string.IsNullOrWhiteSpace(branchId))
                 {
-                    if (int.TryParse(branchId, out var parsedBranchId))
+                    if (branchId == "system")
+                    {
+                        query = query.Where(l => l.TargetBranchId == null);
+                    }
+                    else if (int.TryParse(branchId, out var parsedBranchId))
                     {
                         query = query.Where(l => l.TargetBranchId == parsedBranchId);
                     }
@@ -98,7 +102,9 @@ namespace HotelManagementSystem.Controllers
                     {
                         operatedAt = l.OperatedAt,
 
-                        branchName = l.TargetBranch != null ? l.TargetBranch.BranchName : "未知分館",
+                        branchName = l.TargetBranchId == null
+                            ? "全系統"
+                            : l.TargetBranch?.BranchName ?? "未知分館",
                         operatorName = operatorName,
                         operationTypeName = l.OperationType != null ? l.OperationType.OperationTypeName : "未知操作",
                         targetType = l.TargetType,

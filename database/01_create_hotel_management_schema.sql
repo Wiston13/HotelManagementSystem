@@ -396,12 +396,13 @@ GO
    8. OperationLogs 基本操作紀錄
    - 僅由系統在關鍵寫入成功後新增
    - 一般功能不提供修改／刪除
-   - TargetBranchId = 操作對象所屬／受影響分館
+   - TargetBranchId = NULL 代表全系統層級操作
+   - TargetBranchId 有值時代表操作對象所屬／受影響分館
    ========================================================= */
 CREATE TABLE [dbo].[OperationLogs]
 (
     [OperationLogId]            int IDENTITY(1,1) NOT NULL,
-    [TargetBranchId]            int NOT NULL,
+    [TargetBranchId]            int NULL,
     [OperatedAt]                datetime2(0) NOT NULL
         CONSTRAINT [DF_OperationLogs_OperatedAt]
         DEFAULT (CONVERT(datetime2(0), SYSDATETIMEOFFSET() AT TIME ZONE 'Taipei Standard Time')),

@@ -214,6 +214,7 @@ public partial class HotelManagementContext : DbContext
 
             entity.HasOne(d => d.TargetBranch).WithMany(p => p.OperationLogs)
                 .HasForeignKey(d => d.TargetBranchId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_OperationLogs_TargetBranch");
         });

@@ -28,19 +28,18 @@ namespace HotelManagementSystem.Controllers
                 Today = _taipeiClock.Today,
 
                 Branches = _context.Branches
-                        .Where(b => b.BranchId != 0)
-                        .Select(b => new BranchViewModel
-                        {
-                                BranchId = b.BranchId,
-                                BranchName = b.BranchName,
-                                AcceptsNewBookings = b.AcceptsNewBookings,
-                                Phone = b.Phone,
-                                Address = b.Address,
-                                Description = b.Description,
-                                Region = b.Region,
-                                ImageUrl = b.ImageUrl
-                        })
-                        .ToList(),
+                    .Select(b => new BranchViewModel
+                    {
+                        BranchId = b.BranchId,
+                        BranchName = b.BranchName,
+                        AcceptsNewBookings = b.AcceptsNewBookings,
+                        Phone = b.Phone,
+                        Address = b.Address,
+                        Description = b.Description,
+                        Region = b.Region,
+                        ImageUrl = b.ImageUrl
+                    })
+                    .ToList(),
 
                 RoomTypes = _context.RoomTypes
                     .Where(r => r.IsActive)

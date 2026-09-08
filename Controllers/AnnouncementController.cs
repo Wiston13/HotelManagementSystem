@@ -80,7 +80,7 @@ namespace HotelManagementSystem.Controllers
 
             var operationLog = new OperationLog
             {
-                TargetBranchId = 0,
+                TargetBranchId = null,
                 OperatedAt = _clock.Now,
                 OperatorEmployeeNumber = CurrentEmployeeNumber!,
                 OperationTypeId = 26, // AnnouncementCreated
@@ -163,7 +163,7 @@ namespace HotelManagementSystem.Controllers
             {
                 var operationLog = new OperationLog
                 {
-                    TargetBranchId = 0,
+                    TargetBranchId = null,
                     OperatedAt = _clock.Now,
                     OperatorEmployeeNumber = CurrentEmployeeNumber!,
                     OperationTypeId = 27, // AnnouncementUpdated
@@ -179,7 +179,7 @@ namespace HotelManagementSystem.Controllers
             {
                 var statusLog = new OperationLog
                 {
-                    TargetBranchId = 0,
+                    TargetBranchId = null,
                     OperatedAt = _clock.Now,
                     OperatorEmployeeNumber = CurrentEmployeeNumber!,
                     OperationTypeId = model.IsActive ? 30 : 29,
@@ -216,7 +216,7 @@ namespace HotelManagementSystem.Controllers
 
             var operationLog = new OperationLog
             {
-                TargetBranchId = 0,
+                TargetBranchId = null,
                 OperatedAt = _clock.Now,
                 OperatorEmployeeNumber = CurrentEmployeeNumber!,
                 OperationTypeId = 28, // AnnouncementDeleted

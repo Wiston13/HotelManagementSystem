@@ -22,9 +22,8 @@ namespace HotelManagementSystem.Controllers
         {
 
             ViewBag.Branches = await _context.Branches
-                    .Where(b => b.BranchId != 0)
-                    .OrderBy(b => b.BranchId)
-                    .ToListAsync();
+                .OrderBy(b => b.BranchId)
+                .ToListAsync();
 
             return View();
         }

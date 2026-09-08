@@ -25,8 +25,8 @@
                             分館
                         </label>
                         <select id="branchSelect" class="form-control">
-                            <option value="">全部分館</option>
-
+                            <option value="">全部範圍</option>
+                            <option value="system">全系統</option>
                             @if (ViewBag.Branches != null)
                             {
                                 foreach (var branch in ViewBag.Branches)
@@ -235,7 +235,7 @@
                     let url = `/OperationLog/GetFilteredLogs?startDate=${sDate}&endDate=${eDate}`;
 
                     if (bId) {
-                        url += `&branchId=${parseInt(bId)}`;
+                        url += `&branchId=${encodeURIComponent(bId)}`;
                     }
                     if (type) {
                         url += `&type=${encodeURIComponent(type)}`;
