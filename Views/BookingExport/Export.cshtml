@@ -123,7 +123,7 @@
         var btnSearch = document.getElementById("btnSearch");
 
         btnSearch.disabled = true;
-        btnSearch.innerText = "連線資料庫中...";
+        btnSearch.innerText = "查詢中...";
 
         try {
             var url = "/BookingExport/GetOrders?branchId=" + encodeURIComponent(selectedBranchId) + "&start=" + sDate + "&end=" + eDate;
@@ -131,7 +131,7 @@
             var result = await response.json();
 
             if (!result.success) {
-                alert("資料庫讀取失敗，請稍後再試。");
+                alert("查詢失敗，請稍後再試。");
                 return;
             }
 
@@ -200,7 +200,7 @@
 
         } catch (error) {
             console.error(error);
-            alert("網路請求失敗，請確保後端伺服器運行正常。");
+            alert("系統暫時無法完成查詢，請稍後再試。");
         } finally {
             btnSearch.disabled = false;
             btnSearch.innerText = "查詢";
