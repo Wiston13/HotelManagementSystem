@@ -49,7 +49,7 @@ namespace HotelManagementSystem.Controllers
                 if (!System.IO.File.Exists(physicalPath))
                 {
                     string normalizedPath = cleanPath.Replace('\\', '/');
-                    ModelState.AddModelError("ImageUrl", $"伺服器找不到圖片檔案：wwwroot/{normalizedPath}");
+                    ModelState.AddModelError("ImageUrl", "找不到指定的圖片檔案，請確認圖片路徑。");
                 }
             }
 
@@ -183,7 +183,7 @@ namespace HotelManagementSystem.Controllers
             }
             catch (Exception)
             {
-                TempData["ErrorMessage"] = "資料庫儲存失敗，請稍後再試。";
+                TempData["ErrorMessage"] = "儲存失敗，請稍後再試。";
 
                 var branches = await _context.Branches.AsNoTracking().OrderBy(b => b.BranchId).ToListAsync();
                 return View("Index", branches);

@@ -83,7 +83,7 @@ BEGIN TRY
         N'鄰近港區與捷運，房型兼顧商務及家庭旅客。',
         1, N'南部', N'/images/seed/branches/kaohsiung-harbor.jpg'),
     (6, N'花蓮站前商旅', '038330806', N'花蓮縣花蓮市國聯一路55號',
-        N'目前停止接受新訂房，用於驗證既有訂單仍可入住與退房。',
+        N'鄰近花蓮車站，提供便利的城市住宿選擇。',
         0, N'東部', N'/images/seed/branches/hualien-station.jpg');
 
     SET IDENTITY_INSERT [dbo].[Branches] OFF;
@@ -102,15 +102,15 @@ BEGIN TRY
     )
     VALUES
     ( 1, 1, N'經典單人房', 1, N'一小床',             2300.00, 1, N'適合單人商務短住，配置書桌與基本收納。', N'/images/seed/room-types/taipei-zhongshan-classic-single.jpg'),
-    ( 2, 1, N'標準雙人房', 2, N'一大床',             3200.00, 1, N'中山館主要雙人房型，適合一般訂房流程測試。', N'/images/seed/room-types/taipei-zhongshan-standard-double.jpg'),
+    ( 2, 1, N'標準雙人房', 2, N'一大床',             3200.00, 1, N'中山館主要雙人房型，適合雙人商務或休閒住宿。', N'/images/seed/room-types/taipei-zhongshan-standard-double.jpg'),
     ( 3, 1, N'豪華雙床房', 2, N'兩小床',             3800.00, 1, N'兩床配置，適合同行旅客。', N'/images/seed/room-types/taipei-zhongshan-deluxe-twin.jpg'),
-    ( 4, 1, N'家庭四人房', 4, N'兩大床',             5200.00, 1, N'保留四人容量快照與實際入住人數上限測試。', N'/images/seed/room-types/taipei-zhongshan-family-quad.jpg'),
-    ( 5, 1, N'行政三人房', 3, N'一大床＋一小床',     4500.00, 1, N'用於無合格房間可指派等櫃檯情境。', N'/images/seed/room-types/taipei-zhongshan-executive-triple.jpg'),
+    ( 4, 1, N'家庭四人房', 4, N'兩大床',             5200.00, 1, N'提供兩張雙人床，適合家庭或多人同行住宿。', N'/images/seed/room-types/taipei-zhongshan-family-quad.jpg'),
+    ( 5, 1, N'行政三人房', 3, N'一大床＋一小床',     4500.00, 1, N'提供一大床與一小床，適合三人同行住宿。', N'/images/seed/room-types/taipei-zhongshan-executive-triple.jpg'),
 
     ( 6, 2, N'都會單人房', 1, N'一小床',             2600.00, 1, N'信義商圈單人住宿選擇。', N'/images/seed/room-types/taipei-xinyi-city-single.jpg'),
     ( 7, 2, N'景觀雙人房', 2, N'一大床',             4200.00, 1, N'提供城市景觀的雙人房型。', N'/images/seed/room-types/taipei-xinyi-skyline-double.jpg'),
     ( 8, 2, N'豪華雙床房', 2, N'兩小床',             4600.00, 1, N'較寬敞的兩床房型。', N'/images/seed/room-types/taipei-xinyi-deluxe-twin.jpg'),
-    ( 9, 2, N'家庭套房',   4, N'兩大床',             6500.00, 1, N'信義館家庭房，適合多晚訂單與匯出測試。', N'/images/seed/room-types/taipei-xinyi-family-suite.jpg'),
+    ( 9, 2, N'家庭套房',   4, N'兩大床',             6500.00, 1, N'信義館家庭房，提供寬敞空間，適合家庭及多晚住宿。', N'/images/seed/room-types/taipei-xinyi-family-suite.jpg'),
 
     (10, 3, N'標準雙人房', 2, N'一大床',             2900.00, 1, N'台中館基本雙人房。', N'/images/seed/room-types/taichung-standard-double.jpg'),
     (11, 3, N'舒適三人房', 3, N'一大床＋一小床',     3900.00, 1, N'適合三人同行。', N'/images/seed/room-types/taichung-comfort-triple.jpg'),
@@ -125,11 +125,11 @@ BEGIN TRY
     (18, 5, N'港景雙人房', 2, N'一大床',             3300.00, 1, N'可辨識的港景雙人房。', N'/images/seed/room-types/kaohsiung-harbor-double.jpg'),
     (19, 5, N'豪華雙床房', 2, N'兩小床',             3900.00, 1, N'高雄館兩床房。', N'/images/seed/room-types/kaohsiung-deluxe-twin.jpg'),
     (20, 5, N'家庭四人房', 4, N'兩大床',             5000.00, 1, N'高雄館家庭房。', N'/images/seed/room-types/kaohsiung-family-quad.jpg'),
-    (21, 5, N'全景三人房', 3, N'一大床＋一小床',     4300.00, 0, N'停用房型；既有訂單仍可保留歷史快照。', N'/images/seed/room-types/kaohsiung-panoramic-triple.jpg'),
+    (21, 5, N'全景三人房', 3, N'一大床＋一小床',     4300.00, 0, N'提供寬敞格局，適合三人同行住宿。', N'/images/seed/room-types/kaohsiung-panoramic-triple.jpg'),
 
     (22, 6, N'山海雙人房', 2, N'一大床',             2600.00, 1, N'花蓮館基本雙人房。', N'/images/seed/room-types/hualien-classic-double.jpg'),
     (23, 6, N'山景雙床房', 2, N'兩小床',             3200.00, 1, N'花蓮館兩床房。', N'/images/seed/room-types/hualien-mountain-twin.jpg'),
-    (24, 6, N'家庭四人房', 4, N'兩大床',             4400.00, 1, N'花蓮館家庭房；分館停接新訂房但可承接既有訂單。', N'/images/seed/room-types/hualien-family-quad.jpg');
+    (24, 6, N'家庭四人房', 4, N'兩大床',             4400.00, 1, N'提供兩張雙人床，適合家庭或多人同行住宿。', N'/images/seed/room-types/hualien-family-quad.jpg');
 
     SET IDENTITY_INSERT [dbo].[RoomTypes] OFF;
     SET @IdentityInsertTable = NULL;
