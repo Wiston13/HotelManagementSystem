@@ -4,6 +4,7 @@ public class HomeViewModel
 {
     public List<BranchViewModel> Branches { get; set; } = new();
     public List<RoomTypeViewModel> RoomTypes { get; set; } = new();
+    public List<HomeAnnouncementViewModel> Announcements { get; set; } = new();
 
     // 今天日期
     public DateOnly Today { get; set; }
@@ -39,4 +40,12 @@ public class RoomTypeViewModel
     public int MaxOccupancy { get; set; }
 
     public bool IsActive { get; set; }
+}
+
+public class HomeAnnouncementViewModel
+{
+    public string Title { get; set; } = string.Empty;
+    public string Content { get; set; } = string.Empty;
+    public DateTime StartAt { get; set; }
+    public DateTime EndAt { get; set; }
 }

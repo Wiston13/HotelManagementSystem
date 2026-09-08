@@ -1,0 +1,55 @@
+﻿@model List<HotelManagementSystem.Models.ViewModels.EmployeeHome.AnnouncementItemViewModel>
+
+@{
+    ViewData["Title"] = "系統公告";
+}
+
+<div class="container my-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">
+            <i class="bi bi-megaphone me-2"></i>
+            系統公告
+        </h2>
+
+        <a asp-controller="EmployeeHome"
+           asp-action="Index"
+           class="btn btn-outline-secondary">
+            返回工作首頁
+        </a>
+    </div>
+
+    @if (Model.Count == 0)
+    {
+        <div class="alert alert-light border">
+            目前沒有系統公告。
+        </div>
+    }
+    else
+    {
+        @foreach (var announcement in Model)
+        {
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-body">
+
+                    <h5 class="fw-bold mb-2">
+                        @announcement.Title
+                    </h5>
+
+                    <p class="mb-3">
+                        @announcement.Content
+                    </p>
+
+                    <small class="text-muted">
+                        公告期間：
+                        @announcement.StartAt.ToString("yyyy/MM/dd HH:mm")
+                        ～
+                        @announcement.EndAt.ToString("yyyy/MM/dd HH:mm")
+                    </small>
+
+                </div>
+            </div>
+        }
+    }
+
+</div>

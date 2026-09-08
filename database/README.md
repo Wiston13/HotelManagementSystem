@@ -20,7 +20,7 @@
 
 只建立系統正常使用所需的必要初始化資料：
 
-- `OperationTypes` 1～25。
+- `OperationTypes` 1～30。
 - 初始 `SystemAdmin`。
 
 本腳本不是 Demo Data，不包含分館、一般員工、房型、房間、訂單或住房資料。

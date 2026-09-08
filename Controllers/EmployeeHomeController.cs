@@ -26,6 +26,7 @@ namespace HotelManagementSystem.Controllers
             await _noShowService.UpdateNoShowsAsync();
 
             var today = _clock.Today;
+            var now = _clock.Now;
 
             var model = new EmployeeHomeViewModel
             {
@@ -87,10 +88,49 @@ namespace HotelManagementSystem.Controllers
                         RoomNumber = r.RoomNumber,
                         RoomTypeName = r.RoomType.RoomTypeName,
                         Floor = r.Floor,
-                    }).ToListAsync()
+                    }).ToListAsync(),
+
+                Announcements = await _context.Announcements
+                         .Where(a => a.IsActive
+                                           && a.StartAt <= now
+                                           && a.EndAt >= now)
+                        .AsNoTracking()
+                        .OrderByDescending(a => a.StartAt)
+                        .Take(1)
+                        .Select(a => new AnnouncementItemViewModel
+                        {
+                                Title = a.Title,
+                                Content = a.Content,
+                                StartAt = a.StartAt,
+                                EndAt = a.EndAt
+                         })
+                        .ToListAsync()
             };
 
             return View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Announcements()
+        {
+            var now = _clock.Now;
+
+            var announcements = await _context.Announcements
+                .Where(a => a.IsActive
+                         && a.StartAt <= now
+                         && a.EndAt >= now)
+                .AsNoTracking()
+                .OrderByDescending(a => a.StartAt)
+                .Select(a => new AnnouncementItemViewModel
+                {
+                    Title = a.Title,
+                    Content = a.Content,
+                    StartAt = a.StartAt,
+                    EndAt = a.EndAt
+                })
+                .ToListAsync();
+
+            return View(announcements);
         }
     }
 }

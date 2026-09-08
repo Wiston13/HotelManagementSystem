@@ -184,6 +184,7 @@ namespace HotelManagementSystem.Controllers
             catch (Exception)
             {
                 TempData["ErrorMessage"] = "資料庫儲存失敗，請稍後再試。";
+
                 var branches = await _context.Branches.AsNoTracking().OrderBy(b => b.BranchId).ToListAsync();
                 return View("Index", branches);
             }
