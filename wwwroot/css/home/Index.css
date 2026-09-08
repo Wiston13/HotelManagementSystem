@@ -278,3 +278,56 @@
     letter-spacing: 0.05em;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 }
+
+/* =========================
+   首頁最新消息
+   ========================= */
+
+.home-announcement-card {
+    background-color: rgba(255, 255, 255, 0.94);
+    border: 1px solid rgba(63, 85, 81, 0.10);
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(40, 55, 52, 0.07);
+    overflow: hidden;
+}
+.home-announcement-header {
+    background-color: #f8faf9;
+    border-bottom: 1px solid rgba(63, 85, 81, 0.10);
+}
+.home-announcement-heading {
+    color: #2f3f3c;
+    font-weight: 600;
+}
+.home-announcement-icon {
+    color: #5f7772;
+}
+.home-announcement-title {
+    color: #2f3f3c;
+}
+.home-announcement-content {
+    color: #66716e;
+}
+.home-announcement-period {
+    color: #7a8885;
+}
+.home-announcement-more {
+    color: #526c67;
+    background-color: #fff;
+    border: 1px solid #718681;
+}
+    .home-announcement-more:hover {
+        color: #3f5551;
+        background-color: #eef2f1;
+        border-color: #526c67;
+    }
+    .home-announcement-more:focus,
+    .home-announcement-more:active,
+    .home-announcement-more:active:focus {
+        color: #3f5551;
+        background-color: #eef2f1;
+        border-color: #526c67;
+        box-shadow: none;
+    }
+    .home-announcement-more:focus-visible {
+        box-shadow: 0 0 0 0.16rem rgba(63, 85, 81, 0.18);
+    }
