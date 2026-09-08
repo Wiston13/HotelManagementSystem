@@ -361,3 +361,9 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# n8n local environment secrets and runtime data
+n8n/.env
+n8n/secrets/
+n8n/n8n_data/
+n8n/n8n-files/
