@@ -1,0 +1,392 @@
+﻿/* =========================
+   共用 Navbar 結構
+   ========================= */
+.customer-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1030;
+}
+.customer-navbar {
+    transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+    .customer-navbar .nav-link,
+    .customer-brand {
+        transition: color 0.25s ease;
+    }
+
+/* =========================
+   Logo / 品牌名稱
+   ========================= */
+.customer-logo {
+    width: 38px;
+    height: 38px;
+    object-fit: contain;
+}
+.customer-brand {
+    font-size: 1.15rem;
+    text-decoration: none;
+}
+
+/* =========================
+   首頁 Navbar
+   ========================= */
+.customer-home-page .customer-navbar {
+    background-color: rgba(0, 0, 0, 0.12);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
+.customer-home-page .customer-brand {
+    color: #fff;
+}
+    .customer-home-page .customer-brand:hover {
+        color: #fff;
+    }
+.customer-home-page .customer-navbar .nav-link {
+    position: relative;
+    color: rgba(255, 255, 255, 0.78);
+}
+    .customer-home-page .customer-navbar .nav-link:hover,
+    .customer-home-page .customer-navbar .nav-link.active {
+        color: #fff;
+    }
+
+/* =========================
+   首頁捲動後 Navbar
+   ========================= */
+.customer-home-page .customer-navbar.navbar-scrolled {
+    background-color: rgba(255, 255, 255, 0.55);
+    border-bottom: 1px solid rgba(63, 85, 81, 0.10);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+    .customer-home-page .customer-navbar.navbar-scrolled .customer-brand {
+        color: #3f5551;
+    }
+    .customer-home-page .customer-navbar.navbar-scrolled .nav-link {
+        color: rgba(63, 85, 81, 0.68);
+    }
+        .customer-home-page .customer-navbar.navbar-scrolled .nav-link:hover,
+        .customer-home-page .customer-navbar.navbar-scrolled .nav-link.active {
+            color: #3f5551;
+        }
+
+/* =========================
+   內頁 Navbar
+   ========================= */
+.customer-inner-page .customer-navbar {
+    background-color: rgba(255, 255, 255, 0.78);
+    border-bottom: 1px solid rgba(63, 85, 81, 0.10);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+.customer-inner-page .customer-brand {
+    color: #3f5551;
+}
+    .customer-inner-page .customer-brand:hover {
+        color: #334744;
+    }
+.customer-inner-page .customer-navbar .nav-link {
+    position: relative;
+    color: rgba(63, 85, 81, 0.68);
+}
+    .customer-inner-page .customer-navbar .nav-link:hover,
+    .customer-inner-page .customer-navbar .nav-link.active {
+        color: #3f5551;
+    }
+
+/* =========================
+   Active 頁籤
+   ========================= */
+.customer-navbar .nav-link.active::after {
+    content: "";
+    position: absolute;
+    left: 20%;
+    right: 20%;
+    bottom: 0;
+    height: 2px;
+    background-color: #f2c94c;
+    border-radius: 999px;
+}
+
+/* =========================
+   內頁避開 fixed Navbar
+   ========================= */
+.customer-inner-page main {
+    padding-top: 72px;
+}
+
+/* =========================
+   顧客端共用主色
+   ========================= */
+:root {
+    --customer-primary: #3f5551;
+    --customer-primary-dark: #334744;
+    --customer-primary-soft: #728985;
+    --customer-border: #b8c1be;
+    --customer-border-light: #d7ddda;
+    --customer-yellow: #f2c94c;
+}
+.customer-home-page .btn-primary,
+.customer-inner-page .btn-primary {
+    background-color: var(--customer-primary);
+    border-color: var(--customer-primary);
+    color: #fff;
+}
+    .customer-home-page .btn-primary:hover,
+    .customer-inner-page .btn-primary:hover {
+        background-color: var(--customer-primary-dark);
+        border-color: var(--customer-primary-dark);
+        color: #fff;
+    }
+    .customer-home-page .btn-primary:focus,
+    .customer-inner-page .btn-primary:focus {
+        background-color: var(--customer-primary-dark);
+        border-color: var(--customer-primary-dark);
+        box-shadow: 0 0 0 0.2rem rgba(63, 85, 81, 0.16);
+    }
+    .customer-home-page .btn-primary:active,
+    .customer-inner-page .btn-primary:active {
+        background-color: var(--customer-primary-dark) !important;
+        border-color: var(--customer-primary-dark) !important;
+    }
+
+/* 返回連結 */
+.customer-back-link {
+    color: #667a76;
+    font-size: 0.95rem;
+}
+    .customer-back-link:hover {
+        color: var(--customer-primary);
+    }
+    .customer-back-link:focus,
+    .customer-back-link:focus-visible {
+        color: var(--customer-primary);
+        outline: none;
+        box-shadow: none;
+    }
+    .customer-back-link:active {
+        color: var(--customer-primary-dark) !important;
+        outline: none;
+        box-shadow: none;
+    }
+
+/* 統一表單 */
+.customer-home-page .form-control,
+.customer-home-page .form-select,
+.customer-inner-page .form-control,
+.customer-inner-page .form-select {
+    border: 1px solid var(--customer-border);
+    border-radius: 6px;
+    color: #343b39;
+    background-color: #fff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+    .customer-home-page .form-control:focus,
+    .customer-home-page .form-select:focus,
+    .customer-inner-page .form-control:focus,
+    .customer-inner-page .form-select:focus {
+        border-color: #5f7772;
+        box-shadow: 0 0 0 0.2rem rgba(63, 85, 81, 0.14);
+        outline: none;
+    }
+
+.customer-primary-text {
+    color: var(--customer-primary) !important;
+}
+
+/* 顧客端表單：瀏覽器自動填入 */
+.customer-content input:-webkit-autofill,
+.customer-content input:-webkit-autofill:hover,
+.customer-content input:-webkit-autofill:focus,
+.customer-content input:-webkit-autofill:active {
+    -webkit-text-fill-color: #212529;
+    -webkit-box-shadow: 0 0 0 1000px #fff inset;
+    box-shadow: 0 0 0 1000px #fff inset;
+}
+
+/* 外框主要按鈕 */
+.customer-home-page .btn-outline-primary,
+.customer-inner-page .btn-outline-primary {
+    color: var(--customer-primary);
+    border-color: var(--customer-primary);
+    background-color: transparent;
+}
+    /* 滑鼠移上去 */
+    .customer-home-page .btn-outline-primary:hover,
+    .customer-inner-page .btn-outline-primary:hover {
+        color: #fff;
+        background-color: var(--customer-primary);
+        border-color: var(--customer-primary);
+    }
+    /* 鍵盤 Tab / 點擊取得焦點 */
+    .customer-home-page .btn-outline-primary:focus,
+    .customer-inner-page .btn-outline-primary:focus {
+        color: var(--customer-primary);
+        background-color: transparent;
+        border-color: var(--customer-primary);
+        box-shadow: 0 0 0 0.2rem rgba(63, 85, 81, 0.16);
+    }
+    /* 按住按鈕的瞬間 */
+    .customer-home-page .btn-outline-primary:active,
+    .customer-inner-page .btn-outline-primary:active {
+        color: #fff !important;
+        background-color: var(--customer-primary) !important;
+        border-color: var(--customer-primary) !important;
+        box-shadow: 0 0 0 0.2rem rgba(63, 85, 81, 0.16) !important;
+    }
+
+/* 頁尾 */
+.customer-footer {
+    background-color: rgba(255, 255, 255, 0.72);
+    border-top: 1px solid rgba(63, 85, 81, 0.10);
+    color: rgba(63, 85, 81, 0.70);
+}
+
+
+/* =========================
+   房型選擇頁
+   ========================= */
+/* 無搜尋結果 */
+.room-empty-state {
+    padding: 3rem 2rem;
+    text-align: center;
+    background-color: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(63, 85, 81, 0.12);
+    border-radius: 10px;
+    color: #3f5551;
+}
+    .room-empty-state p {
+        line-height: 1.7;
+    }
+
+/* 房型卡片 */
+.room-type-card {
+    background-color: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(63, 85, 81, 0.10);
+    border-radius: 12px;
+    box-shadow: 0 3px 12px rgba(40, 55, 52, 0.06);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+    .room-type-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(63, 85, 81, 0.18);
+        box-shadow: 0 7px 20px rgba(40, 55, 52, 0.09);
+    }
+.room-type-name {
+    color: #2f3f3c;
+    letter-spacing: 0.01em;
+}
+.room-bed-type {
+    color: #7a8885;
+    font-size: 0.95rem;
+}
+.room-occupancy-badge {
+    display: inline-block;
+    padding: 0.25rem 0.55rem;
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: #687975;
+    background-color: #f4f7f6;
+    border: 1px solid rgba(63, 85, 81, 0.12);
+    border-radius: 6px;
+}
+.room-description {
+    color: #7d8785;
+    font-size: 0.93rem;
+    line-height: 1.6;
+}
+
+/* 房型選擇按鈕：一般狀態 */
+.btn-select-room {
+    color: #3f5b56;
+    background-color: #fff;
+    border-color: #718681;
+}
+    /* Hover */
+    .btn-select-room:hover {
+        color: #3f5b56;
+        background-color: #eef2f1;
+        border-color: #526c67;
+    }
+    /* Focus / 點擊 */
+    .btn-select-room:focus,
+    .btn-select-room:focus-visible,
+    .btn-select-room:active {
+        outline: none;
+        border-color: #3f5b56;
+        box-shadow: 0 0 0 0.2rem rgba(63, 91, 86, 0.18);
+    }
+    /* 已選擇 */
+    .btn-select-room.selected,
+    .btn-select-room.selected:hover,
+    .btn-select-room.selected:focus,
+    .btn-select-room.selected:active {
+        color: #fff;
+        background-color: #3f5b56;
+        border-color: #3f5b56;
+    }
+
+/* 右側房型選擇摘要 */
+.room-selection-summary {
+    background-color: #f8faf9;
+    border: 1px solid rgba(63, 85, 81, 0.18);
+    border-radius: 12px;
+    box-shadow: 0 5px 18px rgba(40, 55, 52, 0.08);
+}
+/* 選擇的房型文字 */
+.customer-selection-text {
+    color: #b8871d;
+    font-weight: 600;
+}
+
+/* ===== Payment：訂房人資料、付款資訊 ===== */
+.payment-section-card {
+    background-color: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(63, 85, 81, 0.10);
+    border-radius: 12px;
+    box-shadow: 0 3px 12px rgba(40, 55, 52, 0.05);
+    overflow: hidden;
+}
+    .payment-section-card .card-header {
+        background-color: #f8faf9;
+        border-bottom: 1px solid rgba(63, 85, 81, 0.10);
+    }
+/* ===== Payment：右側訂房資訊 ===== */
+.payment-summary {
+    background-color: #f8faf9;
+    border: 1px solid rgba(63, 85, 81, 0.18);
+    border-radius: 12px;
+    box-shadow: 0 5px 18px rgba(40, 55, 52, 0.08);
+    overflow: hidden;
+}
+    .payment-summary .card-header {
+        background-color: transparent;
+        border-bottom: 1px solid rgba(63, 85, 81, 0.12);
+    }
+
+.payment-section-card .card-header,
+.payment-summary .card-header {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #2f3f3c;
+}
+/* Payment：付款失敗提示 */
+.payment-error-alert {
+    color: #8b3f3f;
+    background-color: #fdf3f3;
+    border: 1px solid #edcccc;
+    border-radius: 10px;
+    padding: 0.9rem 1rem;
+}
+
+/* 訂單查詢：查無資料提示 */
+.lookup-warning-alert {
+    color: #7a5b22;
+    background-color: #fff9e8;
+    border-color: #ead9a3;
+    border-radius: 10px;
+    padding: 0.9rem 1rem;
+}

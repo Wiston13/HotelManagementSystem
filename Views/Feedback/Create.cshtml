@@ -16,9 +16,33 @@
             
             .was-validated .form-control:valid:focus,
             .was-validated .form-select:valid:focus {
-                border-color: #86b7fe !important;
-                box-shadow: 0 0 0 .25rem rgba(13, 110, 253, .25) !important;
+                border-color: #5f7772 !important;
+                box-shadow: 0 0 0 0.2rem rgba(63, 85, 81, 0.14) !important;
             }
+
+        .contact-intro {
+            border-color: #718681 !important;
+        }
+        .contact-title {
+            color: #3f5b56;
+        }
+        .feedback-success-icon {
+            display: grid;
+            width: 4rem;
+            height: 4rem;
+            place-items: center;
+            color: #2f765e;
+            background-color: #edf7f2;
+            border: 3px solid currentColor;
+            border-radius: 50%;
+        }
+            .feedback-success-icon::before {
+                content: "\2713";
+                font-size: 2.25rem;
+                font-weight: 700;
+                line-height: 1;
+            }
+
     </style>
 }
 
@@ -28,8 +52,8 @@
             <div class="row g-5">
 
                 <!-- 左側高質感亮藍引導欄 -->
-                <div class="col-md-4 border-start border-4 ps-4" style="border-color: #0d6efd !important;">
-                    <h1 class="h2 fw-bold tracking-wide mb-3 text-primary" style="letter-spacing: 1px;">GET IN TOUCH</h1>
+                <div class="col-md-4 border-start border-4 ps-4 contact-intro">
+                    <h1 class="h2 fw-bold tracking-wide mb-3 contact-title" style="letter-spacing: 1px;">GET IN TOUCH</h1>
                     <p class="text-secondary small lh-lg mb-4">
                         歡迎留下住宿或網站使用相關意見，您的回饋將作為服務改善參考。
                     </p>
@@ -42,7 +66,7 @@
 
                         <div class="mb-4">
                             <label class="form-label small fw-bold text-secondary mb-2">分館選擇 <span class="text-danger">*</span></label>
-                            <select name="BranchId" class="form-select border-light-subtle py-2 shadow-sm rounded-3" required>
+                            <select name="BranchId" class="form-select py-2 rounded-3" required>
                                 <option value="" disabled selected>請選擇對應分館</option>
                                 @if (ViewBag.Branches != null)
                                 {
@@ -58,24 +82,24 @@
                         <div class="row mb-4">
                             <div class="col-md-6">
                                 <label class="form-label small fw-bold text-secondary mb-2">訪客姓名 <span class="text-danger">*</span></label>
-                                <input type="text" name="CustomerName" class="form-control border-light-subtle py-2 shadow-sm rounded-3" placeholder="請輸入您的全名" required>
+                                <input type="text" name="CustomerName" class="form-control py-2 rounded-3" placeholder="請輸入您的全名" required>
                                 <div class="invalid-feedback small">訪客姓名為必填項目。</div>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-bold text-secondary mb-2">聯絡電話</label>
-                                <input type="tel" name="Phone" class="form-control border-light-subtle py-2 shadow-sm rounded-3" placeholder="請輸入您的聯絡電話(選填)">
+                                <input type="tel" name="Phone" class="form-control py-2 rounded-3" placeholder="請輸入您的聯絡電話（選填）">
                             </div>
                         </div>
 
                         <div class="mb-4">
                             <label class="form-label small fw-bold text-secondary mb-2">電子信箱 <span class="text-danger">*</span></label>
-                            <input type="email" name="Email" class="form-control border-light-subtle py-2 shadow-sm rounded-3" placeholder="例如：example@mail.com" required>
+                            <input type="email" name="Email" class="form-control py-2 rounded-3" placeholder="請輸入可正常收信的電子信箱" required>
                             <div class="invalid-feedback small">請輸入正確格式的電子信箱。</div>
                         </div>
 
                         <div class="mb-4">
                             <label class="form-label small fw-bold text-secondary mb-2">您的寶貴意見 <span class="text-danger">*</span></label>
-                            <textarea name="Content" class="form-control border-light-subtle py-2 shadow-sm rounded-3" rows="12" placeholder="請輸入您的建議或反映內容..." maxlength="500" required></textarea>
+                            <textarea name="Content" class="form-control py-2 rounded-3" rows="12" placeholder="請輸入您的建議或反映內容..." maxlength="500" required></textarea>
                             <div class="invalid-feedback small">意見內容描述不可留白。</div>
                             <div class="form-text text-end text-muted small mt-1">限 500 字以內</div>
                         </div>
@@ -98,8 +122,7 @@
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content border-0 shadow rounded-4 text-center p-4">
             <div class="modal-body">
-                <div class="mx-auto mb-3 d-flex align-items-center justify-content-center text-primary rounded-circle bg-primary-subtle border border-primary-subtle" style="width: 60px; height: 60px;">
-                    <i class="bi bi-check-lg fs-2"></i>
+                <div class="feedback-success-icon mx-auto mb-3" aria-hidden="true">
                 </div>
                 <h5 class="fw-bold text-dark mb-2">提交成功</h5>
                 <p class="text-secondary small mb-0">我們已收到您的意見，感謝您的回饋。</p>
