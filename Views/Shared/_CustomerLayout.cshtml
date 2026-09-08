@@ -15,6 +15,9 @@
 
     var isGuestGuidePage = 
         currentController == "Home" && currentAction == "GuestGuide";
+
+    var isFeedbackPage = 
+        currentController == "Feedback" && currentAction == "Create";
 }
 
 <!DOCTYPE html>
@@ -110,12 +113,14 @@
                                 房客須知
                             </a>
                         </li>
+
                         <li class="nav-item">
-    <a class="nav-link @(currentController == "Feedback" && currentAction == "Create" ? "active fw-semibold" : "")"
-       asp-controller="Feedback" asp-action="Create">
-        聯絡我們
-    </a>
-</li>
+                            <a class="nav-link @(isFeedbackPage ? "active fw-semibold" : "")"
+                                asp-controller="Feedback"
+                                asp-action="Create">
+                                聯絡我們
+                            </a>
+                        </li>
 
                     </ul>
                 </div>
