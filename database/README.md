@@ -32,7 +32,6 @@ Repository 內的固定密碼 `Hotel@123` 與 PasswordHash 只供本機開發／
 3. PasswordHash 必須與 ASP.NET Identity `PasswordHasher<Employee>` 相容。
 4. 部署用明碼與 hash 不得提交至版本控制。
 
-詳細規則見 [deploy/README.md](deploy/README.md)。
 
 ### `03_demo_data.sql`
 
