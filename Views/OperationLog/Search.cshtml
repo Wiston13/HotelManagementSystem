@@ -25,7 +25,8 @@
                             分館
                         </label>
                         <select id="branchSelect" class="form-control">
-                            <option value="">全部分館</option>
+                            <option value="">全部範圍</option>
+                            <option value="system">全系統</option>
                             @if (ViewBag.Branches != null)
                             {
                                 foreach (var branch in ViewBag.Branches)
@@ -121,7 +122,8 @@
                 RoomType: "房型",
                 Room: "房間",
                 Booking: "訂單",
-                Employee: "員工"
+                Employee: "員工",
+                Announcement: "公告"
             };
 
             const today = new Date();
@@ -170,7 +172,7 @@
                         const tdBranch = document.createElement("td");
                         const spanBranch = document.createElement("span");
                         spanBranch.className = "badge bg-light text-dark border";
-                        spanBranch.textContent = item.branchName || "系統核心";
+                        spanBranch.textContent = item.branchName || "未知分館";
                         tdBranch.appendChild(spanBranch);
                         tr.appendChild(tdBranch);
 
@@ -233,7 +235,7 @@
                     let url = `/OperationLog/GetFilteredLogs?startDate=${sDate}&endDate=${eDate}`;
 
                     if (bId) {
-                        url += `&branchId=${parseInt(bId)}`;
+                        url += `&branchId=${encodeURIComponent(bId)}`;
                     }
                     if (type) {
                         url += `&type=${encodeURIComponent(type)}`;
@@ -256,7 +258,7 @@
                     renderTable(data);
                 } catch (error) {
                     console.error(error);
-                    alert("網路連線失敗，請檢查網路或伺服器狀態。");
+                    alert("查詢失敗，請稍後再試。");
                 } finally {
                     btnSearch.disabled = false;
                     btnSearch.innerText = "查詢";

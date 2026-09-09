@@ -29,7 +29,7 @@ namespace HotelManagementSystem.Controllers
 
         [HttpGet]
         public async Task<IActionResult> GetFilteredLogs(
-           string startDate, string endDate, int? branchId,
+           string startDate, string endDate, string? branchId,
            string type, string operatorInput, string target)
         {
             try
@@ -50,9 +50,16 @@ namespace HotelManagementSystem.Controllers
                     query = query.Where(l => l.OperatedAt < eDateEnd);
                 }
 
-                if (branchId.HasValue)
+                if (!string.IsNullOrWhiteSpace(branchId))
                 {
-                    query = query.Where(l => l.TargetBranchId == branchId.Value);
+                    if (branchId == "system")
+                    {
+                        query = query.Where(l => l.TargetBranchId == null);
+                    }
+                    else if (int.TryParse(branchId, out var parsedBranchId))
+                    {
+                        query = query.Where(l => l.TargetBranchId == parsedBranchId);
+                    }
                 }
 
                 if (!string.IsNullOrWhiteSpace(type))
@@ -95,7 +102,9 @@ namespace HotelManagementSystem.Controllers
                     {
                         operatedAt = l.OperatedAt,
 
-                        branchName = l.TargetBranch != null ? l.TargetBranch.BranchName : "系統核心",
+                        branchName = l.TargetBranchId == null
+                            ? "全系統"
+                            : l.TargetBranch?.BranchName ?? "未知分館",
                         operatorName = operatorName,
                         operationTypeName = l.OperationType != null ? l.OperationType.OperationTypeName : "未知操作",
                         targetType = l.TargetType,

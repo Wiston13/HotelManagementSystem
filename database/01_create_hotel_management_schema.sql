@@ -37,6 +37,7 @@ GO
 /* =========================================================
    重新建立資料表：先依 FK 相依順序刪除
    ========================================================= */
+DROP TABLE IF EXISTS [dbo].[Announcements];
 DROP TABLE IF EXISTS [dbo].[OperationLogs];
 DROP TABLE IF EXISTS [dbo].[StayRecords];
 DROP TABLE IF EXISTS [dbo].[Bookings];
@@ -44,6 +45,7 @@ DROP TABLE IF EXISTS [dbo].[Rooms];
 DROP TABLE IF EXISTS [dbo].[Employees];
 DROP TABLE IF EXISTS [dbo].[OperationTypes];
 DROP TABLE IF EXISTS [dbo].[RoomTypes];
+DROP TABLE IF EXISTS [dbo].[CustomerFeedbacks];
 DROP TABLE IF EXISTS [dbo].[Branches];
 GO
 
@@ -394,12 +396,13 @@ GO
    8. OperationLogs 基本操作紀錄
    - 僅由系統在關鍵寫入成功後新增
    - 一般功能不提供修改／刪除
-   - TargetBranchId = 操作對象所屬／受影響分館
+   - TargetBranchId = NULL 代表全系統層級操作
+   - TargetBranchId 有值時代表操作對象所屬／受影響分館
    ========================================================= */
 CREATE TABLE [dbo].[OperationLogs]
 (
     [OperationLogId]            int IDENTITY(1,1) NOT NULL,
-    [TargetBranchId]            int NOT NULL,
+    [TargetBranchId]            int NULL,
     [OperatedAt]                datetime2(0) NOT NULL
         CONSTRAINT [DF_OperationLogs_OperatedAt]
         DEFAULT (CONVERT(datetime2(0), SYSDATETIMEOFFSET() AT TIME ZONE 'Taipei Standard Time')),
@@ -423,6 +426,80 @@ CREATE TABLE [dbo].[OperationLogs]
     CONSTRAINT [FK_OperationLogs_OperationTypes]
         FOREIGN KEY ([OperationTypeId])
         REFERENCES [dbo].[OperationTypes] ([OperationTypeId])
+);
+GO
+
+/* =========================================================
+   9. CustomerFeedbacks 顧客意見回饋
+   開放式單向收集；內部僅查詢／匯出，不保存處理狀態或回覆。
+   ========================================================= */
+CREATE TABLE [dbo].[CustomerFeedbacks]
+(
+    [Id]              int IDENTITY(1,1) NOT NULL,
+    [BranchId]        int NOT NULL,
+    [CustomerName]    nvarchar(50) NOT NULL,
+    [Email]           varchar(254) NOT NULL,
+    [Phone]           varchar(20) NULL,
+    [Content]         nvarchar(500) NOT NULL,
+    [CreatedAt]       datetime2(0) NOT NULL
+        CONSTRAINT [DF_CustomerFeedbacks_CreatedAt]
+        DEFAULT (CONVERT(datetime2(0), SYSDATETIMEOFFSET() AT TIME ZONE 'Taipei Standard Time')),
+
+    CONSTRAINT [PK_CustomerFeedbacks]
+        PRIMARY KEY ([Id]),
+
+    CONSTRAINT [FK_CustomerFeedbacks_Branches]
+        FOREIGN KEY ([BranchId])
+        REFERENCES [dbo].[Branches] ([BranchId])
+        ON DELETE NO ACTION,
+
+    CONSTRAINT [CK_CustomerFeedbacks_CustomerName]
+        CHECK (LEN(LTRIM(RTRIM([CustomerName]))) > 0),
+
+    CONSTRAINT [CK_CustomerFeedbacks_Email]
+        CHECK (LEN(LTRIM(RTRIM([Email]))) > 0),
+
+    CONSTRAINT [CK_CustomerFeedbacks_Content]
+        CHECK (LEN(LTRIM(RTRIM([Content]))) > 0),
+
+    /* 後端先移除空白與半形連字號；未填保存 NULL，有值只接受 ASCII 數字。 */
+    CONSTRAINT [CK_CustomerFeedbacks_Phone]
+        CHECK ([Phone] IS NULL OR (DATALENGTH([Phone]) > 0 AND [Phone] COLLATE Latin1_General_100_BIN2 NOT LIKE '%[^0-9]%'))
+);
+GO
+
+/* =========================================================
+   10. Announcements 全域公告
+   閱讀端依啟用、有效期間與顧客可見性查詢；不保存到期狀態。
+   公告量小，先使用主鍵索引，不限制同時存在多則有效公告。
+   ========================================================= */
+CREATE TABLE [dbo].[Announcements]
+(
+    [AnnouncementId]    int IDENTITY(1,1) NOT NULL,
+    [Title]             nvarchar(100) NOT NULL,
+    [Content]           nvarchar(1000) NOT NULL,
+    [StartAt]           datetime2(0) NOT NULL,
+    [EndAt]             datetime2(0) NOT NULL,
+    [IsActive]          bit NOT NULL
+        CONSTRAINT [DF_Announcements_IsActive] DEFAULT (1),
+    [ShowToGuest]       bit NOT NULL
+        CONSTRAINT [DF_Announcements_ShowToGuest] DEFAULT (0),
+    [CreatedAt]         datetime2(0) NOT NULL
+        CONSTRAINT [DF_Announcements_CreatedAt]
+        DEFAULT (CONVERT(datetime2(0), SYSDATETIMEOFFSET() AT TIME ZONE 'Taipei Standard Time')),
+
+    CONSTRAINT [PK_Announcements]
+        PRIMARY KEY ([AnnouncementId]),
+
+    CONSTRAINT [CK_Announcements_DateRange]
+        CHECK ([EndAt] > [StartAt]),
+
+    /* 排除空字串與全由半形空格組成的值；完整空白與輸入驗證仍由後端負責。 */
+    CONSTRAINT [CK_Announcements_Title]
+        CHECK (LEN(LTRIM(RTRIM([Title]))) > 0),
+
+    CONSTRAINT [CK_Announcements_Content]
+        CHECK (LEN(LTRIM(RTRIM([Content]))) > 0)
 );
 GO
 
@@ -485,6 +562,16 @@ GO
 /* 操作紀錄：依操作者帳號查詢 */
 CREATE INDEX [IX_OperationLogs_Operator_OperatedAt]
 ON [dbo].[OperationLogs] ([OperatorEmployeeNumber], [OperatedAt] DESC);
+GO
+
+/* 顧客意見：員工本館／管理員指定分館，依填寫日期查詢與排序。 */
+CREATE INDEX [IX_CustomerFeedbacks_Branch_CreatedAt]
+ON [dbo].[CustomerFeedbacks] ([BranchId], [CreatedAt] DESC);
+GO
+
+/* 顧客意見：管理員全部分館的填寫日期區間查詢與匯出。 */
+CREATE INDEX [IX_CustomerFeedbacks_CreatedAt]
+ON [dbo].[CustomerFeedbacks] ([CreatedAt] DESC);
 GO
 
 /* =========================================================

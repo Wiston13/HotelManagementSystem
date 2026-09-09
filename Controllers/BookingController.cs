@@ -43,6 +43,16 @@ namespace HotelManagementSystem.Controllers
                 return NotFound("找不到指定的分館，或該分館目前不開放訂房。");
             }
 
+            // 查詢所有目前可訂分館中，已啟用房型的入住人數
+            var guestOptions = _context.RoomTypes
+                .Where(r =>
+                    r.IsActive &&
+                    _context.Branches.Any(b => b.BranchId == r.BranchId && b.AcceptsNewBookings))
+                .Select(r => (int)r.MaxOccupancy)
+                .Distinct()
+                .OrderBy(x => x)
+                .ToList();
+
             // 查詢該分館符合入住人數且已啟用的房型
             var roomTypes = _context.RoomTypes
                 .Where(r =>
@@ -77,14 +87,16 @@ namespace HotelManagementSystem.Controllers
                 .Where(r => r.AvailableRooms > 0)
                 .ToList();
 
-            // 沒有任何可預訂房型，回到首頁
-            if (!availableRoomTypes.Any())
-            {
-                TempData["NoAvailableRoom"] =
-                    "很抱歉，目前沒有符合查詢條件的可訂房間，請調整查詢條件後再試一次。";
-
-                return RedirectToAction("Index", "Home");
-            }
+            // 查詢目前可接受新訂房的分館，供頁面篩選使用
+            var branches = _context.Branches
+                .Where(b => b.AcceptsNewBookings)
+                .Select(b => new HotelManagementSystem.Models.ViewModels.Home.BranchViewModel
+                {
+                    BranchId = b.BranchId,
+                    BranchName = b.BranchName,
+                    AcceptsNewBookings = b.AcceptsNewBookings
+                })
+                .ToList();            
 
             // 計算入住晚數
             var nights = checkOut.DayNumber - checkIn.DayNumber;
@@ -97,7 +109,11 @@ namespace HotelManagementSystem.Controllers
                 CheckOutDate = checkOut,
                 Nights = nights,
                 GuestCount = guestCount,
-                RoomTypes = availableRoomTypes
+                RoomTypes = availableRoomTypes,
+                HasMatchingRoomType = roomTypes.Any(),
+                Branches = branches,
+                GuestOptions = guestOptions,
+                Today = _taipeiClock.Today                
             };
 
             return View(model);
@@ -311,7 +327,7 @@ namespace HotelManagementSystem.Controllers
                 // 指定測試卡號模擬付款失敗
                 if (normalizedCardNumber == "4000000000000002")
                 {
-                    TempData["PaymentError"] = "付款失敗，訂單尚未建立，請確認付款資訊後重新嘗試。";
+                    TempData["PaymentError"] = "付款失敗，訂單尚未建立。請確認付款資訊後重新嘗試。";
                     TempData["BookerName"] = input.BookerName;
                     TempData["ContactPhone"] = input.ContactPhone;
                     TempData["Email"] = input.Email;

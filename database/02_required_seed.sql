@@ -54,7 +54,7 @@ BEGIN TRY
     ('E20260807001', N'系統管理員', 1, NULL, @SamplePasswordHash, 'SystemAdmin');
 
     /* =========================================================
-       2. OperationTypes：固定 ID 1～25
+       2. OperationTypes：固定 ID 1～30
 
        StayController 目前以 22 / 23 寫入 Check-in / Check-out，
        因此保留既有 ID 與代碼，避免種子資料和程式不相容。
@@ -89,13 +89,18 @@ BEGIN TRY
     (22, 'CheckIn',                   N'Check-in'),
     (23, 'CheckOut',                  N'Check-out'),
     (24, 'RoomDisabledReasonUpdated', N'修改房間停用原因'),
-    (25, 'EmployeePasswordChanged',   N'員工修改密碼');
+    (25, 'EmployeePasswordChanged',   N'員工修改密碼'),
+    (26, 'AnnouncementCreated',       N'新增公告'),
+    (27, 'AnnouncementUpdated',       N'修改公告'),
+    (28, 'AnnouncementDeleted',       N'刪除公告'),
+    (29, 'AnnouncementDisabled',      N'停用公告'),
+    (30, 'AnnouncementEnabled',       N'啟用公告');
 
     SET IDENTITY_INSERT [dbo].[OperationTypes] OFF;
     SET @IdentityInsertTable = NULL;
 
     /* 固定 ID 寫入後校正 seed，下一筆一般 INSERT 從 MAX + 1 接續。 */
-    DBCC CHECKIDENT ('dbo.OperationTypes', RESEED, 25) WITH NO_INFOMSGS;
+    DBCC CHECKIDENT ('dbo.OperationTypes', RESEED, 30) WITH NO_INFOMSGS;
 
     COMMIT TRANSACTION;
 

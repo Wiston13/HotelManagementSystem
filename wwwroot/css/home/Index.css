@@ -1,5 +1,73 @@
 ﻿/* 訂房首頁css */
+.home-hero {
+    position: relative;
+    min-height: 100vh;
+    background-image: url('/images/home/hero.jpg');
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+}
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.28);
+}
+.hero-content {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+}
 
+#submitBtn {
+    background-color: #3f5551;
+    border-color: #3f5551;
+    color: #fff;
+    font-weight: 500;
+    border-radius: 6px;
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+    #submitBtn:hover {
+        background-color: #334744;
+        border-color: #334744;
+    }
+    #submitBtn:focus {
+        background-color: #334744;
+        border-color: #334744;
+        box-shadow: 0 0 0 0.2rem rgba(63, 85, 81, 0.18);
+    }
+
+.home-hero .form-select,
+.home-hero .form-control {
+    border: 1px solid #b8c1be;
+    border-radius: 6px;
+    color: #343b39;
+    background-color: #fff;
+    min-height: 42px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+    .home-hero .form-select:focus,
+    .home-hero .form-control:focus {
+        border-color: #5f7772;
+        box-shadow: 0 0 0 0.2rem rgba(63, 85, 81, 0.14);
+        outline: none;
+    }
+.home-hero .form-label {
+    color: #66716e !important;
+    font-weight: 500;
+}
+
+.hero-search-box {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 1.25rem;
+    background-color: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+}
 
 /* 確保所有分館圖片高度一致，自動裁切不會變形 */
 .branch-img-trigger {
@@ -98,16 +166,94 @@
         pointer-events: none;
     }
 
+/* 區域按鈕 */
+.region-scroll .btn {
+    color: #667a76;
+    border: 1px solid #aebbb7;
+    background-color: rgba(255, 255, 255, 0.45);
+    border-radius: 6px;
+    transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+    /* 滑鼠移上去：只做淡淡提示 */
+    .region-scroll .btn:hover {
+        color: #3f5551;
+        border-color: #8fa09b;
+        background-color: rgba(63, 85, 81, 0.05);
+    }
+    /* 真正目前選中的區域 */
+    .region-scroll .btn.active {
+        color: #fff;
+        background-color: #3f5551;
+        border-color: #3f5551;
+    }
+    /* 滑鼠點擊後，不顯示外圈 */
+    .region-scroll .btn:focus {
+        box-shadow: none;
+    }
+    /* 使用鍵盤 Tab 操作時，才顯示焦點 */
+    .region-scroll .btn:focus-visible {
+        box-shadow: 0 0 0 0.16rem rgba(63, 85, 81, 0.18);
+    }
 
 .branch-card-wrapper {
-    position: relative;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-radius: 10px;
+    overflow: hidden;
+    background-color: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 3px 14px rgba(45, 60, 56, 0.07);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+    .branch-card-wrapper:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 22px rgba(45, 60, 56, 0.12);
+    }
+
+.branch-title {
+    color: #3f5551;
+}
+.branch-address,
+.branch-phone {
+    color: #747d7a !important;
+    line-height: 1.6;
 }
 
-.branch-card-wrapper:hover {
-    transform: translateY(-4px) scale(1.02);
-    box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.12);
+.branch-detail-title {
+    color: #3f5551;
 }
+.branch-detail-description {
+    color: #747d7a;
+}
+.branch-detail-info {
+    color: #66716e;
+}
+.branch-detail-icon {
+    color: #5f7772;
+}
+.branch-detail-divider {
+    border-color: rgba(63, 85, 81, 0.14);
+    opacity: 1;
+}
+
+.close-detail-btn {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 50%;
+    color: #fff;
+    background-color: rgba(0, 0, 0, 0.35);
+    z-index: 2;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+    .close-detail-btn:hover {
+        background-color: rgba(0, 0, 0, 0.55);
+        transform: scale(1.05);
+    }
+
 
 /* 停止訂房的分館卡片用遮罩 */
 .branch-card-wrapper {
@@ -132,3 +278,56 @@
     letter-spacing: 0.05em;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 }
+
+/* =========================
+   首頁最新消息
+   ========================= */
+
+.home-announcement-card {
+    background-color: rgba(255, 255, 255, 0.94);
+    border: 1px solid rgba(63, 85, 81, 0.10);
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(40, 55, 52, 0.07);
+    overflow: hidden;
+}
+.home-announcement-header {
+    background-color: #f8faf9;
+    border-bottom: 1px solid rgba(63, 85, 81, 0.10);
+}
+.home-announcement-heading {
+    color: #2f3f3c;
+    font-weight: 600;
+}
+.home-announcement-icon {
+    color: #5f7772;
+}
+.home-announcement-title {
+    color: #2f3f3c;
+}
+.home-announcement-content {
+    color: #66716e;
+}
+.home-announcement-period {
+    color: #7a8885;
+}
+.home-announcement-more {
+    color: #526c67;
+    background-color: #fff;
+    border: 1px solid #718681;
+}
+    .home-announcement-more:hover {
+        color: #3f5551;
+        background-color: #eef2f1;
+        border-color: #526c67;
+    }
+    .home-announcement-more:focus,
+    .home-announcement-more:active,
+    .home-announcement-more:active:focus {
+        color: #3f5551;
+        background-color: #eef2f1;
+        border-color: #526c67;
+        box-shadow: none;
+    }
+    .home-announcement-more:focus-visible {
+        box-shadow: 0 0 0 0.16rem rgba(63, 85, 81, 0.18);
+    }

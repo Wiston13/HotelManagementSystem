@@ -7,7 +7,7 @@ public partial class OperationLog
 {
     public int OperationLogId { get; set; }
 
-    public int TargetBranchId { get; set; }
+    public int? TargetBranchId { get; set; }
 
     public DateTime OperatedAt { get; set; }
 
@@ -25,5 +25,5 @@ public partial class OperationLog
 
     public virtual Employee OperatorEmployeeNumberNavigation { get; set; } = null!;
 
-    public virtual Branch TargetBranch { get; set; } = null!;
+    public virtual Branch? TargetBranch { get; set; }
 }

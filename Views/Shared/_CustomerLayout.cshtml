@@ -15,6 +15,9 @@
 
     var isGuestGuidePage = 
         currentController == "Home" && currentAction == "GuestGuide";
+
+    var isFeedbackPage = 
+        currentController == "Feedback" && currentAction == "Create";
 }
 
 <!DOCTYPE html>
@@ -26,9 +29,12 @@
 
     <title>
         @(string.IsNullOrWhiteSpace(pageTitle)
-            ? "連鎖商旅"
-            : $"{pageTitle}｜連鎖商旅")
+            ? "曙光連鎖商旅"
+            : $"{pageTitle}｜曙光連鎖商旅")
     </title>
+
+    <!-- 網站分頁圖示 -->
+    <link rel="icon" type="image/png" href="~/images/logo/dawn-logo.png" />
 
     <!-- ASP.NET Core MVC 範本內建的 Bootstrap -->
     <link rel="stylesheet"
@@ -39,22 +45,32 @@
           href="~/css/site.css"
           asp-append-version="true" />
 
+    <!-- 顧客端共用樣式 -->
+    <link rel="stylesheet"
+          href="~/css/customer.css"
+          asp-append-version="true" />
+
     <!-- 讓個別頁面未來可以加入自己的樣式 -->
     @await RenderSectionAsync("Styles", required: false)
 </head>
 
-<body class="d-flex flex-column min-vh-100 bg-light">
+<body class="d-flex flex-column min-vh-100 bg-light @(isRoomSearchPage ? "customer-home-page" : "customer-inner-page")">
 
     <!-- 顧客端共用導覽列 -->
-    <header>
-        <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm">
+    <header class="customer-header">
+        <nav class="navbar navbar-expand-lg customer-navbar">
             <div class="container py-2">
 
-                <!-- 品牌名稱／首頁連結 -->
-                <a class="navbar-brand fw-bold text-primary"
+                <!-- Logo／品牌名稱／首頁連結 -->
+                <a class="navbar-brand d-flex align-items-center gap-2 fw-bold customer-brand"
                    asp-controller="Home"
                    asp-action="Index">
-                    連鎖商旅
+
+                    <img src="~/images/logo/dawn-logo.png"
+                         alt="曙光連鎖商旅 Logo"
+                         class="customer-logo" />
+
+                    <span>曙光連鎖商旅</span>
                 </a>
 
                 <!-- 小尺寸畫面導覽列切換按鈕 -->
@@ -98,6 +114,14 @@
                             </a>
                         </li>
 
+                        <li class="nav-item">
+                            <a class="nav-link @(isFeedbackPage ? "active fw-semibold" : "")"
+                                asp-controller="Feedback"
+                                asp-action="Create">
+                                聯絡我們
+                            </a>
+                        </li>
+
                     </ul>
                 </div>
             </div>
@@ -111,14 +135,14 @@
         每個 View 自己決定要使用：
         container、container-fluid，或完全全寬。
     -->
-    <main class="flex-grow-1">
+    <main class="flex-grow-1 customer-content">
         @RenderBody()
     </main>
 
     <!-- 顧客端共用頁尾 -->
-    <footer class="border-top bg-white mt-auto">
-        <div class="container py-3 text-center text-secondary small">
-            &copy; @DateTime.Now.Year 連鎖商旅
+    <footer class="customer-footer mt-auto">
+        <div class="container py-3 text-center small">
+            &copy; @DateTime.Now.Year 曙光連鎖商旅
         </div>
     </footer>
 

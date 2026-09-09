@@ -20,7 +20,7 @@
 
 只建立系統正常使用所需的必要初始化資料：
 
-- `OperationTypes` 1～25。
+- `OperationTypes` 1～30。
 - 初始 `SystemAdmin`。
 
 本腳本不是 Demo Data，不包含分館、一般員工、房型、房間、訂單或住房資料。
@@ -32,7 +32,6 @@ Repository 內的固定密碼 `Hotel@123` 與 PasswordHash 只供本機開發／
 3. PasswordHash 必須與 ASP.NET Identity `PasswordHasher<Employee>` 相容。
 4. 部署用明碼與 hash 不得提交至版本控制。
 
-詳細規則見 [deploy/README.md](deploy/README.md)。
 
 ### `03_demo_data.sql`
 
@@ -52,11 +51,79 @@ Repository 內的固定密碼 `Hotel@123` 與 PasswordHash 只供本機開發／
 - 46 筆 Booking。
 - 9 筆 StayRecord。
 - 53 筆 OperationLog。
+- 6 筆 Announcements：公開有效 A／B、內部有效、未開始、已到期與期間內停用公告。
+- 5 筆 CustomerFeedbacks：分館 1（台北中山）、2（台北信義）、3（台中草悟），含有／無電話及同 Email 重複提交。
+- 回饋日期為台灣時間今天、前 1、3、7 天，供顧客提交、分館員工無查看權限，以及總系統管理員全域唯讀查看與依建立時間排序情境使用。
 - Paid、CheckedIn、Completed、Cancelled、NoShow 狀態。
 - Check-in、Check-out、No-show、取消、房況、清潔、房量重疊與容量臨界情境。
 - `OperationTypeId` 1～25 coverage。
 
 本腳本依執行當天的台灣日期產生可持續使用的情境，必須建立在 `01 → 02 → 03` 之後。它不取代 Unit Test 或 Integration Test，也不可對正式部署資料庫執行。
+
+`03` 會先清除 CustomerFeedbacks 再重建分館；`04` 單獨重跑會清除並重建 5 筆回饋（含開發時自行新增的回饋），沿用交易、固定 Identity 與台灣時間慣例。
+
+### 顧客意見回饋資料模型
+
+SQL 表名固定為 `dbo.CustomerFeedbacks`；EF 使用 `Feedback` Entity 與 `Feedbacks` DbSet，透過 Fluent Mapping 明確指定表名。
+
+| 欄位 | SQL 型別 | 限制 |
+| --- | --- | --- |
+| Id | int | PK、IDENTITY(1,1)、NOT NULL |
+| BranchId | int | NOT NULL、FK → Branches.BranchId、ON DELETE NO ACTION |
+| CustomerName | nvarchar(50) | NOT NULL、不可空字串／全由半形空格組成 |
+| Email | varchar(254) | NOT NULL、不可空字串／全由半形空格組成；不設 UNIQUE |
+| Phone | varchar(20) | NULL 或 1～20 碼 ASCII 0～9 |
+| Content | nvarchar(500) | NOT NULL、不可空字串／全由半形空格組成 |
+| CreatedAt | datetime2(0) | NOT NULL、DEFAULT 明確轉成 Taipei Standard Time |
+
+上述必填 CHECK 排除空字串與全由半形空格組成的值；後端仍須驗證所有空白輸入、Email 格式、有效分館及各欄位長度。電話寫入前須移除空白與半形連字號，未填保存 NULL，再驗證僅含 0～9 且不超過 20 碼。
+
+`CreatedAt` 設為新增時由資料庫產生；新 Entity 不指定時間時使用 SQL DEFAULT。
+
+目前索引包含：
+
+- `(BranchId, CreatedAt DESC)`
+- `(CreatedAt DESC)`
+
+這些索引屬目前資料庫 Schema。現行顧客意見回饋功能只由 SystemAdmin 進行全部分館唯讀查看，預設依 `CreatedAt` 由新至舊；目前不提供分館或日期篩選。
+
+本表只保存七欄；不含處理狀態、備註／回覆、訂單／住房關聯或通知紀錄。顧客提交不要求登入或訂單驗證。分館員工不具有顧客意見回饋的查看或操作權限；SystemAdmin 是唯一內部查看角色，只提供全部分館回饋的唯讀檢視，預設依 `CreatedAt` 由新至舊。目前不提供分館／日期篩選、CSV 匯出、修改、刪除、回覆或處理狀態。
+
+顧客意見回饋正式依據為 L0 與 03／05／07／08／09；實際型別、長度與限制以目前 DDL 為準。既有部署資料庫使用 `deploy/001_add_customer_feedbacks.sql` 加入此表，不可用 `01` 重建升級。
+
+### 全域公告資料模型與情境
+
+`dbo.Announcements` 對應 `Announcement` Entity 與 `Announcements` DbSet，只保存以下八欄，全部為 NOT NULL：
+
+| 欄位 | SQL 型別 | 限制／預設值 |
+| --- | --- | --- |
+| AnnouncementId | int | PK、IDENTITY(1,1) |
+| Title | nvarchar(100) | 必填、不設 UNIQUE |
+| Content | nvarchar(1000) | 必填 |
+| StartAt | datetime2(0) | 開始顯示時間 |
+| EndAt | datetime2(0) | CHECK：EndAt > StartAt |
+| IsActive | bit | DEFAULT 1 |
+| ShowToGuest | bit | DEFAULT 0 |
+| CreatedAt | datetime2(0) | DEFAULT 明確轉成 Taipei Standard Time |
+
+Title／Content 的 CHECK 排除空字串及全由半形空格組成的值，不能取代後端完整空白、長度與日期驗證。公告為全域資料，沒有 FK；容許同標題與期間重疊。現階段資料量小，僅保留主鍵索引。
+
+EF 的 `IsActive` 初值與未設定判定值均為 true，明確設定 false 時可寫入 0；`ShowToGuest` 可保存 true／false。`CreatedAt` 只在新增時產生：未指定時用資料庫 DEFAULT，Controller 明確指定 `TaipeiClock.Now` 時保存該值，映射不會在編輯時自動重設時間。公告作者仍須在 Create 設定時間，Edit 保留原 CreatedAt。
+
+公告範例只由 `04` 插入，沿用 `@NowTaipei`。執行當下的預期如下；有效公告至少還有 7 天操作空間，未開始公告在 10 天後開始：
+
+| Id／情境 | 顧客閱讀端 | 員工閱讀端 | 管理列表 |
+| --- | --- | --- | --- |
+| 1／公開有效 A | 完整列表 | 完整列表 | 可見 |
+| 2／公開有效 B | 首頁及完整列表 | 完整列表 | 可見 |
+| 3／內部有效 | 不可見 | 首頁及完整列表 | 可見 |
+| 4／尚未開始 | 不可見 | 不可見 | 可見 |
+| 5／已到期 | 不可見 | 不可見 | 可見 |
+| 6／期間內停用 | 不可見 | 不可見 | 可見 |
+
+顧客列表順序為 2、1；員工列表為 3、2、1（ShowToGuest 不排除員工）；管理列表依 CreatedAt 遞減為 6、4、3、2、1、5。閱讀条件是 IsActive 且 StartAt <= 現在 <= EndAt，顧客再加 ShowToGuest。這些是情境資料的預期，不代表 Controller／頁面已完成整合驗證。
+
+完整初始化依序 `01 → 02 → 03 → 04`。`03` 依既有展示資料重置語意清除公告；`04` 重跑會清除公告後重建六筆，含 Identity reseed 與例外清理。公告不加入 Required Seed、不觸發通知或 OperationLog，也不修改既有回饋情境。既有部署環境使用 `deploy/002_add_announcements.sql` 加入公告表，不得用 `01` 重建升級。
 
 ## 2. 本機初始化流程
 
