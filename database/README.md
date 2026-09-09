@@ -54,7 +54,7 @@ Repository 內的固定密碼 `Hotel@123` 與 PasswordHash 只供本機開發／
 - 53 筆 OperationLog。
 - 6 筆 Announcements：公開有效 A／B、內部有效、未開始、已到期與期間內停用公告。
 - 5 筆 CustomerFeedbacks：分館 1（台北中山）、2（台北信義）、3（台中草悟），含有／無電話及同 Email 重複提交。
-- 回饋日期為台灣時間今天、前 1、3、7 天，供本館／跨館查詢、日期篩選、排序與 CSV 匯出情境使用。
+- 回饋日期為台灣時間今天、前 1、3、7 天，供顧客提交、分館員工無查看權限，以及總系統管理員全域唯讀查看與依建立時間排序情境使用。
 - Paid、CheckedIn、Completed、Cancelled、NoShow 狀態。
 - Check-in、Check-out、No-show、取消、房況、清潔、房量重疊與容量臨界情境。
 - `OperationTypeId` 1～25 coverage。
@@ -79,9 +79,16 @@ SQL 表名固定為 `dbo.CustomerFeedbacks`；EF 使用 `Feedback` Entity 與 `F
 
 上述必填 CHECK 排除空字串與全由半形空格組成的值；後端仍須驗證所有空白輸入、Email 格式、有效分館及各欄位長度。電話寫入前須移除空白與半形連字號，未填保存 NULL，再驗證僅含 0～9 且不超過 20 碼。
 
-`CreatedAt` 設為新增時由資料庫產生；新 Entity 不指定時間時使用 SQL DEFAULT。索引為 `(BranchId, CreatedAt DESC)`（本館／指定分館）與 `(CreatedAt DESC)`（全部分館日期範圍）。
+`CreatedAt` 設為新增時由資料庫產生；新 Entity 不指定時間時使用 SQL DEFAULT。
 
-本表只保存七欄；不含處理狀態、備註／回覆、訂單／住房關聯或通知紀錄。顧客提交不要求登入或訂單驗證；內部依角色查詢／匯出皆為唯讀，相關授權、輸入驗證與畫面由功能分支實作。
+目前索引包含：
+
+- `(BranchId, CreatedAt DESC)`
+- `(CreatedAt DESC)`
+
+這些索引屬目前資料庫 Schema。現行顧客意見回饋功能只由 SystemAdmin 進行全部分館唯讀查看，預設依 `CreatedAt` 由新至舊；目前不提供分館或日期篩選。
+
+本表只保存七欄；不含處理狀態、備註／回覆、訂單／住房關聯或通知紀錄。顧客提交不要求登入或訂單驗證。分館員工不具有顧客意見回饋的查看或操作權限；SystemAdmin 是唯一內部查看角色，只提供全部分館回饋的唯讀檢視，預設依 `CreatedAt` 由新至舊。目前不提供分館／日期篩選、CSV 匯出、修改、刪除、回覆或處理狀態。
 
 顧客意見回饋正式依據為 L0 與 03／05／07／08／09；實際型別、長度與限制以目前 DDL 為準。既有部署資料庫使用 `deploy/001_add_customer_feedbacks.sql` 加入此表，不可用 `01` 重建升級。
 

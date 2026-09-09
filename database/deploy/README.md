@@ -34,6 +34,8 @@ Database Deploy SQL
 
 只執行該環境尚未套用的 SQL，不要重新執行已經套用過的檔案。
 
+目前專案沒有自動 migration tracking 或 `SchemaVersions` table。每次正式資料庫更新完成後，必須在部署紀錄、Release 或對應 PR 中記載該環境最後成功套用的 deploy SQL，避免之後無法判斷 Production 已執行到哪一支增量 SQL。
+
 執行前請先確認目前連線的是正確資料庫。
 
 ## 目前 Deploy SQL
