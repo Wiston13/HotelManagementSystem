@@ -43,8 +43,8 @@ builder.Services
         "N8n:HeaderName 尚未設定。")
     .Validate(
         options => !string.IsNullOrWhiteSpace(options.WebhookSecret),
-        "N8n:WebhookSecret 尚未設定。")
-    .ValidateOnStart();
+        "N8n:WebhookSecret 尚未設定。");
+    //.ValidateOnStart();
 
 builder.Services.AddHttpClient<
     IBookingEmailService,
