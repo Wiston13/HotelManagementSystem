@@ -44,7 +44,7 @@ namespace HotelManagementSystem.Services
             webhookUrl);
             
             httpRequest.Headers.Add(
-                "X-FAQ-API-Key",
+                "X-Hotel-Webhook-Key",
                 apiKey);
             httpRequest.Headers.Add(
             "ngrok-skip-browser-warning",
